@@ -9,6 +9,9 @@ function getFilePath(folderPath, fileName) {
 	if (folderPath == '.') {
 		return fileName;
 	}
+	else if (!folderPath || !fileName) {
+		return undefined;
+	}
 	else {
 		return path.join(folderPath, fileName).replace(/\\/g, '/');
 	}
