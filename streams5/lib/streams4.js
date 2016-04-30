@@ -108,5 +108,6 @@ function getProjectDependency(matchResult) {
 	return dependency;
 };
 
+exports.getDependenciesWithStreams = getDependenciesWithStreams;
 exports.getModuleFolders = getModuleFolders;
 exports.getModuleDetails = getModuleDetails;
