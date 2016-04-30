@@ -58,7 +58,12 @@ function getModuleFolders(folderPath, maxDepth) {
 };
 
 function isHidden(fileName) {
-	return fileName.indexOf('.') == 0;
+	var pos = fileName.indexOf('/');
+	var firstPathElement = fileName.substring(0, pos);
+
+	return (firstPathElement.indexOf('.') == 0) &&
+		(firstPathElement != '.') &&
+		(firstPathElement != '..');
 };
 
 function isModuleFolder(folder) {
