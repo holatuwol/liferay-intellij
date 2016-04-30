@@ -153,6 +153,10 @@ function keyExistsInObject(key, object) {
 };
 
 function setGradleJarPath(library) {
+	if (!('group' in library)) {
+		return null;
+	}
+
 	var gradleBasePath = '.gradle/caches/modules-2/files-2.1';
 	var folderPath = [library.group, library.name, library.version].reduce(getFilePath, gradleBasePath);
 
