@@ -6,10 +6,10 @@ var getCoreFolders = streams5.getCoreFolders;
 var getModuleDetails = streams4.getModuleDetails;
 var getModuleFolders = streams4.getModuleFolders;
 
-function createProject(workspaceFolder) {
+function createProject(portalSourceFolder, pluginSourceFolders) {
 	var initialCWD = process.cwd();
 
-	process.chdir(workspaceFolder);
+	process.chdir(portalSourceFolder);
 
 	var coreFolders = getCoreFolders();
 	//var moduleFolders = getModuleFolders('modules', 5);

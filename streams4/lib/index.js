@@ -3,10 +3,10 @@ var streams4 = require('./streams4');
 var getModuleDetails = streams4.getModuleDetails;
 var getModuleFolders = streams4.getModuleFolders;
 
-function createProject(workspaceFolder) {
+function createProject(portalSourceFolder, pluginSourceFolders) {
 	var initialCWD = process.cwd();
 
-	process.chdir(workspaceFolder);
+	process.chdir(portalSourceFolder);
 
 	//var moduleFolders = getModuleFolders('modules', 5);
 	var moduleFolders = getModuleFolders('modules/apps/marketplace', 3);

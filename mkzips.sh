@@ -39,11 +39,6 @@ done
 source_folder=streams0
 target_folder=streams9
 
-pushd streams0/bin
-mklink run.js $target_folder
-mklink pom.js $target_folder
-popd
-
 pushd $source_folder/lib
 for i in $(seq 2 $(expr $id - 2)); do
 	mklink streams$i.js $target_folder

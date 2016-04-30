@@ -11,10 +11,10 @@ var getModuleDetails = streams4.getModuleDetails;
 var getModuleFolders = streams4.getModuleFolders;
 var isDirectory = streams2.isDirectory;
 
-function createProject(workspaceFolder) {
+function createProject(portalSourceFolder, pluginSourceFolders) {
 	var initialCWD = process.cwd();
 
-	process.chdir(workspaceFolder);
+	process.chdir(portalSourceFolder);
 
 	if (!isDirectory('.idea')) {
 		fs.mkdirSync('.idea');

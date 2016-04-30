@@ -2,10 +2,10 @@ var streams2 = require('./streams2');
 
 var getModuleFolders = streams2.getModuleFolders;
 
-function createProject(workspaceFolder) {
+function createProject(portalSourceFolder, pluginSourceFolders) {
 	var initialCWD = process.cwd();
 
-	process.chdir(workspaceFolder);
+	process.chdir(portalSourceFolder);
 
 	var moduleFolders = getModuleFolders('modules', 5);
 

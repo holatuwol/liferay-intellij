@@ -7,8 +7,14 @@ var liferay_intellij = require('..');
 
 assert(process.argv.length > 2, 'No workspace folder specified');
 
-var workspaceFolder = process.argv[2];
+var portalSourceFolder = process.argv[2];
 
-assert(shelljs.test('-d', workspaceFolder), workspaceFolder + ' is not a valid folder');
+assert(shelljs.test('-d', portalSourceFolder), portalSourceFolder + ' is not a valid folder');
 
-liferay_intellij.createProject(workspaceFolder);
+var pluginSourceFolders = [];
+
+if (process.argv.length > 3) {
+	pluginSourceFolders = process.argv.slice(3, process.argv.length);
+}
+
+liferay_intellij.createProject(portalSourceFolder, pluginSourceFolders);
