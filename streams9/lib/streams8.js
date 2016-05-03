@@ -2,15 +2,18 @@ var comparators = require('comparators').default;
 var fs = require('fs');
 var highland = require('highland');
 var streams2 = require('./streams2');
+var streams4 = require('./streams4');
 var streams5 = require('./streams5');
 var streams6 = require('./streams6');
 var streams7 = require('./streams7');
 
 var getComponentXML = streams6.getComponentXML;
+var getDependenciesWithWhileLoop = streams4.getDependenciesWithWhileLoop;
 var getExcludeFolderElement = streams6.getExcludeFolderElement;
 var getFacetManagerXML = streams6.getFacetManagerXML;
 var getFilePath = streams5.getFilePath;
 var getIntellijXML = streams6.getIntellijXML;
+var getLibraryDependency = streams4.getLibraryDependency;
 var getModuleElement = streams7.getModuleElement;
 var getModulesElement = streams7.getModulesElement;
 var getModuleIMLPath = streams6.getModuleIMLPath;
@@ -50,8 +53,7 @@ function createProjectWorkspace(coreDetails, moduleDetails) {
 		.compact()
 		.flatten()
 		.uniqBy(isSameLibraryDependency)
-		.doto(setGradleJarPath)
-		.filter(highland.partial(keyExistsInObject, 'gradleJarPath'))
+		.filter(highland.partial(keyExistsInObject, 'group'))
 		.doto(setLibraryName)
 		.map(getLibraryXML)
 		.each(saveContent);
@@ -59,20 +61,107 @@ function createProjectWorkspace(coreDetails, moduleDetails) {
 	detailsStream.done(function() {});
 };
 
-function getLibraryOrderEntryElement(libraryDependency) {
-	return '<orderEntry type="library" name="' + libraryDependency['libraryName'] + '" level="project"/>';
+function flatten(accumulator, next) {
+	if (!accumulator) {
+		return next;
+	}
+
+	if (!next) {
+		return accumulator;
+	}
+
+	return accumulator.concat(next);
+};
+
+function getGradleLibraryPaths(library) {
+	if (!('group' in library)) {
+		return [];
+	}
+
+	var gradleBasePath = '.gradle/caches/modules-2/files-2.1';
+
+	var folderPath = [library.group, library.name, library.version].reduce(getFilePath, gradleBasePath);
+
+	if (!isDirectory(folderPath)) {
+		return [];
+	}
+
+	var jarName = library.name + '-' + library.version + '.jar';
+
+	var jarPaths = fs.readdirSync(folderPath)
+		.map(getFilePath(folderPath))
+		.map(highland.flip(getFilePath, jarName))
+		.filter(isFile);
+
+	if (jarPaths.length > 0) {
+		return jarPaths;
+	}
+
+	var pomName = library.name + '-' + library.version + '.pom';
+
+	var pomPaths = fs.readdirSync(folderPath)
+		.map(getFilePath(folderPath))
+		.map(highland.flip(getFilePath, pomName))
+		.filter(isFile);
+
+	if (pomPaths.length > 0) {
+		return getPomDependencyPaths(pomPaths[0], library.version);
+	}
+
+	return [];
+};
+
+
+function getLibraryOrderEntryElement(library) {
+	return '<orderEntry type="library" name="' + library['libraryName'] + '" level="project"/>';
+};
+
+
+function getLibraryPaths(library) {
+	var gradleLibraryPaths = getGradleLibraryPaths(library);
+
+	if (gradleLibraryPaths.length != 0) {
+		return gradleLibraryPaths;
+	}
+
+	return [];
+};
+
+function getLibraryRootElement(libraryPath) {
+	return '\t\t<root url="jar://$PROJECT_DIR$/' + libraryPath + '!/" />';
 };
 
 function getLibraryTableXML(library) {
-	var libraryTableXML = [
-		'<library name="' + library['libraryName'] + '">',
-		'<CLASSES>',
-		'<root url="jar://$PROJECT_DIR$/' + library['gradleJarPath'] + '!/" />',
-		'</CLASSES>',
-		'<JAVADOC />',
-		'<SOURCES />',
-		'</library>'
-	];
+	var libraryTableXML = [];
+
+	libraryTableXML.push('<library name="' + library['libraryName'] + '" type="repository">');
+	libraryTableXML.push('\t<properties maven-id="' + library['libraryName'] + '" />');
+
+	var binaryPaths = getLibraryPaths(library);
+
+	if (binaryPaths.length > 0) {
+		libraryTableXML.push('\t<CLASSES>');
+		Array.prototype.push.apply(libraryTableXML, binaryPaths.map(getLibraryRootElement));
+		libraryTableXML.push('\t</CLASSES>');
+	}
+	else {
+		libraryTableXML.push('\t<CLASSES />');
+	}
+
+	libraryTableXML.push('\t<JAVADOC />');
+
+	var sourcePaths = [];
+
+	if (sourcePaths.length > 0) {
+		libraryTableXML.push('\t<SOURCES>');
+		Array.prototype.push.apply(libraryTableXML, sourcePaths.map(getLibraryRootElement));
+		libraryTableXML.push('\t</SOURCES>');
+	}
+	else {
+		libraryTableXML.push('\t<SOURCES />');
+	}
+
+	libraryTableXML.push('</library>');
 
 	return libraryTableXML.join('\n');
 };
@@ -124,8 +213,6 @@ function getNewModuleRootManagerXML(module) {
 
 	if (module.libraryDependencies) {
 		var libraryOrderEntryElements = module.libraryDependencies
-			.map(setGradleJarPath)
-			.filter(highland.partial(keyExistsInObject, 'gradleJarPath'))
 			.map(setLibraryName)
 			.map(getLibraryOrderEntryElement);
 
@@ -142,6 +229,27 @@ function getNewModuleRootManagerXML(module) {
 	return newModuleRootManagerXML.join('\n');
 };
 
+function getPomDependencyPaths(pomAbsolutePath, libraryVersion) {
+	var pomContents = fs.readFileSync(pomAbsolutePath);
+
+	var dependencyTextRegex = /<dependencies>([\s\S]*?)<\/dependencies>/g;
+	var dependencyTextResult = dependencyTextRegex.exec(pomContents);
+
+	if (!dependencyTextResult) {
+		return [];
+	}
+
+	var dependencyText = dependencyTextResult[1];
+
+	var libraryDependencyRegex = /<groupId>([^>]*)<\/groupId>[^<]*<artifactId>([^>]*)<\/artifactId>[^<]*<version>([^>]*)<\/version>/g;
+	var libraryDependencies = getDependenciesWithWhileLoop(dependencyText, getLibraryDependency, libraryDependencyRegex);
+
+	return libraryDependencies
+		.map(highland.partial(replaceProjectVersion, libraryVersion))
+		.map(getLibraryPaths)
+		.reduce(flatten, [])
+};
+
 function isSameLibraryDependency(left, right) {
 	return (left.group == right.group) &&
 		(left.name == right.name) &&
@@ -149,37 +257,19 @@ function isSameLibraryDependency(left, right) {
 };
 
 function keyExistsInObject(key, object) {
-	return object && key in object;
+	return key in object;
 };
 
-function setGradleJarPath(library) {
-	if (!('group' in library)) {
-		return null;
-	}
-
-	var gradleBasePath = '.gradle/caches/modules-2/files-2.1';
-	var folderPath = [library.group, library.name, library.version].reduce(getFilePath, gradleBasePath);
-
-	if (!isDirectory(folderPath)) {
-		return null;
-	}
-
-	var libraryFileName = library.name + '-' + library.version + '.jar';
-
-	var gradleJarPaths = fs.readdirSync(folderPath)
-		.map(getFilePath(folderPath))
-		.map(highland.flip(getFilePath, libraryFileName))
-		.filter(isFile);
-
-	if (gradleJarPaths.length > 0) {
-		library['gradleJarPath'] = gradleJarPaths[0];
+function replaceProjectVersion(version, library) {
+	if (library.version == '${project.version}') {
+		library.version = version;
 	}
 
 	return library;
 };
 
 function setLibraryName(library) {
-	if (keyExistsInObject('group', library)) {
+	if ('group' in library) {
 		library['libraryName'] = library.group + ':' + library.name + ':' + library.version;
 	}
 	else {
@@ -190,10 +280,12 @@ function setLibraryName(library) {
 };
 
 exports.createProjectWorkspace = createProjectWorkspace;
+exports.getGradleLibraryPaths = getGradleLibraryPaths;
 exports.getLibraryOrderEntryElement = getLibraryOrderEntryElement;
+exports.getLibraryRootElement = getLibraryRootElement;
 exports.getLibraryXML = getLibraryXML;
 exports.getModuleXML = getModuleXML;
+exports.getPomDependencyPaths = getPomDependencyPaths;
 exports.isSameLibraryDependency = isSameLibraryDependency;
 exports.keyExistsInObject = keyExistsInObject;
-exports.setGradleJarPath = setGradleJarPath;
 exports.setLibraryName = setLibraryName;

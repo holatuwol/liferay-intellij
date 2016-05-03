@@ -35,11 +35,12 @@ function createProject(portalSourceFolder, pluginSourceFolders) {
 	var moduleDetails = moduleFolders.map(getModuleDetails);
 	var pluginDetails = pluginFolders.map(getPluginDetails);
 
-	createProjectWorkspace(coreDetails, moduleDetails);
+	createProjectWorkspace(coreDetails, moduleDetails, pluginDetails);
 
 	process.chdir(initialCWD);
 };
 
+/*
 function createProjectObjectModels(portalSourceFolder) {
 	var initialCWD = process.cwd();
 
@@ -52,6 +53,7 @@ function createProjectObjectModels(portalSourceFolder) {
 
 	process.chdir(initialCWD);
 };
+*/
 
 exports.createProject = createProject;
-exports.createProjectObjectModels = createProjectObjectModels;
+//exports.createProjectObjectModels = createProjectObjectModels;

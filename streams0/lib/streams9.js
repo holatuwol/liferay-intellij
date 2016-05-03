@@ -12,19 +12,21 @@ var getComponentXML = streams6.getComponentXML;
 var getExcludeFolderElement = streams6.getExcludeFolderElement;
 var getFacetManagerXML = streams6.getFacetManagerXML;
 var getFilePath = streams5.getFilePath;
+var getGradleLibraryPaths = streams8.getGradleLibraryPaths;
 var getIntellijXML = streams6.getIntellijXML;
 var getLibraryOrderEntryElement = streams8.getLibraryOrderEntryElement;
+var getLibraryRootElement = streams8.getLibraryRootElement;
 var getModuleElement = streams7.getModuleElement;
 var getModulesElement = streams7.getModulesElement;
 var getModuleIMLPath = streams6.getModuleIMLPath;
 var getModuleOrderEntryElement = streams7.getModuleOrderEntryElement;
+var getPomDependencyPaths = streams8.getPomDependencyPaths;
 var getSourceFolderElement = streams6.getSourceFolderElement;
 var getWorkspaceModulesXML = streams7.getWorkspaceModulesXML;
 var isFile = streams2.isFile;
 var isSameLibraryDependency = streams8.isSameLibraryDependency;
-var keyExistsInObject = streams8.keyExistsInObject;
+var keyExistsInObject = highland.ncurry(2, streams8.keyExistsInObject);
 var saveContent = streams6.saveContent;
-var setGradleJarPath = streams8.setGradleJarPath;
 var setLibraryName = streams8.setLibraryName;
 
 function createProjectObjectModels(moduleDetails) {
@@ -92,10 +94,8 @@ function createProjectWorkspace(coreDetails, moduleDetails) {
 		.each(saveContent);
 
 	libraryFilesStream
-		.doto(setGradleJarPath)
-		.filter(highland.partial(keyExistsInObject, 'gradleJarPath'))
+		.filter(keyExistsInObject('group'))
 		.doto(setLibraryName)
-		.doto(setMavenSourcesJarPath)
 		.map(getLibraryXML)
 		.each(saveContent);
 
@@ -105,12 +105,12 @@ function createProjectWorkspace(coreDetails, moduleDetails) {
 function getJarLibraryTableXML(library) {
 	var libraryTableXML = [
 		'<library name="' + library.name + '" type="repository">',
-		'<CLASSES>',
-		'<root url="file://$PROJECT_DIR$/lib/' + library.name + '" />',
-		'</CLASSES>',
-		'<JAVADOC />',
-		'<SOURCES />',
-		'<jarDirectory url="file://$PROJECT_DIR$/lib/' + library.name + '" recursive="false" />',
+		'\t<CLASSES>',
+		'\t\t<root url="file://$PROJECT_DIR$/lib/' + library.name + '" />',
+		'\t</CLASSES>',
+		'\t<JAVADOC />',
+		'\t<SOURCES />',
+		'\t<jarDirectory url="file://$PROJECT_DIR$/lib/' + library.name + '" recursive="false" />',
 		'</library>'
 	];
 
@@ -131,21 +131,52 @@ function getJarLibraryXML(library) {
 	};
 };
 
-function getLibraryTableXML(library) {
-	var libraryTableXML = [
-		'<library name="' + library['libraryName'] + '">',
-		'<CLASSES>',
-		'<root url="jar://$PROJECT_DIR$/' + library['gradleJarPath'] + '!/" />',
-		'</CLASSES>',
-		'<JAVADOC />',
-		'<SOURCES>'
-	];
+function getLibraryPaths(library) {
+	var mavenLibraryPaths = getMavenLibraryPaths(library);
 
-	if ('mavenSourcesPath' in library) {
-		libraryTableXML.push('<root url="jar://$MAVEN_REPOSITORY$/' + library['mavenSourcesPath'] + '!/" />' );
+	if (mavenLibraryPaths.length != 0) {
+		return mavenLibraryPaths;
 	}
 
-	libraryTableXML.push('</SOURCES>');
+	var gradleLibraryPaths = getGradleLibraryPaths(library);
+
+	if (gradleLibraryPaths.length != 0) {
+		return gradleLibraryPaths;
+	}
+
+	return [];
+};
+
+function getLibraryTableXML(library) {
+	var libraryTableXML = [];
+
+	libraryTableXML.push('<library name="' + library['libraryName'] + '" type="repository">');
+	libraryTableXML.push('\t<properties maven-id="' + library['libraryName'] + '" />');
+
+	var binaryPaths = getLibraryPaths(library);
+
+	if (binaryPaths.length > 0) {
+		libraryTableXML.push('\t<CLASSES>');
+		Array.prototype.push.apply(libraryTableXML, binaryPaths.map(getLibraryRootElement));
+		libraryTableXML.push('\t</CLASSES>');
+	}
+	else {
+		libraryTableXML.push('\t<CLASSES />');
+	}
+
+	libraryTableXML.push('\t<JAVADOC />');
+
+	var sourcePaths = binaryPaths.map(getMavenSourcePath).filter(isFile);
+
+	if (sourcePaths.length > 0) {
+		libraryTableXML.push('\t<SOURCES>');
+		Array.prototype.push.apply(libraryTableXML, sourcePaths.map(getLibraryRootElement));
+		libraryTableXML.push('\t</SOURCES>');
+	}
+	else {
+		libraryTableXML.push('\t<SOURCES />');
+	}
+
 	libraryTableXML.push('</library>');
 
 	return libraryTableXML.join('\n');
@@ -196,14 +227,40 @@ function getMavenDependencyElement(library) {
 	};
 };
 
+function getMavenLibraryPaths(library) {
+	if (!('group' in library)) {
+		return [];
+	}
+
+	var jarFileName = library.name + '-' + library.version + '.jar';
+
+	var userHome = process.env.HOME || process.env.HOMEPATH || process.env.USERPROFILE;
+
+	var jarRelativePath = library.group.split('.').concat([library.name, library.version, jarFileName]).join('/');
+	var jarAbsolutePath = ['.m2', 'repository', jarRelativePath].reduce(getFilePath, userHome);
+
+	if (isFile(jarAbsolutePath)) {
+		return [jarAbsolutePath];
+	}
+
+	var pomFileName = library.name + '-' + library.version + '.pom';
+
+	var pomRelativePath = library.group.split('.').concat([library.name, library.version, pomFileName]).join('/');
+	var pomAbsolutePath = ['.m2', 'repository', pomRelativePath].reduce(getFilePath, userHome);
+
+	if (!isFile(pomAbsolutePath)) {
+		return [];
+	}
+
+	return getPomDependencyPaths(pomAbsolutePath, library.version);
+};
+
 function getMavenProject(module) {
 	var dependencyObjects = {};
 
-	if ('libraryDependencies' in module) {
+	if (module.libraryDependencies) {
 		var libraryDependencies = module.libraryDependencies
-			.filter(highland.partial(keyExistsInObject, 'group'))
-			.map(setGradleJarPath)
-			.filter(highland.partial(keyExistsInObject, 'gradleJarPath'));
+			.filter(keyExistsInObject('group'))
 
 		if (libraryDependencies.length > 0) {
 			dependencyObjects = {
@@ -248,6 +305,12 @@ function getMavenProject(module) {
 	};
 };
 
+function getMavenSourcePath(mavenBinaryPath) {
+	var pos = mavenBinaryPath.lastIndexOf('.');
+
+	return mavenBinaryPath.substring(0, pos) + '-sources' + mavenBinaryPath.substring(pos);
+};
+
 function getModuleXML(module) {
 	return {
 		fileName: getModuleIMLPath(module),
@@ -281,15 +344,14 @@ function getNewModuleRootManagerXML(module) {
 
 	if (module.libraryDependencies) {
 		var libraryOrderEntryElements = module.libraryDependencies
-			.map(setGradleJarPath)
-			.filter(highland.partial(keyExistsInObject, 'gradleJarPath'))
+			.filter(keyExistsInObject('group'))
 			.map(setLibraryName)
 			.map(getLibraryOrderEntryElement);
 
 		newModuleRootManagerXML = newModuleRootManagerXML.concat(libraryOrderEntryElements);
 
 		var coreLibraryOrderEntryElements = module.libraryDependencies
-			.filter(highland.compose(highland.not, highland.partial(keyExistsInObject, 'group')))
+			.filter(highland.compose(highland.not, keyExistsInObject('group')))
 			.map(setLibraryName)
 			.map(getLibraryOrderEntryElement);
 
@@ -351,21 +413,6 @@ function setCoreBundleVersions(accumulator, module) {
 	};
 
 	return accumulator;
-};
-
-function setMavenSourcesJarPath(library) {
-	var libraryFileName = library.name + '-' + library.version + '-sources.jar';
-	var userHome = process.env.HOME || process.env.HOMEPATH || process.env.USERPROFILE;
-
-	var libraryRelativePath = library.group.split('.').concat([library.name, library.version, libraryFileName]).join('/');
-	var libraryAbsolutePath = ['.m2', 'repository', libraryRelativePath].reduce(getFilePath, userHome);
-
-	if (!isFile(libraryAbsolutePath)) {
-		return library;
-	}
-
-	library['mavenSourcesPath'] = libraryRelativePath;
-	return library;
 };
 
 function setModuleBundleVersions(accumulator, module) {

@@ -108,6 +108,8 @@ function getProjectDependency(matchResult) {
 	return dependency;
 };
 
+exports.getDependenciesWithWhileLoop = getDependenciesWithWhileLoop;
 exports.getDependenciesWithStreams = getDependenciesWithStreams;
+exports.getLibraryDependency = getLibraryDependency;
 exports.getModuleFolders = getModuleFolders;
 exports.getModuleDetails = getModuleDetails;
