@@ -40,7 +40,7 @@ source_folder=streams0
 target_folder=streams9
 
 pushd $source_folder/lib
-for i in $(seq 2 $(expr $id - 2)); do
+for i in $(seq 2 8); do
 	mklink streams$i.js $target_folder
 done
 popd
