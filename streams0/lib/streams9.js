@@ -51,7 +51,7 @@ function createProjectObjectModels(moduleDetails) {
 	moduleStream.done(function() {});
 };
 
-function createProjectWorkspace(coreDetails, moduleDetails) {
+function createProjectWorkspace(coreDetails, moduleDetails, pluginDetails) {
 	var moduleVersions = coreDetails.reduce(setCoreBundleVersions, {});
 	moduleVersions = moduleDetails.reduce(setModuleBundleVersions, moduleVersions);
 
@@ -59,8 +59,9 @@ function createProjectWorkspace(coreDetails, moduleDetails) {
 
 	var moduleStream = highland(moduleDetails);
 	var coreStream = highland(coreDetails);
+	var pluginStream = highland(pluginDetails);
 
-	var detailsStream = highland.merge([moduleStream, coreStream]);
+	var detailsStream = highland.merge([moduleStream, coreStream, pluginStream]);
 
 	var moduleFilesStream = detailsStream.observe();
 	var projectFileStream = detailsStream.observe();
