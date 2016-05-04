@@ -40,7 +40,6 @@ function createProject(portalSourceFolder, pluginSourceFolders) {
 	process.chdir(initialCWD);
 };
 
-/*
 function createProjectObjectModels(portalSourceFolder) {
 	var initialCWD = process.cwd();
 
@@ -53,7 +52,6 @@ function createProjectObjectModels(portalSourceFolder) {
 
 	process.chdir(initialCWD);
 };
-*/
 
 exports.createProject = createProject;
-//exports.createProjectObjectModels = createProjectObjectModels;
+exports.createProjectObjectModels = createProjectObjectModels;
