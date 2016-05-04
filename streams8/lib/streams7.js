@@ -53,9 +53,21 @@ function getModuleGroupName(module) {
 	if (moduleGroupName.indexOf('modules/') == 0) {
 		return moduleGroupName;
 	}
-	else {
-		return 'portal';
+
+	var pos = moduleGroupName.indexOf('/');
+
+	while (pos != -1) {
+		var rootName = moduleGroupName.substring(0, pos);
+
+		if (rootName.indexOf('plugins') != -1) {
+			return moduleGroupName;
+		}
+
+		moduleGroupName = moduleGroupName.substring(pos + 1);
+		pos = moduleGroupName.indexOf('/');
 	}
+
+	return 'portal';
 };
 
 function getModuleOrderEntryElement(projectDependency) {
