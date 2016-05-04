@@ -133,7 +133,7 @@ function getPluginDependencies(folder) {
 
 	return {
 		libraryDependencies: ivyDependencies.concat(coreLibraryDependencies),
-		projectDependencies: deploymentContextDependencies.concat(sharedDependencies)
+		projectDependencies: deploymentContextDependencies.concat(sharedDependencies).map(getProjectDependency)
 	};
 }
 
