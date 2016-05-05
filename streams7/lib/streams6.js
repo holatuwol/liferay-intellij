@@ -114,7 +114,33 @@ function getSourceFolderElement(attributeName, attributeValue, folder) {
 };
 
 function saveContent(file) {
-	fs.writeFile(file.name, file.content, function() {});
+	var indent = 0;
+	var splitContent = file.content.split('\n');
+
+	for (var i = 0; i < splitContent.length; i++) {
+		var line = splitContent[i];
+
+		if (line.length == 0) {
+			splitContent.splice(i--, 1);
+			continue;
+		}
+
+		if (line.indexOf('<?') == 0) {
+			continue;
+		}
+
+		if ((line.indexOf('<') != -1) && (line.indexOf('</') == -1)) {
+			++indent;
+		}
+
+		splitContent[i] = new Array(indent).join('\t') + line;
+
+		if ((line.indexOf('/>') != -1) || (line.indexOf('</') != -1)) {
+			--indent;
+		}
+	}
+
+	fs.writeFile(file.name, splitContent.join('\n'), function() {});
 };
 
 exports.createProjectWorkspace = createProjectWorkspace;

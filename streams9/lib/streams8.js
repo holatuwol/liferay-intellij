@@ -128,37 +128,37 @@ function getLibraryPaths(library) {
 };
 
 function getLibraryRootElement(libraryPath) {
-	return '\t\t<root url="jar://$PROJECT_DIR$/' + libraryPath + '!/" />';
+	return '<root url="jar://$PROJECT_DIR$/' + libraryPath + '!/" />';
 };
 
 function getLibraryTableXML(library) {
 	var libraryTableXML = [];
 
 	libraryTableXML.push('<library name="' + library['libraryName'] + '" type="repository">');
-	libraryTableXML.push('\t<properties maven-id="' + library['libraryName'] + '" />');
+	libraryTableXML.push('<properties maven-id="' + library['libraryName'] + '" />');
 
 	var binaryPaths = getLibraryPaths(library);
 
 	if (binaryPaths.length > 0) {
-		libraryTableXML.push('\t<CLASSES>');
+		libraryTableXML.push('<CLASSES>');
 		Array.prototype.push.apply(libraryTableXML, binaryPaths.map(getLibraryRootElement));
-		libraryTableXML.push('\t</CLASSES>');
+		libraryTableXML.push('</CLASSES>');
 	}
 	else {
-		libraryTableXML.push('\t<CLASSES />');
+		libraryTableXML.push('<CLASSES />');
 	}
 
-	libraryTableXML.push('\t<JAVADOC />');
+	libraryTableXML.push('<JAVADOC />');
 
 	var sourcePaths = [];
 
 	if (sourcePaths.length > 0) {
-		libraryTableXML.push('\t<SOURCES>');
+		libraryTableXML.push('<SOURCES>');
 		Array.prototype.push.apply(libraryTableXML, sourcePaths.map(getLibraryRootElement));
-		libraryTableXML.push('\t</SOURCES>');
+		libraryTableXML.push('</SOURCES>');
 	}
 	else {
-		libraryTableXML.push('\t<SOURCES />');
+		libraryTableXML.push('<SOURCES />');
 	}
 
 	libraryTableXML.push('</library>');
