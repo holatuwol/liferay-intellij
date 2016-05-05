@@ -25,6 +25,9 @@ var isFile = streams2.isFile;
 var saveContent = streams6.saveContent;
 
 function createProjectWorkspace(coreDetails, moduleDetails) {
+	coreDetails = coreDetails.map(sortModuleAttributes);
+	moduleDetails = moduleDetails.map(sortModuleAttributes);
+
 	var moduleStream = highland(moduleDetails);
 	var coreStream = highland(coreDetails);
 
@@ -279,6 +282,23 @@ function setLibraryName(library) {
 	return library;
 };
 
+function sortModuleAttributes(module) {
+	module.sourceFolders.sort();
+	module.resourceFolders.sort();
+	module.testSourceFolders.sort();
+	module.testResourceFolders.sort();
+
+	if (module.libraryDependencies) {
+		module.libraryDependencies.sort(comparators.comparing('name'));
+	}
+
+	if (module.projectDependencies) {
+		module.projectDependencies.sort(comparators.comparing('name'));
+	}
+
+	return module;
+}
+
 exports.createProjectWorkspace = createProjectWorkspace;
 exports.getGradleLibraryPaths = getGradleLibraryPaths;
 exports.getLibraryOrderEntryElement = getLibraryOrderEntryElement;
@@ -289,3 +309,4 @@ exports.getPomDependencyPaths = getPomDependencyPaths;
 exports.isSameLibraryDependency = isSameLibraryDependency;
 exports.keyExistsInObject = keyExistsInObject;
 exports.setLibraryName = setLibraryName;
+exports.sortModuleAttributes = sortModuleAttributes;

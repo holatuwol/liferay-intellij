@@ -28,6 +28,7 @@ var isSameLibraryDependency = streams8.isSameLibraryDependency;
 var keyExistsInObject = highland.ncurry(2, streams8.keyExistsInObject);
 var saveContent = streams6.saveContent;
 var setLibraryName = streams8.setLibraryName;
+var sortModuleAttributes = streams8.sortModuleAttributes;
 
 function createProjectObjectModels(moduleDetails) {
 	var moduleVersions = moduleDetails.reduce(setModuleBundleVersions, {});
@@ -52,6 +53,13 @@ function createProjectObjectModels(moduleDetails) {
 };
 
 function createProjectWorkspace(coreDetails, moduleDetails, pluginDetails) {
+	coreDetails = coreDetails.map(sortModuleAttributes);
+	moduleDetails = moduleDetails.map(sortModuleAttributes);
+
+	if (pluginDetails) {
+		pluginDetails = pluginDetails.map(sortModuleAttributes);
+	}
+
 	var moduleVersions = coreDetails.reduce(setCoreBundleVersions, {});
 	moduleVersions = moduleDetails.reduce(setModuleBundleVersions, moduleVersions);
 
