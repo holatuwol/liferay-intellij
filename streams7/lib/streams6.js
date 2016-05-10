@@ -59,8 +59,15 @@ function getIntellijXML(fileData) {
 	];
 
 	fileData.components
-		.map(highland.ncurry(1, getComponentXML))
-		.forEach(highland.ncurry(1, Array.prototype.push.bind(xmlContent)));
+		.map(
+			highland.ncurry(1, getComponentXML)
+		)
+		.filter(
+			highland.compose(highland.not, highland.not)
+		)
+		.forEach(
+			highland.ncurry(1, Array.prototype.push.bind(xmlContent))
+		);
 
 	xmlContent.push('</module>');
 
@@ -115,15 +122,11 @@ function getSourceFolderElement(attributeName, attributeValue, folder) {
 
 function saveContent(file) {
 	var indent = 0;
-	var splitContent = file.content.split('\n');
+	var splitContent = file.content.split('\n')
+		.filter(highland.compose(highland.not, highland.not));
 
 	for (var i = 0; i < splitContent.length; i++) {
 		var line = splitContent[i];
-
-		if (line.length == 0) {
-			splitContent.splice(i--, 1);
-			continue;
-		}
 
 		if (line.indexOf('<?') == 0) {
 			continue;

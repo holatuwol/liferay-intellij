@@ -28,7 +28,6 @@ var isSameLibraryDependency = streams8.isSameLibraryDependency;
 var keyExistsInObject = highland.ncurry(2, streams8.keyExistsInObject);
 var saveContent = streams6.saveContent;
 var setLibraryName = streams8.setLibraryName;
-var sortModuleAttributes = streams8.sortModuleAttributes;
 
 function createProjectObjectModels(moduleDetails) {
 	var moduleVersions = moduleDetails.reduce(setModuleBundleVersions, {});
@@ -249,7 +248,7 @@ function getMavenLibraryPaths(library) {
 	var jarAbsolutePath = ['.m2', 'repository', jarRelativePath].reduce(getFilePath, userHome);
 
 	if (isFile(jarAbsolutePath)) {
-		return [jarAbsolutePath];
+		return [getFilePath('$M2_REPOSITORY$', jarRelativePath)];
 	}
 
 	var pomFileName = library.name + '-' + library.version + '.pom';
@@ -441,6 +440,23 @@ function setModuleBundleVersions(accumulator, module) {
 
 	return accumulator;
 };
+
+function sortModuleAttributes(module) {
+	module.sourceFolders.sort();
+	module.resourceFolders.sort();
+	module.testSourceFolders.sort();
+	module.testResourceFolders.sort();
+
+	if (module.libraryDependencies) {
+		module.libraryDependencies.sort(comparators.comparing('name'));
+	}
+
+	if (module.projectDependencies) {
+		module.projectDependencies.sort(comparators.comparing('name'));
+	}
+
+	return module;
+}
 
 function updateProjectDependencies(moduleVersions, module) {
 	if (!('libraryDependencies' in module)) {

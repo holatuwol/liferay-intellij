@@ -1,4 +1,3 @@
-var comparators = require('comparators').default;
 var fs = require('fs');
 var highland = require('highland');
 var streams2 = require('./streams2');
@@ -25,9 +24,6 @@ var isFile = streams2.isFile;
 var saveContent = streams6.saveContent;
 
 function createProjectWorkspace(coreDetails, moduleDetails) {
-	coreDetails = coreDetails.map(sortModuleAttributes);
-	moduleDetails = moduleDetails.map(sortModuleAttributes);
-
 	var moduleStream = highland(moduleDetails);
 	var coreStream = highland(coreDetails);
 
@@ -119,7 +115,6 @@ function getLibraryOrderEntryElement(library) {
 	return '<orderEntry type="library" name="' + library['libraryName'] + '" level="project"/>';
 };
 
-
 function getLibraryPaths(library) {
 	var gradleLibraryPaths = getGradleLibraryPaths(library);
 
@@ -131,7 +126,12 @@ function getLibraryPaths(library) {
 };
 
 function getLibraryRootElement(libraryPath) {
-	return '<root url="jar://$PROJECT_DIR$/' + libraryPath + '!/" />';
+	if ((libraryPath.indexOf('/') == 0) || (libraryPath.indexOf('$') == 0)) {
+		return '<root url="jar://' + libraryPath + '!/" />';
+	}
+	else {
+		return '<root url="jar://$PROJECT_DIR$/' + libraryPath + '!/" />';
+	}
 };
 
 function getLibraryTableXML(library) {
@@ -216,6 +216,7 @@ function getNewModuleRootManagerXML(module) {
 
 	if (module.libraryDependencies) {
 		var libraryOrderEntryElements = module.libraryDependencies
+			.filter(highland.partial(keyExistsInObject, 'group'))
 			.map(setLibraryName)
 			.map(getLibraryOrderEntryElement);
 
@@ -260,7 +261,7 @@ function isSameLibraryDependency(left, right) {
 };
 
 function keyExistsInObject(key, object) {
-	return key in object;
+	return object && key in object;
 };
 
 function replaceProjectVersion(version, library) {
@@ -282,23 +283,6 @@ function setLibraryName(library) {
 	return library;
 };
 
-function sortModuleAttributes(module) {
-	module.sourceFolders.sort();
-	module.resourceFolders.sort();
-	module.testSourceFolders.sort();
-	module.testResourceFolders.sort();
-
-	if (module.libraryDependencies) {
-		module.libraryDependencies.sort(comparators.comparing('name'));
-	}
-
-	if (module.projectDependencies) {
-		module.projectDependencies.sort(comparators.comparing('name'));
-	}
-
-	return module;
-}
-
 exports.createProjectWorkspace = createProjectWorkspace;
 exports.getGradleLibraryPaths = getGradleLibraryPaths;
 exports.getLibraryOrderEntryElement = getLibraryOrderEntryElement;
@@ -309,4 +293,3 @@ exports.getPomDependencyPaths = getPomDependencyPaths;
 exports.isSameLibraryDependency = isSameLibraryDependency;
 exports.keyExistsInObject = keyExistsInObject;
 exports.setLibraryName = setLibraryName;
-exports.sortModuleAttributes = sortModuleAttributes;
