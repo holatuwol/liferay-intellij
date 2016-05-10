@@ -31,7 +31,8 @@ var setLibraryName = streams8.setLibraryName;
 
 function createProjectObjectModels(moduleDetails) {
 	var moduleVersions = moduleDetails.reduce(setModuleBundleVersions, {});
-	moduleDetails = moduleDetails.map(highland.partial(updateProjectDependencies, moduleVersions));
+	moduleDetails = moduleDetails.map(highland.partial(fixLibraryDependencies, moduleVersions));
+	moduleDetails = moduleDetails.map(highland.partial(fixProjectDependencies, moduleVersions));
 
 	var moduleStream = highland(moduleDetails);
 
@@ -62,7 +63,8 @@ function createProjectWorkspace(coreDetails, moduleDetails, pluginDetails) {
 	var moduleVersions = coreDetails.reduce(setCoreBundleVersions, {});
 	moduleVersions = moduleDetails.reduce(setModuleBundleVersions, moduleVersions);
 
-	moduleDetails = moduleDetails.map(highland.partial(updateProjectDependencies, moduleVersions));
+	moduleDetails = moduleDetails.map(highland.partial(fixLibraryDependencies, moduleVersions));
+	moduleDetails = moduleDetails.map(highland.partial(fixProjectDependencies, moduleVersions));
 
 	var moduleStream = highland(moduleDetails);
 	var coreStream = highland(coreDetails);
@@ -108,6 +110,81 @@ function createProjectWorkspace(coreDetails, moduleDetails, pluginDetails) {
 		.each(saveContent);
 
 	detailsStream.done(function() {});
+};
+
+function fixLibraryDependencies(moduleVersions, module) {
+	if (!('libraryDependencies' in module)) {
+		return module;
+	}
+
+	for (var i = module.libraryDependencies.length - 1; i >= 0; i--) {
+		var dependency = module.libraryDependencies[i];
+		var dependencyName = dependency.name;
+
+		if (!(dependencyName in moduleVersions)) {
+			continue;
+		}
+
+		if (dependencyName.indexOf('taglib') != -1) {
+			continue;
+		}
+
+		var dependencyVersion = dependency.version;
+		var moduleVersion = moduleVersions[dependencyName];
+
+		if (!isMatchingProjectVersion(dependencyVersion, moduleVersion.version)) {
+			console.warn(
+				module.moduleName + ' depends on ' + dependencyName + ' version ' +
+					dependencyVersion + ' (current version is ' + moduleVersion.version + ')');
+
+			continue;
+		}
+
+		module.libraryDependencies.splice(i, 1);
+
+		var projectDependency = {
+			type: 'project',
+			name: moduleVersion.projectName
+		};
+
+		module.projectDependencies.push(projectDependency);
+	}
+
+	return module;
+};
+
+function fixProjectDependencies(moduleVersions, module) {
+	if (!('projectDependencies' in module)) {
+		return module;
+	}
+
+	for (var i = module.projectDependencies.length - 1; i >= 0; i--) {
+		var dependency = module.projectDependencies[i];
+		var dependencyName = dependency.name;
+
+		if (!(dependencyName in moduleVersions)) {
+			continue;
+		}
+
+		if (dependencyName.indexOf('taglib') == -1) {
+			continue;
+		}
+
+		var moduleVersion = moduleVersions[dependencyName];
+
+		module.projectDependencies.splice(i, 1);
+
+		var libraryDependency = {
+			type: 'library',
+			group: 'com.liferay',
+			name: moduleVersion.bundleName,
+			version: moduleVersion.version
+		}
+
+		module.libraryDependencies.push(libraryDependency);
+	}
+
+	return module;
 };
 
 function getJarLibraryTableXML(library) {
@@ -248,7 +325,7 @@ function getMavenLibraryPaths(library) {
 	var jarAbsolutePath = ['.m2', 'repository', jarRelativePath].reduce(getFilePath, userHome);
 
 	if (isFile(jarAbsolutePath)) {
-		return [getFilePath('$M2_REPOSITORY$', jarRelativePath)];
+		return [getFilePath('$MAVEN_REPOSITORY$', jarRelativePath)];
 	}
 
 	var pomFileName = library.name + '-' + library.version + '.pom';
@@ -438,6 +515,11 @@ function setModuleBundleVersions(accumulator, module) {
 		version: bundleVersion
 	};
 
+	accumulator[module.moduleName] = {
+		bundleName: bundleName,
+		version: bundleVersion
+	};
+
 	return accumulator;
 };
 
@@ -457,47 +539,6 @@ function sortModuleAttributes(module) {
 
 	return module;
 }
-
-function updateProjectDependencies(moduleVersions, module) {
-	if (!('libraryDependencies' in module)) {
-		return module;
-	}
-
-	for (var i = module.libraryDependencies.length - 1; i >= 0; i--) {
-		var dependency = module.libraryDependencies[i];
-		var dependencyName = dependency.name;
-
-		if (!(dependencyName in moduleVersions)) {
-			continue;
-		}
-
-		if (dependencyName.indexOf('taglib') != -1) {
-			continue;
-		}
-
-		var dependencyVersion = dependency.version;
-		var moduleVersion = moduleVersions[dependencyName];
-
-		if (!isMatchingProjectVersion(dependencyVersion, moduleVersion.version)) {
-			console.warn(
-				module.moduleName + ' depends on ' + dependencyName + ' version ' +
-					dependencyVersion + ' (current version is ' + moduleVersion.version + ')');
-
-			continue;
-		}
-
-		module.libraryDependencies.splice(i, 1);
-
-		var projectDependency = {
-			type: 'project',
-			name: moduleVersion.projectName
-		};
-
-		module.projectDependencies.push(projectDependency);
-	}
-
-	return module;
-};
 
 exports.createProjectObjectModels = createProjectObjectModels;
 exports.createProjectWorkspace = createProjectWorkspace;
