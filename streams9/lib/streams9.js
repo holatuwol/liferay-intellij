@@ -11,19 +11,21 @@ var getComponentXML = streams6.getComponentXML;
 var getExcludeFolderElement = streams6.getExcludeFolderElement;
 var getFacetManagerXML = streams6.getFacetManagerXML;
 var getFilePath = streams5.getFilePath;
+var getGradleLibraryPaths = streams8.getGradleLibraryPaths;
 var getIntellijXML = streams6.getIntellijXML;
 var getLibraryOrderEntryElement = streams8.getLibraryOrderEntryElement;
+var getLibraryRootElement = streams8.getLibraryRootElement;
 var getModuleElement = streams7.getModuleElement;
 var getModulesElement = streams7.getModulesElement;
 var getModuleIMLPath = streams6.getModuleIMLPath;
 var getModuleOrderEntryElement = streams7.getModuleOrderEntryElement;
+var getPomDependencyPaths = streams8.getPomDependencyPaths;
 var getSourceFolderElement = streams6.getSourceFolderElement;
 var getWorkspaceModulesXML = streams7.getWorkspaceModulesXML;
 var isFile = streams2.isFile;
 var isSameLibraryDependency = streams8.isSameLibraryDependency;
-var keyExistsInObject = streams8.keyExistsInObject;
+var keyExistsInObject = highland.ncurry(2, streams8.keyExistsInObject);
 var saveContent = streams6.saveContent;
-var setGradleJarPath = streams8.setGradleJarPath;
 var setLibraryName = streams8.setLibraryName;
 
 function createProjectObjectModels(moduleDetails) {
@@ -79,8 +81,7 @@ function createProjectWorkspace(coreDetails, moduleDetails) {
 		.done(function() {});
 
 	libraryFilesStream
-		.doto(setGradleJarPath)
-		.filter(highland.partial(keyExistsInObject, 'gradleJarPath'))
+		.filter(highland.partial(keyExistsInObject, 'group'))
 		.doto(setLibraryName)
 		.map(getLibraryXML)
 		.each(saveContent);
@@ -155,8 +156,6 @@ function getNewModuleRootManagerXML(module) {
 
 	if (module.libraryDependencies) {
 		var libraryOrderEntryElements = module.libraryDependencies
-			.map(setGradleJarPath)
-			.filter(highland.partial(keyExistsInObject, 'gradleJarPath'))
 			.map(setLibraryName)
 			.map(getLibraryOrderEntryElement);
 
@@ -172,7 +171,5 @@ function getNewModuleRootManagerXML(module) {
 
 	return newModuleRootManagerXML.join('\n');
 };
-
-
 
 exports.createProjectWorkspace = createProjectWorkspace;

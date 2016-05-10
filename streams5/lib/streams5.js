@@ -21,7 +21,7 @@ var getFolders = streams3.getFolders;
 var getModuleExcludeFolders = streams3.getModuleExcludeFolders;
 var getModuleIncludeFolders = streams3.getModuleIncludeFolders;
 var getModuleOverview = streams3.getModuleOverview;
-var isValidSourcePath = highland.ncurry(2, streams3.isValidSourcePath);
+var isValidSourcePath = streams3.isValidSourcePath;
 
 var getLibraryDependency = highland.partial(getCoreDependency, 'library');
 var getProjectDependency = highland.partial(getCoreDependency, 'project');
@@ -133,7 +133,7 @@ function getPluginDependencies(folder) {
 
 	return {
 		libraryDependencies: ivyDependencies.concat(coreLibraryDependencies),
-		projectDependencies: deploymentContextDependencies.concat(sharedDependencies)
+		projectDependencies: deploymentContextDependencies.concat(sharedDependencies).map(getProjectDependency)
 	};
 }
 
