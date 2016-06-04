@@ -1,6 +1,7 @@
 var comparators = require('comparators').default;
 var fs = require('fs');
 var highland = require('highland');
+var semver = require('semver');
 var streams2 = require('./streams2');
 var streams5 = require('./streams5');
 var streams6 = require('./streams6');
@@ -53,9 +54,6 @@ function createProjectObjectModels(moduleDetails) {
 };
 
 function createProjectWorkspace(coreDetails, moduleDetails, pluginDetails) {
-	coreDetails = coreDetails.map(sortModuleAttributes);
-	moduleDetails = moduleDetails.map(sortModuleAttributes);
-
 	if (pluginDetails) {
 		pluginDetails = pluginDetails.map(sortModuleAttributes);
 	}
@@ -65,6 +63,9 @@ function createProjectWorkspace(coreDetails, moduleDetails, pluginDetails) {
 
 	moduleDetails = moduleDetails.map(highland.partial(fixLibraryDependencies, moduleVersions));
 	moduleDetails = moduleDetails.map(highland.partial(fixProjectDependencies, moduleVersions));
+
+	coreDetails = coreDetails.map(sortModuleAttributes);
+	moduleDetails = moduleDetails.map(sortModuleAttributes);
 
 	var moduleStream = highland(moduleDetails);
 	var coreStream = highland(coreDetails);
@@ -288,7 +289,7 @@ function getMavenAggregator(modulePaths) {
 			'@xmlns:xsi': 'http://www.w3.org/2001/XMLSchema-instance',
 			'@xsi:schemaLocation': 'http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd',
 			modelVersion: '4.0.0',
-			groupId: 'com.liferay.dummy',
+			groupId: 'com.liferay.dependencies',
 			artifactId: 'parent',
 			version: '1.0.0-SNAPSHOT',
 			packaging: 'pom',
@@ -360,7 +361,7 @@ function getMavenProject(module) {
 			'@xmlns:xsi': 'http://www.w3.org/2001/XMLSchema-instance',
 			'@xsi:schemaLocation': 'http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd',
 			modelVersion: '4.0.0',
-			groupId: 'com.liferay.dummy',
+			groupId: 'com.liferay.dependencies',
 			artifactId: module.moduleName,
 			version: '1.0.0-SNAPSHOT',
 			packaging: 'pom',
@@ -454,25 +455,67 @@ function getNewModuleRootManagerXML(module) {
 };
 
 function isMatchingProjectVersion(version1, version2) {
-	if ((version1 == 'default') || (version2 == 'default')) {
+	if (version1 == 'default') {
 		return true;
 	}
 
-	var pos1 = version1.indexOf(',');
-	var pos2 = version2.indexOf(',');
+	var pos1 = version1.indexOf('.LIFERAY-PATCHED');
 
-	if ((pos1 != -1) || (pos2 != -1)) {
-		return version1 == version2;
+	if (pos1 != -1) {
+		version1 = version1.substring(0, pos1);
 	}
 
-	pos1 = version1.indexOf('.');
-	pos2 = version2.indexOf('.');
+	pos1 = version2.indexOf('.LIFERAY-PATCHED');
 
-	if ((pos1 == -1) || (pos2 == -1)) {
-		return version1 == version2;
+	if (pos1 != -1) {
+		version2 = version2.substring(0, pos1);
 	}
 
-	return version1.substring(0, pos1) === version2.substring(0, pos2);
+	if (version1 == version2) {
+		return true;
+	}
+
+	pos1 = version1.indexOf(',');
+
+	var startVersion, endVersion;
+
+	if (pos1 == -1) {
+		startVersion = '>=' + version1;
+		endVersion = '<' + semver.inc(version1, 'major');
+	}
+	else {
+		if (version1.charAt(0) == '[') {
+			startVersion = '>=' + version1.substring(1, pos1);
+		}
+		else if (version1.charAt(0) == '(') {
+			startVersion = '>' + version1.substring(1, pos1);
+		}
+		else {
+			return false;
+		}
+
+		pos2 = version1.length - 1;
+
+		if (pos1 == pos2) {
+			return semver.satisfies(version2, startVersion);
+		}
+		else if (version1.charAt(pos2) == ']') {
+			endVersion = '<=' + version1.substring(pos1 + 1, pos2);
+		}
+		else if (version1.charAt(pos2) == ')') {
+			endVersion = '<' + version1.substring(pos1 + 1, pos2);
+		}
+		else {
+			return false;
+		}
+	}
+
+	try {
+		return semver.satisfies(version2, startVersion + ' ' + endVersion);
+	}
+	catch (e) {
+		return false;
+	}
 };
 
 function setCoreBundleVersions(accumulator, module) {
@@ -538,7 +581,7 @@ function sortModuleAttributes(module) {
 	}
 
 	return module;
-}
+};
 
 exports.createProjectObjectModels = createProjectObjectModels;
 exports.createProjectWorkspace = createProjectWorkspace;
