@@ -1,13 +1,16 @@
 var streams2 = require('./streams2');
 
+var getFilePath = streams2.getFilePath;
 var getModuleFolders = streams2.getModuleFolders;
 
-function createProject(portalSourceFolder, pluginSourceFolders) {
+function createProject(portalSourceFolder, otherSourceFolders) {
 	var initialCWD = process.cwd();
 
 	process.chdir(portalSourceFolder);
 
-	var moduleFolders = getModuleFolders('modules', 5);
+	var portalSourceModulesRootPath = getFilePath(portalSourceFolder, 'modules');
+
+	var moduleFolders = getModuleFolders(portalSourceFolder, portalSourceModulesRootPath, true);
 
 	console.dir(moduleFolders, {depth: null});
 

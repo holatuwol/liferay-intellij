@@ -44,12 +44,14 @@ function getFolders(folderPath, maxDepth) {
 	return folders;
 };
 
-function getModuleFolders(folderPath, maxDepth) {
-	var findResultFolders = getFolders(folderPath, maxDepth);
+function getModuleFolders(portalSourceFolder, moduleSourceFolder, includeSubRepos) {
+	var moduleRootPath = path.relative(portalSourceFolder, moduleSourceFolder);
+	var findResultFolders = getFolders(moduleRootPath, 5);
+
 	var moduleFolders = [];
 
 	for (var i = 0; i < findResultFolders.length; i++) {
-		if (isModuleFolder(findResultFolders[i])) {
+		if (isModuleFolder(includeSubRepos, findResultFolders[i])) {
 			moduleFolders.push(findResultFolders[i]);
 		}
 	}
@@ -66,12 +68,16 @@ function isHidden(fileName) {
 		(firstPathElement != '..');
 };
 
-function isModuleFolder(folder) {
+function isModuleFolder(includeSubRepos, folder) {
 	if (!isFile(getFilePath(folder, 'bnd.bnd'))) {
 		return false;
 	}
 
 	if (!isFile(getFilePath(folder, 'build.gradle'))) {
+		return false;
+	}
+
+	if (!includeSubRepos && isFile(getFilePath(folder, '../.gitrepo'))) {
 		return false;
 	}
 
