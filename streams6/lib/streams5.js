@@ -148,23 +148,33 @@ function getPluginDetails(folder) {
 	return moduleDetailsArray.reduce(util._extend, {});
 };
 
-function getPluginFolders(portalSourceFolder, pluginSourceFolders) {
+function getPluginFolders(portalSourceFolder, pluginSourceFolder) {
 	var pluginFolders = [];
 
-	var pluginSubFolders = ['hooks', 'modules', 'portlets', 'shared', 'webs']
+	var pluginSubFolders = ['hooks', 'modules', 'portlets', 'shared', 'webs'];
+	var pluginRootPath = path.relative(portalSourceFolder, pluginSourceFolder);
 
-	for (var i = 0; i < pluginSourceFolders.length; i++) {
-		var pluginSourceFolder = pluginSourceFolders[i];
-		var pluginRootPath = path.relative(portalSourceFolder, pluginSourceFolder);
+	if (isPluginFolder(pluginRootPath)) {
+		pluginFolders = pluginFolders.concat([pluginRootPath]);
+	}
 
-		for (var j = 0; j < pluginSubFolders.length; j++) {
-			var pluginSubPath = getFilePath(pluginRootPath, pluginSubFolders[j]);
-			var findResults = getFolders(pluginSubPath, 2);
+	var pluginSubPaths = [];
 
-			pluginFolders = pluginFolders.concat(
-				findResults.filter(isPluginFolder)
-			);
-		}
+	if (pluginSubFolders.indexOf(path.basename(pluginRootPath)) != -1) {
+		pluginSubPaths = [pluginRootPath];
+	}
+	else {
+		var getPluginPath = highland.partial(getFilePath, pluginRootPath);
+		pluginSubPaths = pluginSubFolders.map(getPluginPath);
+	}
+
+	for (var j = 0; j < pluginSubPaths.length; j++) {
+		var pluginSubPath = pluginSubPaths[j];
+		var findResults = getFolders(pluginSubPath, 2);
+
+		pluginFolders = pluginFolders.concat(
+			findResults.filter(isPluginFolder)
+		);
 	}
 
 	return pluginFolders;
