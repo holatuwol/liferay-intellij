@@ -50,21 +50,34 @@ function getModuleGroupName(module) {
 
 	var moduleGroupName = module.modulePath.substring(0, pos);
 
-	if (moduleGroupName.indexOf('modules/') == 0) {
+	var pos = moduleGroupName.indexOf('modules/');
+
+	if (pos == 0) {
 		return moduleGroupName;
 	}
 
-	var pos = moduleGroupName.indexOf('/');
+	pos = moduleGroupName.indexOf('/modules/');
 
-	while (pos != -1) {
-		var rootName = moduleGroupName.substring(0, pos);
+	if (pos != -1) {
+		return moduleGroupName.substring(pos + 1);
+	}
 
-		if (rootName.indexOf('plugins') != -1) {
-			return moduleGroupName;
+	pos = moduleGroupName.indexOf('/plugins/');
+
+	if (pos != -1) {
+		return moduleGroupName.substring(pos + 1);
+	}
+
+	pos = moduleGroupName.lastIndexOf('../');
+
+	if (pos != -1) {
+		moduleGroupName = moduleGroupName.substring(pos + 3);
+
+		if (moduleGroupName == '..') {
+			moduleGroupName = module.modulePath.substring(module.modulePath.lastIndexOf('/') + 1);
 		}
 
-		moduleGroupName = moduleGroupName.substring(pos + 1);
-		pos = moduleGroupName.indexOf('/');
+		return moduleGroupName;
 	}
 
 	return 'portal';
