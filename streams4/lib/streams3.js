@@ -84,9 +84,10 @@ function getModuleExcludeFolders(moduleIncludeFolders) {
 	};
 };
 
-function getModuleFolders(folderPath, maxDepth) {
-	var findResultFolders = getFolders(folderPath, maxDepth);
-	var moduleFolders = findResultFolders.filter(isModuleFolder);
+function getModuleFolders(portalSourceFolder, moduleSourceFolder, includeSubRepos) {
+	var moduleRootPath = path.relative(portalSourceFolder, moduleSourceFolder);
+	var findResultFolders = getFolders(moduleRootPath, 5);
+	var moduleFolders = findResultFolders.filter(isModuleFolder.bind(null, includeSubRepos));
 	return moduleFolders;
 };
 
@@ -111,13 +112,20 @@ function getModuleOverview(folder) {
 	};
 };
 
-function isModuleFolder(folder) {
+function isModuleFolder(includeSubRepos, folder) {
 	var getPath = getFilePath.bind(null, folder);
 
-	var subfiles = ['bnd.bnd', 'build.gradle'];
+	var validSubfiles = ['bnd.bnd', 'build.gradle'];
+	var invalidSubFiles = [];
+
+	if (!includeSubRepos) {
+		invalidSubFiles.push('../.gitrepo');
+	}
+
 	var subfolders = ['docroot', 'src'];
 
-	return subfiles.map(getPath).every(isFile) &&
+	return validSubfiles.map(getPath).every(isFile) &&
+		!invalidSubFiles.map(getPath).some(isFile) &&
 		subfolders.map(getPath).some(isDirectory);
 };
 
