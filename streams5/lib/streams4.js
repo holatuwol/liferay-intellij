@@ -6,7 +6,6 @@ var streams3 = require('./streams3');
 var util = require('util');
 
 var getModuleExcludeFolders = streams3.getModuleExcludeFolders;
-var getModuleFolders = streams3.getModuleFolders;
 var getModuleIncludeFolders = streams3.getModuleIncludeFolders;
 var getModuleOverview = streams3.getModuleOverview;
 
@@ -111,5 +110,4 @@ function getProjectDependency(matchResult) {
 exports.getDependenciesWithWhileLoop = getDependenciesWithWhileLoop;
 exports.getDependenciesWithStreams = getDependenciesWithStreams;
 exports.getLibraryDependency = getLibraryDependency;
-exports.getModuleFolders = getModuleFolders;
 exports.getModuleDetails = getModuleDetails;
