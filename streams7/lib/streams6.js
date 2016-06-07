@@ -126,20 +126,30 @@ function saveContent(file) {
 		.filter(highland.compose(highland.not, highland.not));
 
 	for (var i = 0; i < splitContent.length; i++) {
-		var line = splitContent[i];
+		var line = splitContent[i].trim();
+		splitContent[i] = line;
 
 		if (line.indexOf('<?') == 0) {
 			continue;
 		}
 
-		if ((line.indexOf('<') != -1) && (line.indexOf('</') == -1)) {
+		if (line.indexOf('<') == -1) {
 			++indent;
+			continue;
 		}
 
-		splitContent[i] = new Array(indent).join('\t') + line;
+		if (line.indexOf('/>') != -1) {
+			continue;
+		}
 
-		if ((line.indexOf('/>') != -1) || (line.indexOf('</') != -1)) {
+		if (line.indexOf('<') == line.indexOf('</')) {
 			--indent;
+		}
+
+		splitContent[i] = new Array(indent + 1).join('\t') + line;
+
+		if (line.indexOf('</') == -1) {
+			++indent;
 		}
 	}
 
