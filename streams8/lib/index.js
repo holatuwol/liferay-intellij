@@ -1,5 +1,4 @@
 var fs = require('fs');
-var shelljs = require('shelljs');
 var streams2 = require('./streams2');
 var streams3 = require('./streams3');
 var streams4 = require('./streams4');
