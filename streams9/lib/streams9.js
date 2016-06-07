@@ -377,4 +377,5 @@ function sortModuleAttributes(module) {
 	return module;
 };
 
+exports.createProjectObjectModels = createProjectObjectModels;
 exports.createProjectWorkspace = createProjectWorkspace;

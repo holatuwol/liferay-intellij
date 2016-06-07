@@ -1,35 +1,55 @@
 var fs = require('fs');
-var shelljs = require('shelljs');
+var streams2 = require('./streams2');
+var streams3 = require('./streams3');
 var streams4 = require('./streams4');
 var streams5 = require('./streams5');
-var streams8 = require('./streams8');
 var streams9 = require('./streams9');
 
 var createProjectObjectModels = streams9.createProjectObjectModels;
 var createProjectWorkspace = streams9.createProjectWorkspace;
 var getCoreDetails = streams5.getCoreDetails;
 var getCoreFolders = streams5.getCoreFolders;
+var getFilePath = streams5.getFilePath;
 var getModuleDetails = streams4.getModuleDetails;
-var getModuleFolders = streams4.getModuleFolders;
+var getModuleFolders = streams3.getModuleFolders;
 var getPluginDetails = streams5.getPluginDetails;
 var getPluginFolders = streams5.getPluginFolders;
+var isDirectory = streams2.isDirectory;
 
-function createProject(portalSourceFolder, pluginSourceFolders) {
+function createProject(portalSourceFolder, otherSourceFolders) {
 	var initialCWD = process.cwd();
 
 	process.chdir(portalSourceFolder);
 
-	if (!shelljs.test('-d', '.idea')) {
+	if (!isDirectory('.idea')) {
 		fs.mkdirSync('.idea');
 	}
 
-	if (!shelljs.test('-d', '.idea/libraries')) {
+	if (!isDirectory('.idea/libraries')) {
 		fs.mkdirSync('.idea/libraries');
 	}
 
 	var coreFolders = getCoreFolders();
-	var moduleFolders = getModuleFolders('modules', 5);
-	var pluginFolders = getPluginFolders(portalSourceFolder, pluginSourceFolders);
+
+	var portalSourceModulesRootPath = getFilePath(portalSourceFolder, 'modules');
+
+	var moduleFolders = getModuleFolders(portalSourceFolder, portalSourceModulesRootPath, otherSourceFolders.length == 0);
+	var pluginFolders = [];
+
+	for (var i = 0; i < otherSourceFolders.length; i++) {
+		var otherSourceFolder = otherSourceFolders[i];
+
+		if (otherSourceFolder.indexOf('modules') != -1) {
+			var newFolders = getModuleFolders(portalSourceFolder, otherSourceFolder);
+
+			moduleFolders = moduleFolders.concat(newFolders);
+		}
+		else {
+			var newFolders = getPluginFolders(portalSourceFolder, otherSourceFolder);
+
+			pluginFolders = pluginFolders.concat(newFolders);
+		}
+	}
 
 	var coreDetails = coreFolders.map(getCoreDetails);
 	var moduleDetails = moduleFolders.map(getModuleDetails);
@@ -40,12 +60,25 @@ function createProject(portalSourceFolder, pluginSourceFolders) {
 	process.chdir(initialCWD);
 };
 
-function createProjectObjectModels(portalSourceFolder) {
+function prepareProject(portalSourceFolder, otherSourceFolders) {
 	var initialCWD = process.cwd();
 
 	process.chdir(portalSourceFolder);
 
-	var moduleFolders = getModuleFolders('modules', 5);
+	var portalSourceModulesRootPath = getFilePath(portalSourceFolder, 'modules');
+
+	var moduleFolders = getModuleFolders(portalSourceFolder, portalSourceModulesRootPath, otherSourceFolders.length == 0);
+
+	for (var i = 0; i < otherSourceFolders.length; i++) {
+		var otherSourceFolder = otherSourceFolders[i];
+
+		if (otherSourceFolder.indexOf('modules') != -1) {
+			var newFolders = getModuleFolders(portalSourceFolder, otherSourceFolder);
+
+			moduleFolders = moduleFolders.concat(newFolders);
+		}
+	}
+
 	var moduleDetails = moduleFolders.map(getModuleDetails);
 
 	createProjectObjectModels(moduleDetails);
@@ -54,4 +87,4 @@ function createProjectObjectModels(portalSourceFolder) {
 };
 
 exports.createProject = createProject;
-exports.createProjectObjectModels = createProjectObjectModels;
+exports.prepareProject = prepareProject;

@@ -21,4 +21,4 @@ if (process.argv.length > 3) {
 	}
 }
 
-liferay_intellij.createProjectObjectModels(portalSourceFolder, otherSourceFolders);
+liferay_intellij.prepareProject(portalSourceFolder, otherSourceFolders);
