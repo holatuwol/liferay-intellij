@@ -139,7 +139,7 @@ function fixLibraryDependencies(moduleVersions, module) {
 			continue;
 		}
 
-		if (dependencyName.indexOf('taglib') != -1) {
+		if ((dependencyName.indexOf('-taglib') != -1) || (dependencyName.indexOf('-web') != -1)) {
 			continue;
 		}
 
@@ -150,8 +150,6 @@ function fixLibraryDependencies(moduleVersions, module) {
 			console.warn(
 				module.moduleName + ' depends on ' + dependencyName + ' version ' +
 					dependencyVersion + ' (current version is ' + moduleVersion.version + ')');
-
-			continue;
 		}
 
 		module.libraryDependencies.splice(i, 1);
@@ -180,7 +178,7 @@ function fixProjectDependencies(moduleVersions, module) {
 			continue;
 		}
 
-		if (dependencyName.indexOf('taglib') == -1) {
+		if ((dependencyName.indexOf('-taglib') == -1) && (dependencyName.indexOf('-web') == -1)) {
 			continue;
 		}
 
