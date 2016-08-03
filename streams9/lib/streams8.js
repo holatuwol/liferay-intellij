@@ -112,7 +112,12 @@ function getGradleLibraryPaths(library) {
 
 
 function getLibraryOrderEntryElement(library) {
-	return '<orderEntry type="library" name="' + library['libraryName'] + '" level="project"/>';
+	if (library.exported) {
+		return '<orderEntry type="library" name="' + library['libraryName'] + '" exported="" level="project"/>';
+	}
+	else {
+		return '<orderEntry type="library" name="' + library['libraryName'] + '" level="project"/>';
+	}
 };
 
 function getLibraryPaths(library) {

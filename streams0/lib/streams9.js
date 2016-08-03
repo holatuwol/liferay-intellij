@@ -118,8 +118,21 @@ function fixLibraryDependencies(moduleVersions, module) {
 		return module;
 	}
 
+	var ownVersion = moduleVersions[module.moduleName];
+
 	for (var i = module.libraryDependencies.length - 1; i >= 0; i--) {
 		var dependency = module.libraryDependencies[i];
+
+		var dependencyGroup = dependency.group;
+
+		if (!dependencyGroup || (dependencyGroup.indexOf('com.liferay') != 0)) {
+			if (ownVersion.bundleName == dependency.name) {
+				dependency.exported = true;
+			}
+
+			continue;
+		}
+
 		var dependencyName = dependency.name;
 
 		if (!(dependencyName in moduleVersions)) {
