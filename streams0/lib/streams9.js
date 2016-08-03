@@ -126,7 +126,9 @@ function fixLibraryDependencies(moduleVersions, module) {
 		var dependencyGroup = dependency.group;
 
 		if (!dependencyGroup || (dependencyGroup.indexOf('com.liferay') != 0)) {
-			if (ownVersion.bundleName == dependency.name) {
+			if ((ownVersion.bundleName == dependency.name) ||
+				(module.modulePath.indexOf('third-party') != -1)) {
+
 				dependency.exported = true;
 			}
 
