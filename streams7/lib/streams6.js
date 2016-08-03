@@ -52,6 +52,10 @@ function getFacetManagerXML(module) {
 	return facetManagerXML.join('\n');
 };
 
+function getIndent(indent) {
+	return new Array(indent + 1).join('\t');
+};
+
 function getIntellijXML(fileData) {
 	var xmlContent = [
 		'<?xml version="1.0" encoding="UTF-8"?>',
@@ -127,14 +131,14 @@ function saveContent(file) {
 
 	for (var i = 0; i < splitContent.length; i++) {
 		var line = splitContent[i].trim();
-		splitContent[i] = line;
+		splitContent[i] = getIndent(indent) + line;
 
 		if (line.indexOf('<?') == 0) {
 			continue;
 		}
 
 		if (line.indexOf('<') == -1) {
-			++indent;
+			splitContent[i] = getIndent(++indent) + line;
 			continue;
 		}
 
@@ -143,10 +147,8 @@ function saveContent(file) {
 		}
 
 		if (line.indexOf('<') == line.indexOf('</')) {
-			--indent;
+			splitContent[i] = getIndent(--indent) + line;
 		}
-
-		splitContent[i] = new Array(indent + 1).join('\t') + line;
 
 		if (line.indexOf('</') == -1) {
 			++indent;
