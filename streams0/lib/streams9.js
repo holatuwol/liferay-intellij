@@ -30,10 +30,12 @@ var keyExistsInObject = highland.ncurry(2, streams8.keyExistsInObject);
 var saveContent = streams6.saveContent;
 var setLibraryName = streams8.setLibraryName;
 
-function createProjectObjectModels(moduleDetails) {
-	var moduleVersions = moduleDetails.reduce(setModuleBundleVersions, {});
+function createProjectObjectModels(coreDetails, moduleDetails) {
+	var moduleVersions = coreDetails.reduce(setCoreBundleVersions, {});
+	moduleVersions = moduleDetails.reduce(setModuleBundleVersions, moduleVersions);
+
 	moduleDetails = moduleDetails.map(highland.partial(fixLibraryDependencies, moduleVersions));
-	moduleDetails = moduleDetails.map(highland.partial(fixProjectDependencies, moduleVersions));
+	moduleDetails = moduleDetails.map(highland.partial(fixProjectDependencies, moduleVersions, false));
 
 	var moduleStream = highland(moduleDetails);
 
@@ -62,7 +64,7 @@ function createProjectWorkspace(coreDetails, moduleDetails, pluginDetails) {
 	moduleVersions = moduleDetails.reduce(setModuleBundleVersions, moduleVersions);
 
 	moduleDetails = moduleDetails.map(highland.partial(fixLibraryDependencies, moduleVersions));
-	moduleDetails = moduleDetails.map(highland.partial(fixProjectDependencies, moduleVersions));
+	moduleDetails = moduleDetails.map(highland.partial(fixProjectDependencies, moduleVersions, true));
 
 	coreDetails = coreDetails.map(sortModuleAttributes);
 	moduleDetails = moduleDetails.map(sortModuleAttributes);
@@ -135,6 +137,7 @@ function fixLibraryDependencies(moduleVersions, module) {
 			continue;
 		}
 
+
 		var dependencyName = dependency.name;
 
 		if (!(dependencyName in moduleVersions)) {
@@ -167,7 +170,7 @@ function fixLibraryDependencies(moduleVersions, module) {
 	return module;
 };
 
-function fixProjectDependencies(moduleVersions, module) {
+function fixProjectDependencies(moduleVersions, addAsLibrary, module) {
 	if (!('projectDependencies' in module)) {
 		return module;
 	}
@@ -177,6 +180,11 @@ function fixProjectDependencies(moduleVersions, module) {
 		var dependencyName = dependency.name;
 
 		if (!(dependencyName in moduleVersions)) {
+			continue;
+		}
+
+		if (!addAsLibrary) {
+			module.projectDependencies.splice(i, 1);
 			continue;
 		}
 

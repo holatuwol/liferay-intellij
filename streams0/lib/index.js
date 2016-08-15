@@ -65,6 +65,8 @@ function prepareProject(portalSourceFolder, otherSourceFolders) {
 
 	process.chdir(portalSourceFolder);
 
+	var coreFolders = getCoreFolders();
+
 	var portalSourceModulesRootPath = getFilePath(portalSourceFolder, 'modules');
 
 	var moduleFolders = getModuleFolders(portalSourceFolder, portalSourceModulesRootPath, otherSourceFolders.length == 0);
@@ -79,9 +81,10 @@ function prepareProject(portalSourceFolder, otherSourceFolders) {
 		}
 	}
 
+	var coreDetails = coreFolders.map(getCoreDetails);
 	var moduleDetails = moduleFolders.map(getModuleDetails);
 
-	createProjectObjectModels(moduleDetails);
+	createProjectObjectModels(coreDetails, moduleDetails);
 
 	process.chdir(initialCWD);
 };
