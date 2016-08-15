@@ -327,11 +327,17 @@ function getMavenAggregator(modulePaths) {
 };
 
 function getMavenDependencyElement(library) {
-	return {
+	var dependencyElement = {
 		'groupId': library.group,
 		'artifactId': library.name,
 		'version': library.version
 	};
+
+	if ((library.group == 'org.jboss.shrinkwrap') && (library.name == 'shrinkwrap-depchain')) {
+		dependencyElement['type'] = 'pom';
+	}
+
+	return dependencyElement;
 };
 
 function getMavenLibraryPaths(library) {
