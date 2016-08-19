@@ -9,6 +9,7 @@ var getModuleExcludeFolders = streams3.getModuleExcludeFolders;
 var getModuleIncludeFolders = streams3.getModuleIncludeFolders;
 var getModuleOverview = streams3.getModuleOverview;
 
+var isDirectory = streams2.isDirectory;
 var isFile = streams2.isFile;
 
 function getDependenciesWithWhileLoop(dependencyText, dependencyExtractor, dependencyRegex) {
@@ -77,10 +78,28 @@ function getModuleDependencies(folder) {
 	var getLibraryDependencies = highland.partial(getDependenciesWithStreams, dependencyText, getLibraryDependency);
 	var getProjectDependencies = highland.partial(getDependenciesWithStreams, dependencyText, getProjectDependency);
 
-	return {
+	var moduleDependencies = {
 		libraryDependencies: getLibraryDependencies(libraryDependencyRegex),
 		projectDependencies: getProjectDependencies(projectDependencyRegex)
 	};
+
+	if (isDirectory(path.join(folder, 'src/test')) ||
+		isDirectory(path.join(folder, 'src/testIntegration'))) {
+
+		moduleDependencies.projectDependencies.push({
+			type: 'project',
+			name: 'portal-test'
+		});
+	}
+
+	if (isDirectory(path.join(folder, 'src/testIntegration'))) {
+		moduleDependencies.projectDependencies.push({
+			type: 'project',
+			name: 'portal-test-integration'
+		});
+	}
+
+	return moduleDependencies;
 };
 
 function getModuleDetails(folder) {

@@ -84,7 +84,12 @@ function getModuleGroupName(module) {
 };
 
 function getModuleOrderEntryElement(projectDependency) {
-	return '<orderEntry type="module" module-name="' + projectDependency.name + '" />';
+	if (projectDependency.name.indexOf('-test') != -1) {
+		return '<orderEntry type="module" module-name="' + projectDependency.name + '" scope="TEST" />';
+	}
+	else {
+		return '<orderEntry type="module" module-name="' + projectDependency.name + '" />';
+	}
 };
 
 function getModulesElement(moduleElements) {

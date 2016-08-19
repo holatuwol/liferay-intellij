@@ -10,6 +10,7 @@ var getModuleFolders = streams3.getModuleFolders;
 var getModuleIncludeFolders = streams3.getModuleIncludeFolders;
 var getModuleOverview = streams3.getModuleOverview;
 
+var isDirectory = streams2.isDirectory;
 var isFile = streams2.isFile;
 
 function getModuleDependencies(folder) {

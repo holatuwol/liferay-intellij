@@ -34,11 +34,11 @@ var defaultDependencyNames = {
 var customDependencyNames = {
 	'portal-impl': {
 		libraryNames: ['development', 'global', 'portal'],
-		projectNames: ['portal-kernel', 'portal-service', 'registry-api', 'util-bridges', 'util-java', 'util-taglib']
+		projectNames: ['portal-kernel', 'portal-service', 'portal-test', 'portal-test-integration', 'registry-api', 'util-bridges', 'util-java', 'util-taglib']
 	},
 	'portal-kernel': {
 		libraryNames: ['development', 'global'],
-		projectNames: ['registry-api']
+		projectNames: ['registry-api', 'portal-test']
 	},
 	'portal-service': {
 		libraryNames: ['development', 'global'],
@@ -47,6 +47,14 @@ var customDependencyNames = {
 	'portal-web': {
 		libraryNames: ['development', 'global', 'portal'],
 		projectNames: ['portal-impl', 'portal-kernel', 'portal-service', 'registry-api', 'util-bridges', 'util-java', 'util-taglib']
+	},
+	'portal-test': {
+		libraryNames: ['development', 'global', 'portal'],
+		projectNames: ['portal-kernel', 'portal-service', 'registry-api', 'util-java']
+	},
+	'portal-test-integration': {
+		libraryNames: ['development', 'global', 'portal'],
+		projectNames: ['portal-kernel', 'portal-service', 'portal-test', 'registry-api', 'util-java']
 	}
 };
 
