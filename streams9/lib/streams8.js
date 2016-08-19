@@ -92,10 +92,6 @@ function getGradleLibraryPaths(library) {
 		.map(highland.flip(getFilePath, jarName))
 		.filter(isFile);
 
-	if (jarPaths.length > 0) {
-		return jarPaths;
-	}
-
 	var pomName = library.name + '-' + library.version + '.pom';
 
 	var pomPaths = fs.readdirSync(folderPath)
@@ -104,10 +100,10 @@ function getGradleLibraryPaths(library) {
 		.filter(isFile);
 
 	if (pomPaths.length > 0) {
-		return getPomDependencyPaths(pomPaths[0], library.version);
+		return jarPaths.concat(getPomDependencyPaths(pomPaths[0], library.version)).filter(isFirstOccurrence);
 	}
 
-	return [];
+	return jarPaths;
 };
 
 
@@ -219,6 +215,13 @@ function getNewModuleRootManagerXML(module) {
 	newModuleRootManagerXML.push('<orderEntry type="inheritedJdk" />');
 	newModuleRootManagerXML.push('<orderEntry type="sourceFolder" forTests="false" />');
 
+	if (module.projectDependencies) {
+		var projectOrderEntryElements = module.projectDependencies
+			.map(getModuleOrderEntryElement);
+
+		newModuleRootManagerXML = newModuleRootManagerXML.concat(projectOrderEntryElements);
+	}
+
 	if (module.libraryDependencies) {
 		var libraryOrderEntryElements = module.libraryDependencies
 			.filter(highland.partial(keyExistsInObject, 'group'))
@@ -226,13 +229,6 @@ function getNewModuleRootManagerXML(module) {
 			.map(getLibraryOrderEntryElement);
 
 		newModuleRootManagerXML = newModuleRootManagerXML.concat(libraryOrderEntryElements);
-	}
-
-	if (module.projectDependencies) {
-		var projectOrderEntryElements = module.projectDependencies
-			.map(getModuleOrderEntryElement);
-
-		newModuleRootManagerXML = newModuleRootManagerXML.concat(projectOrderEntryElements);
 	}
 
 	return newModuleRootManagerXML.join('\n');
@@ -257,6 +253,10 @@ function getPomDependencyPaths(pomAbsolutePath, libraryVersion) {
 		.map(highland.partial(replaceProjectVersion, libraryVersion))
 		.map(getLibraryPaths)
 		.reduce(flatten, [])
+};
+
+function isFirstOccurrence(value, index, array) {
+	return array.indexOf(value) == index;
 };
 
 function isSameLibraryDependency(left, right) {
@@ -295,6 +295,7 @@ exports.getLibraryRootElement = getLibraryRootElement;
 exports.getLibraryXML = getLibraryXML;
 exports.getModuleXML = getModuleXML;
 exports.getPomDependencyPaths = getPomDependencyPaths;
+exports.isFirstOccurrence = isFirstOccurrence;
 exports.isSameLibraryDependency = isSameLibraryDependency;
 exports.keyExistsInObject = keyExistsInObject;
 exports.setLibraryName = setLibraryName;

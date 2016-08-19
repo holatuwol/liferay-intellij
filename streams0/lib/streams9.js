@@ -25,6 +25,7 @@ var getPomDependencyPaths = streams8.getPomDependencyPaths;
 var getSourceFolderElement = streams6.getSourceFolderElement;
 var getWorkspaceModulesXML = streams7.getWorkspaceModulesXML;
 var isFile = streams2.isFile;
+var isFirstOccurrence = streams8.isFirstOccurrence;
 var isSameLibraryDependency = streams8.isSameLibraryDependency;
 var keyExistsInObject = highland.ncurry(2, streams8.keyExistsInObject);
 var saveContent = streams6.saveContent;
@@ -137,7 +138,6 @@ function fixLibraryDependencies(moduleVersions, module) {
 
 			continue;
 		}
-
 
 		var dependencyName = dependency.name;
 
@@ -353,8 +353,10 @@ function getMavenLibraryPaths(library) {
 	var jarRelativePath = library.group.split('.').concat([library.name, library.version, jarFileName]).join('/');
 	var jarAbsolutePath = ['.m2', 'repository', jarRelativePath].reduce(getFilePath, userHome);
 
+	var jarPaths = [];
+
 	if (isFile(jarAbsolutePath)) {
-		return [getFilePath('$MAVEN_REPOSITORY$', jarRelativePath)];
+		jarPaths = [getFilePath('$MAVEN_REPOSITORY$', jarRelativePath)];
 	}
 
 	var pomFileName = library.name + '-' + library.version + '.pom';
@@ -363,10 +365,10 @@ function getMavenLibraryPaths(library) {
 	var pomAbsolutePath = ['.m2', 'repository', pomRelativePath].reduce(getFilePath, userHome);
 
 	if (!isFile(pomAbsolutePath)) {
-		return [];
+		return jarPaths;
 	}
 
-	return getPomDependencyPaths(pomAbsolutePath, library.version);
+	return jarPaths.concat(getPomDependencyPaths(pomAbsolutePath, library.version)).filter(isFirstOccurrence);
 };
 
 function getMavenProject(module) {
@@ -456,6 +458,13 @@ function getNewModuleRootManagerXML(module) {
 	newModuleRootManagerXML.push('<orderEntry type="inheritedJdk" />');
 	newModuleRootManagerXML.push('<orderEntry type="sourceFolder" forTests="false" />');
 
+	if (module.projectDependencies) {
+		var projectOrderEntryElements = module.projectDependencies
+			.map(getModuleOrderEntryElement);
+
+		newModuleRootManagerXML = newModuleRootManagerXML.concat(projectOrderEntryElements);
+	}
+
 	if (module.libraryDependencies) {
 		var libraryOrderEntryElements = module.libraryDependencies
 			.filter(keyExistsInObject('group'))
@@ -470,13 +479,6 @@ function getNewModuleRootManagerXML(module) {
 			.map(getLibraryOrderEntryElement);
 
 		newModuleRootManagerXML = newModuleRootManagerXML.concat(coreLibraryOrderEntryElements);
-	}
-
-	if (module.projectDependencies) {
-		var projectOrderEntryElements = module.projectDependencies
-			.map(getModuleOrderEntryElement);
-
-		newModuleRootManagerXML = newModuleRootManagerXML.concat(projectOrderEntryElements);
 	}
 
 	return newModuleRootManagerXML.join('\n');
