@@ -213,14 +213,34 @@ function fixProjectDependencies(moduleVersions, addAsLibrary, module) {
 function getJarLibraryTableXML(library) {
 	var libraryTableXML = [
 		'<library name="' + library.name + '">',
-		'<CLASSES>',
-		'<root url="file://$PROJECT_DIR$/lib/' + library.name + '" />',
+		'<CLASSES>'
+	];
+
+	if (library.name == 'development') {
+		var libraryPath = getFilePath('lib', 'development');
+		var jarFiles = fs.readdirSync(libraryPath);
+
+		Array.prototype.push.apply(
+			libraryTableXML,
+			jarFiles.filter(isDevelopmentLibrary)
+				.map(highland.partial(getFilePath, libraryPath))
+				.map(getLibraryRootElement));
+	}
+	else {
+		libraryTableXML.push(
+			'<root url="file://$PROJECT_DIR$/lib/' + library.name + '" />');
+	}
+
+	libraryTableXML.push(
 		'</CLASSES>',
 		'<JAVADOC />',
-		'<SOURCES />',
-		'<jarDirectory url="file://$PROJECT_DIR$/lib/' + library.name + '" recursive="false" />',
-		'</library>'
-	];
+		'<SOURCES />');
+
+	if (library.name != 'development') {
+		libraryTableXML.push('<jarDirectory url="file://$PROJECT_DIR$/lib/' + library.name + '" recursive="false" />');
+	}
+
+	libraryTableXML.push('</library>');
 
 	return libraryTableXML.join('\n');
 };
@@ -483,6 +503,10 @@ function getNewModuleRootManagerXML(module) {
 
 	return newModuleRootManagerXML.join('\n');
 };
+
+function isDevelopmentLibrary(libraryName) {
+	return libraryName.indexOf('.') == libraryName.length - 4;
+}
 
 function isMatchingProjectVersion(version1, version2) {
 	if (version1 == 'default') {
