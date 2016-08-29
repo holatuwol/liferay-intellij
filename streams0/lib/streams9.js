@@ -225,6 +225,10 @@ function getJarLibraryTableXML(library) {
 			jarFiles.filter(isDevelopmentLibrary)
 				.map(highland.partial(getFilePath, libraryPath))
 				.map(getLibraryRootElement));
+
+		if (isFile('lib/portal/bnd.jar')) {
+			libraryTableXML.push(getLibraryRootElement('lib/portal/bnd.jar'));
+		}
 	}
 	else {
 		libraryTableXML.push(
