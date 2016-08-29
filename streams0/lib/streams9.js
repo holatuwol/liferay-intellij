@@ -590,8 +590,21 @@ function setCoreBundleVersions(accumulator, module) {
 	var bundleNameRegex = /property name="manifest.bundle.symbolic.name" value="([^"\;]*)/g;
 	var bundleVersionRegex = /Bundle-Version: ([^\n]+)/g;
 
-	var bundleName = bundleNameRegex.exec(buildXmlContent)[1];
-	var bundleVersion = bundleVersionRegex.exec(bndContent)[1];
+	var matchResult = bundleNameRegex.exec(buildXmlContent);
+
+	if (!matchResult) {
+		return accumulator;
+	}
+
+	var bundleName = matchResult[1];
+
+	matchResult = bundleVersionRegex.exec(bndContent);
+
+	if (!matchResult) {
+		return accumulator;
+	}
+
+	var bundleVersion = matchResult[1];
 
 	accumulator[bundleName] = {
 		projectName: module.moduleName,
