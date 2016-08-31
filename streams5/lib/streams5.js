@@ -54,7 +54,7 @@ var customDependencyNames = {
 	},
 	'portal-test-integration': {
 		libraryNames: ['development', 'global', 'portal'],
-		projectNames: ['portal-kernel', 'portal-service', 'portal-test', 'registry-api', 'util-java']
+		projectNames: ['portal-impl', 'portal-kernel', 'portal-service', 'portal-test', 'registry-api', 'util-java']
 	}
 };
 

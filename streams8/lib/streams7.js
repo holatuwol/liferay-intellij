@@ -83,8 +83,11 @@ function getModuleGroupName(module) {
 	return 'portal';
 };
 
-function getModuleOrderEntryElement(projectDependency) {
-	if (projectDependency.name.indexOf('-test') != -1) {
+function getModuleOrderEntryElement(module, projectDependency) {
+	var isTestDependency = (projectDependency.name.indexOf('-test') != -1) &&
+		((module.moduleName.indexOf('-test') == -1) || (module.modulePath.indexOf('modules/') == 0));
+
+	if (isTestDependency) {
 		return '<orderEntry type="module" module-name="' + projectDependency.name + '" scope="TEST" />';
 	}
 	else {
@@ -129,7 +132,7 @@ function getNewModuleRootManagerXML(module) {
 
 	if (module.projectDependencies) {
 		var projectOrderEntryElements = module.projectDependencies
-			.map(getModuleOrderEntryElement);
+			.map(highland.partial(getModuleOrderEntryElement, module));
 
 		newModuleRootManagerXML = newModuleRootManagerXML.concat(projectOrderEntryElements);
 	}

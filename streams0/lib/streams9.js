@@ -484,7 +484,7 @@ function getNewModuleRootManagerXML(module) {
 
 	if (module.projectDependencies) {
 		var projectOrderEntryElements = module.projectDependencies
-			.map(getModuleOrderEntryElement);
+			.map(highland.partial(getModuleOrderEntryElement, module));
 
 		newModuleRootManagerXML = newModuleRootManagerXML.concat(projectOrderEntryElements);
 	}
