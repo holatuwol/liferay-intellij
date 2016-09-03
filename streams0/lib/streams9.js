@@ -13,7 +13,6 @@ var getComponentXML = streams6.getComponentXML;
 var getExcludeFolderElement = streams6.getExcludeFolderElement;
 var getFacetManagerXML = streams6.getFacetManagerXML;
 var getFilePath = streams5.getFilePath;
-var getGradleLibraryPaths = streams8.getGradleLibraryPaths;
 var getIntellijXML = streams6.getIntellijXML;
 var getLibraryOrderEntryElement = streams8.getLibraryOrderEntryElement;
 var getLibraryRootElement = streams8.getLibraryRootElement;
@@ -24,6 +23,7 @@ var getModuleOrderEntryElement = streams7.getModuleOrderEntryElement;
 var getPomDependencyPaths = streams8.getPomDependencyPaths;
 var getSourceFolderElement = streams6.getSourceFolderElement;
 var getWorkspaceModulesXML = streams7.getWorkspaceModulesXML;
+var isDirectory = streams2.isDirectory;
 var isFile = streams2.isFile;
 var isFirstOccurrence = streams8.isFirstOccurrence;
 var isSameLibraryDependency = streams8.isSameLibraryDependency;
@@ -122,6 +122,7 @@ function fixLibraryDependencies(moduleVersions, module) {
 	}
 
 	var ownVersion = moduleVersions[module.moduleName];
+	var moduleHasWebroot = module.webrootFolders.length > 0;
 
 	for (var i = module.libraryDependencies.length - 1; i >= 0; i--) {
 		var dependency = module.libraryDependencies[i];
@@ -145,12 +146,14 @@ function fixLibraryDependencies(moduleVersions, module) {
 			continue;
 		}
 
-		if ((dependencyName.indexOf('-taglib') != -1) || (dependencyName.indexOf('-web') != -1)) {
+		var moduleVersion = moduleVersions[dependencyName];
+
+		if (moduleHasWebroot && moduleVersion.hasWebroot) {
+			dependency.hasWebroot = true;
 			continue;
 		}
 
 		var dependencyVersion = dependency.version;
-		var moduleVersion = moduleVersions[dependencyName];
 
 		if (!isMatchingProjectVersion(dependencyVersion, moduleVersion.version)) {
 			console.warn(
@@ -162,7 +165,8 @@ function fixLibraryDependencies(moduleVersions, module) {
 
 		var projectDependency = {
 			type: 'project',
-			name: moduleVersion.projectName
+			name: moduleVersion.projectName,
+			version: dependencyVersion
 		};
 
 		module.projectDependencies.push(projectDependency);
@@ -173,6 +177,12 @@ function fixLibraryDependencies(moduleVersions, module) {
 
 function fixProjectDependencies(moduleVersions, addAsLibrary, module) {
 	if (!('projectDependencies' in module)) {
+		return module;
+	}
+
+	var moduleHasWebroot = module.webrootFolders.length > 0;
+
+	if (!moduleHasWebroot) {
 		return module;
 	}
 
@@ -189,11 +199,11 @@ function fixProjectDependencies(moduleVersions, addAsLibrary, module) {
 			continue;
 		}
 
-		if ((dependencyName.indexOf('-taglib') == -1) && (dependencyName.indexOf('-web') == -1)) {
+		var moduleVersion = moduleVersions[dependencyName];
+
+		if (!moduleVersion.hasWebroot) {
 			continue;
 		}
-
-		var moduleVersion = moduleVersions[dependencyName];
 
 		module.projectDependencies.splice(i, 1);
 
@@ -201,13 +211,52 @@ function fixProjectDependencies(moduleVersions, addAsLibrary, module) {
 			type: 'library',
 			group: 'com.liferay',
 			name: moduleVersion.bundleName,
-			version: moduleVersion.version
-		}
+			version: dependency.version || moduleVersion.version,
+			hasWebroot: true
+		};
 
 		module.libraryDependencies.push(libraryDependency);
 	}
 
 	return module;
+};
+
+function getGradleLibraryPaths(library) {
+	if (!('group' in library)) {
+		return [];
+	}
+
+	var gradleBasePath = '.gradle/caches/modules-2/files-2.1';
+
+	var folderPath = [library.group, library.name, library.version].reduce(getFilePath, gradleBasePath);
+
+	if (!isDirectory(folderPath)) {
+		return [];
+	}
+
+	var jarName = library.name + '-' + library.version + '.jar';
+
+	var jarPaths = fs.readdirSync(folderPath)
+		.map(getFilePath(folderPath))
+		.map(highland.flip(getFilePath, jarName))
+		.filter(isFile);
+
+	if ((library.group == 'com.liferay') && library.hasWebroot) {
+		return jarPaths;
+	}
+
+	var pomName = library.name + '-' + library.version + '.pom';
+
+	var pomPaths = fs.readdirSync(folderPath)
+		.map(getFilePath(folderPath))
+		.map(highland.flip(getFilePath, pomName))
+		.filter(isFile);
+
+	if (pomPaths.length > 0) {
+		return jarPaths.concat(getPomDependencyPaths(pomPaths[0], library.version)).filter(isFirstOccurrence);
+	}
+
+	return jarPaths;
 };
 
 function getJarLibraryTableXML(library) {
@@ -381,6 +430,10 @@ function getMavenLibraryPaths(library) {
 
 	if (isFile(jarAbsolutePath)) {
 		jarPaths = [getFilePath('$MAVEN_REPOSITORY$', jarRelativePath)];
+	}
+
+	if ((library.group == 'com.liferay') && library.hasWebroot) {
+		return jarPaths;
 	}
 
 	var pomFileName = library.name + '-' + library.version + '.pom';
@@ -626,12 +679,14 @@ function setModuleBundleVersions(accumulator, module) {
 
 	accumulator[bundleName] = {
 		projectName: module.moduleName,
-		version: bundleVersion
+		version: bundleVersion,
+		hasWebroot: module.webrootFolders.length > 0
 	};
 
 	accumulator[module.moduleName] = {
 		bundleName: bundleName,
-		version: bundleVersion
+		version: bundleVersion,
+		hasWebroot: module.webrootFolders.length > 0
 	};
 
 	return accumulator;

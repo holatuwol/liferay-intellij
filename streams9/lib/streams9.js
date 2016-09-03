@@ -13,7 +13,6 @@ var getComponentXML = streams6.getComponentXML;
 var getExcludeFolderElement = streams6.getExcludeFolderElement;
 var getFacetManagerXML = streams6.getFacetManagerXML;
 var getFilePath = streams5.getFilePath;
-var getGradleLibraryPaths = streams8.getGradleLibraryPaths;
 var getIntellijXML = streams6.getIntellijXML;
 var getLibraryOrderEntryElement = streams8.getLibraryOrderEntryElement;
 var getLibraryRootElement = streams8.getLibraryRootElement;
@@ -24,6 +23,7 @@ var getModuleOrderEntryElement = streams7.getModuleOrderEntryElement;
 var getPomDependencyPaths = streams8.getPomDependencyPaths;
 var getSourceFolderElement = streams6.getSourceFolderElement;
 var getWorkspaceModulesXML = streams7.getWorkspaceModulesXML;
+var isDirectory = streams2.isDirectory;
 var isFile = streams2.isFile;
 var isFirstOccurrence = streams8.isFirstOccurrence;
 var isSameLibraryDependency = streams8.isSameLibraryDependency;
@@ -101,6 +101,147 @@ function createProjectWorkspace(coreDetails, moduleDetails) {
 	detailsStream.done(function() {});
 };
 
+function fixLibraryDependencies(moduleVersions, module) {
+	if (!('libraryDependencies' in module)) {
+		return module;
+	}
+
+	var ownVersion = moduleVersions[module.moduleName];
+	var moduleHasWebroot = module.webrootFolders.length > 0;
+
+	for (var i = module.libraryDependencies.length - 1; i >= 0; i--) {
+		var dependency = module.libraryDependencies[i];
+
+		var dependencyGroup = dependency.group;
+
+		if (!dependencyGroup || (dependencyGroup.indexOf('com.liferay') != 0)) {
+			if ((ownVersion.bundleName == dependency.name) ||
+				(module.modulePath.indexOf('test') != -1) ||
+				(module.modulePath.indexOf('third-party') != -1)) {
+
+				dependency.exported = true;
+			}
+
+			continue;
+		}
+
+		var dependencyName = dependency.name;
+
+		if (!(dependencyName in moduleVersions)) {
+			continue;
+		}
+
+		var moduleVersion = moduleVersions[dependencyName];
+
+		if (moduleHasWebroot && dependency.hasWebroot) {
+			continue;
+		}
+
+		var dependencyVersion = dependency.version;
+
+		if (!isMatchingProjectVersion(dependencyVersion, moduleVersion.version)) {
+			console.warn(
+				module.moduleName + ' depends on ' + dependencyName + ' version ' +
+					dependencyVersion + ' (current version is ' + moduleVersion.version + ')');
+		}
+
+		module.libraryDependencies.splice(i, 1);
+
+		var projectDependency = {
+			type: 'project',
+			name: moduleVersion.projectName,
+			version: dependencyVersion
+		};
+
+		module.projectDependencies.push(projectDependency);
+	}
+
+	return module;
+};
+
+function fixProjectDependencies(moduleVersions, addAsLibrary, module) {
+	if (!('projectDependencies' in module)) {
+		return module;
+	}
+
+	var moduleHasWebroot = module.webrootFolders.length > 0;
+
+	if (!moduleHasWebroot) {
+		return module;
+	}
+
+	for (var i = module.projectDependencies.length - 1; i >= 0; i--) {
+		var dependency = module.projectDependencies[i];
+		var dependencyName = dependency.name;
+
+		if (!(dependencyName in moduleVersions)) {
+			continue;
+		}
+
+		if (!addAsLibrary) {
+			module.projectDependencies.splice(i, 1);
+			continue;
+		}
+
+		var moduleVersion = moduleVersions[dependencyName];
+
+		if (!moduleVersion.hasWebroot) {
+			continue;
+		}
+
+		module.projectDependencies.splice(i, 1);
+
+		var libraryDependency = {
+			type: 'library',
+			group: 'com.liferay',
+			name: moduleVersion.bundleName,
+			version: dependency.version || moduleVersion.version
+		};
+
+		module.libraryDependencies.push(libraryDependency);
+	}
+
+	return module;
+};
+
+function getGradleLibraryPaths(library) {
+	if (!('group' in library)) {
+		return [];
+	}
+
+	var gradleBasePath = '.gradle/caches/modules-2/files-2.1';
+
+	var folderPath = [library.group, library.name, library.version].reduce(getFilePath, gradleBasePath);
+
+	if (!isDirectory(folderPath)) {
+		return [];
+	}
+
+	var jarName = library.name + '-' + library.version + '.jar';
+
+	var jarPaths = fs.readdirSync(folderPath)
+		.map(getFilePath(folderPath))
+		.map(highland.flip(getFilePath, jarName))
+		.filter(isFile);
+
+	if ((library.group == 'com.liferay') && library.hasWebroot) {
+		return jarPaths;
+	}
+
+	var pomName = library.name + '-' + library.version + '.pom';
+
+	var pomPaths = fs.readdirSync(folderPath)
+		.map(getFilePath(folderPath))
+		.map(highland.flip(getFilePath, pomName))
+		.filter(isFile);
+
+	if (pomPaths.length > 0) {
+		return jarPaths.concat(getPomDependencyPaths(pomPaths[0], library.version)).filter(isFirstOccurrence);
+	}
+
+	return jarPaths;
+};
+
 function getLibraryPaths(library) {
 	var mavenLibraryPaths = getMavenLibraryPaths(library);
 
@@ -166,6 +307,20 @@ function getLibraryXML(library) {
 	};
 };
 
+function getMavenDependencyElement(library) {
+	var dependencyElement = {
+		'groupId': library.group,
+		'artifactId': library.name,
+		'version': library.version
+	};
+
+	if ((library.group == 'org.jboss.shrinkwrap') && (library.name == 'shrinkwrap-depchain')) {
+		dependencyElement['type'] = 'pom';
+	}
+
+	return dependencyElement;
+};
+
 function getMavenLibraryPaths(library) {
 	if (!('group' in library)) {
 		return [];
@@ -182,6 +337,10 @@ function getMavenLibraryPaths(library) {
 
 	if (isFile(jarAbsolutePath)) {
 		jarPaths = [getFilePath('$MAVEN_REPOSITORY$', jarRelativePath)];
+	}
+
+	if ((library.group == 'com.liferay') && library.hasWebroot) {
+		return jarPaths;
 	}
 
 	var pomFileName = library.name + '-' + library.version + '.pom';
@@ -233,14 +392,6 @@ function getNewModuleRootManagerXML(module) {
 	newModuleRootManagerXML.push('<orderEntry type="inheritedJdk" />');
 	newModuleRootManagerXML.push('<orderEntry type="sourceFolder" forTests="false" />');
 
-	if (module.libraryDependencies) {
-		var libraryOrderEntryElements = module.libraryDependencies
-			.map(setLibraryName)
-			.map(getLibraryOrderEntryElement);
-
-		newModuleRootManagerXML = newModuleRootManagerXML.concat(libraryOrderEntryElements);
-	}
-
 	if (module.projectDependencies) {
 		var projectOrderEntryElements = module.projectDependencies
 			.map(highland.partial(getModuleOrderEntryElement, module));
@@ -248,8 +399,28 @@ function getNewModuleRootManagerXML(module) {
 		newModuleRootManagerXML = newModuleRootManagerXML.concat(projectOrderEntryElements);
 	}
 
+	if (module.libraryDependencies) {
+		var libraryOrderEntryElements = module.libraryDependencies
+			.filter(keyExistsInObject('group'))
+			.map(setLibraryName)
+			.map(getLibraryOrderEntryElement);
+
+		newModuleRootManagerXML = newModuleRootManagerXML.concat(libraryOrderEntryElements);
+
+		var coreLibraryOrderEntryElements = module.libraryDependencies
+			.filter(highland.compose(highland.not, keyExistsInObject('group')))
+			.map(setLibraryName)
+			.map(getLibraryOrderEntryElement);
+
+		newModuleRootManagerXML = newModuleRootManagerXML.concat(coreLibraryOrderEntryElements);
+	}
+
 	return newModuleRootManagerXML.join('\n');
 };
+
+function isDevelopmentLibrary(libraryName) {
+	return libraryName.indexOf('.') == libraryName.length - 4;
+}
 
 function isMatchingProjectVersion(version1, version2) {
 	if (version1 == 'default') {
@@ -329,8 +500,21 @@ function setCoreBundleVersions(accumulator, module) {
 	var bundleNameRegex = /property name="manifest.bundle.symbolic.name" value="([^"\;]*)/g;
 	var bundleVersionRegex = /Bundle-Version: ([^\n]+)/g;
 
-	var bundleName = bundleNameRegex.exec(buildXmlContent)[1];
-	var bundleVersion = bundleVersionRegex.exec(bndContent)[1];
+	var matchResult = bundleNameRegex.exec(buildXmlContent);
+
+	if (!matchResult) {
+		return accumulator;
+	}
+
+	var bundleName = matchResult[1];
+
+	matchResult = bundleVersionRegex.exec(bndContent);
+
+	if (!matchResult) {
+		return accumulator;
+	}
+
+	var bundleVersion = matchResult[1];
 
 	accumulator[bundleName] = {
 		projectName: module.moduleName,
@@ -352,12 +536,14 @@ function setModuleBundleVersions(accumulator, module) {
 
 	accumulator[bundleName] = {
 		projectName: module.moduleName,
-		version: bundleVersion
+		version: bundleVersion,
+		hasWebroot: module.webrootFolders.length > 0
 	};
 
 	accumulator[module.moduleName] = {
 		bundleName: bundleName,
-		version: bundleVersion
+		version: bundleVersion,
+		hasWebroot: module.webrootFolders.length > 0
 	};
 
 	return accumulator;
