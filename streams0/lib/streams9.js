@@ -86,7 +86,7 @@ function createProjectWorkspace(coreDetails, moduleDetails, pluginDetails) {
 		.each(saveContent);
 
 	projectFileStream
-		.sortBy(comparators.comparing('modulePath'))
+		.sortBy(comparators.comparing('moduleName'))
 		.map(getModuleElement)
 		.collect()
 		.map(getModulesElement)
