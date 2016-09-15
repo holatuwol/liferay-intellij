@@ -77,16 +77,38 @@ function isModuleFolder(includeSubRepos, folder) {
 		return false;
 	}
 
-	if (!includeSubRepos && isFile(getFilePath(folder, '../.gitrepo'))) {
+	if (!isDirectory(getFilePath(folder, 'docroot')) && !isDirectory(getFilePath(folder, 'src'))) {
 		return false;
 	}
 
-	if (isDirectory(getFilePath(folder, 'docroot'))) {
-		return true;
+	if (!includeSubRepos && isSubRepo(folder)) {
+		return false;
 	}
 
-	if (isDirectory(getFilePath(folder, 'src'))) {
-		return true;
+	return true;
+};
+
+function isRepoModePull(gitRepoFileContents) {
+	return gitRepoFileContents.indexOf('mode = pull') != -1;
+};
+
+function isSubRepo(folder) {
+	var possibleGitRepoFileLocations = ['.gitrepo', '../.gitrepo', '../../.gitrepo'];
+
+	for (var i = 0; i < possibleGitRepoFileLocations; i++) {
+		var possibleGitRepoFileLocation = possibleGitRepoFileLocations[i];
+		var gitRepoFilePath = getFilePath(folder, possibleGitRepoFileLocation);
+		var gitRepoFileExists = isFile(gitRepoFilePath);
+
+		if (!gitRepoFileExists) {
+			continue;
+		}
+
+		var gitRepoFileContents = fs.readFileSync(gitRepoFilePath);
+
+		if (isRepoModePull(gitRepoFileContents)) {
+			return true;
+		}
 	}
 
 	return false;
@@ -99,3 +121,4 @@ exports.isDirectory = isDirectory;
 exports.isFile = isFile;
 exports.isHidden = isHidden;
 exports.isModuleFolder = isModuleFolder;
+exports.isRepoModePull = isRepoModePull;

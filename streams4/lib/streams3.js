@@ -7,6 +7,7 @@ var getFilePath = streams2.getFilePath;
 var isDirectory = streams2.isDirectory;
 var isFile = streams2.isFile;
 var isHidden = streams2.isHidden;
+var isRepoModePull = streams2.isRepoModePull;
 
 var sourceFolders = ['docroot/WEB-INF/service', 'docroot/WEB-INF/src', 'src/main/java'];
 var resourceFolders = ['src/main/resources'];
@@ -115,18 +116,34 @@ function getModuleOverview(folder) {
 function isModuleFolder(includeSubRepos, folder) {
 	var getPath = getFilePath.bind(null, folder);
 
-	var validSubfiles = ['bnd.bnd', 'build.gradle'];
-	var invalidSubFiles = [];
-
-	if (!includeSubRepos) {
-		invalidSubFiles.push('../.gitrepo');
-	}
-
+	var subfiles = ['bnd.bnd', 'build.gradle'];
 	var subfolders = ['docroot', 'src'];
 
-	return validSubfiles.map(getPath).every(isFile) &&
-		!invalidSubFiles.map(getPath).some(isFile) &&
+	var isPotentialModuleFolder = subfiles.map(getPath).every(isFile) &&
 		subfolders.map(getPath).some(isDirectory);
+
+	if (!isPotentialModuleFolder) {
+		return false;
+	}
+
+	if (!includeSubRepos && isSubRepo(folder)) {
+		return false;
+	}
+
+	return true;
+};
+
+function isSubRepo(folder) {
+	var getPath = getFilePath.bind(null, folder);
+	var possibleGitRepoFileLocations = ['.gitrepo', '../.gitrepo', '../../.gitrepo'];
+
+	var isAnyGitRepoModePull = possibleGitRepoFileLocations
+		.map(getPath)
+		.filter(isFile)
+		.map(fs.readFileSync)
+		.some(isRepoModePull);
+
+	return isAnyGitRepoModePull;
 };
 
 function isValidSourcePath(moduleRoot, sourceFolder) {

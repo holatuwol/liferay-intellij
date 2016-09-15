@@ -7,6 +7,7 @@ var getFilePath = streams2.getFilePath;
 var isDirectory = streams2.isDirectory;
 var isFile = streams2.isFile;
 var isHidden = streams2.isHidden;
+var isRepoModePull = streams2.isRepoModePull;
 
 function getFolders(folderPath, maxDepth) {
 	var folders = [];
@@ -59,16 +60,34 @@ function isModuleFolder(includeSubRepos, folder) {
 		return false;
 	}
 
-	if (!includeSubRepos && isFile(getFilePath(folder, '../.gitrepo'))) {
+	if (!isDirectory(getFilePath(folder, 'docroot')) && !isDirectory(getFilePath(folder, 'src'))) {
 		return false;
 	}
 
-	if (isDirectory(getFilePath(folder, 'docroot'))) {
-		return true;
+	if (!includeSubRepos && isSubRepo(folder)) {
+		return false;
 	}
 
-	if (isDirectory(getFilePath(folder, 'src'))) {
-		return true;
+	return true;
+};
+
+function isSubRepo(folder) {
+	var possibleGitRepoFileLocations = ['.gitrepo', '../.gitrepo', '../../.gitrepo'];
+
+	for (var i = 0; i < possibleGitRepoFileLocations; i++) {
+		var possibleGitRepoFileLocation = possibleGitRepoFileLocations[i];
+		var gitRepoFilePath = getFilePath(folder, possibleGitRepoFileLocation);
+		var gitRepoFileExists = isFile(gitRepoFilePath);
+
+		if (!gitRepoFileExists) {
+			continue;
+		}
+
+		var gitRepoFileContents = fs.readFileSync(gitRepoFilePath);
+
+		if (isRepoModePull(gitRepoFileContents)) {
+			return true;
+		}
 	}
 
 	return false;
