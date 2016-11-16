@@ -6,7 +6,6 @@
   "dependencies": {
     "comparators": "2.0.x",
     "highland": "2.7.x",
-    "semver": "5.1.x",
     "shelljs": "0.6.x",
     "xmlbuilder": "7.0.x"
   },

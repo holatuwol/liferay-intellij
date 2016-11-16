@@ -1,7 +1,6 @@
 var comparators = require('comparators').default;
 var fs = require('fs');
 var highland = require('highland');
-var semver = require('semver');
 var streams2 = require('./streams2');
 var streams5 = require('./streams5');
 var streams6 = require('./streams6');
@@ -154,12 +153,6 @@ function fixLibraryDependencies(moduleVersions, module) {
 		}
 
 		var dependencyVersion = dependency.version;
-
-		if (!isMatchingProjectVersion(dependencyVersion, moduleVersion.version)) {
-			console.warn(
-				module.moduleName + ' depends on ' + dependencyName + ' version ' +
-					dependencyVersion + ' (current version is ' + moduleVersion.version + ')');
-		}
 
 		module.libraryDependencies.splice(i, 1);
 
@@ -563,70 +556,6 @@ function getNewModuleRootManagerXML(module) {
 
 function isDevelopmentLibrary(libraryName) {
 	return libraryName.indexOf('.') == libraryName.length - 4;
-}
-
-function isMatchingProjectVersion(version1, version2) {
-	if (version1 == 'default') {
-		return true;
-	}
-
-	var pos1 = version1.indexOf('.LIFERAY-PATCHED');
-
-	if (pos1 != -1) {
-		version1 = version1.substring(0, pos1);
-	}
-
-	pos1 = version2.indexOf('.LIFERAY-PATCHED');
-
-	if (pos1 != -1) {
-		version2 = version2.substring(0, pos1);
-	}
-
-	if (version1 == version2) {
-		return true;
-	}
-
-	pos1 = version1.indexOf(',');
-
-	var startVersion, endVersion;
-
-	if (pos1 == -1) {
-		startVersion = '>=' + version1;
-		endVersion = '<' + semver.inc(version1, 'major');
-	}
-	else {
-		if (version1.charAt(0) == '[') {
-			startVersion = '>=' + version1.substring(1, pos1);
-		}
-		else if (version1.charAt(0) == '(') {
-			startVersion = '>' + version1.substring(1, pos1);
-		}
-		else {
-			return false;
-		}
-
-		pos2 = version1.length - 1;
-
-		if (pos1 == pos2) {
-			return semver.satisfies(version2, startVersion);
-		}
-		else if (version1.charAt(pos2) == ']') {
-			endVersion = '<=' + version1.substring(pos1 + 1, pos2);
-		}
-		else if (version1.charAt(pos2) == ')') {
-			endVersion = '<' + version1.substring(pos1 + 1, pos2);
-		}
-		else {
-			return false;
-		}
-	}
-
-	try {
-		return semver.satisfies(version2, startVersion + ' ' + endVersion);
-	}
-	catch (e) {
-		return false;
-	}
 };
 
 function setCoreBundleVersions(accumulator, module) {
