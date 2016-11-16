@@ -30,7 +30,7 @@ var keyExistsInObject = highland.ncurry(2, streams8.keyExistsInObject);
 var saveContent = streams6.saveContent;
 var setLibraryName = streams8.setLibraryName;
 
-function createProjectObjectModels(moduleDetails) {
+function createProjectObjectModels(coreDetails, moduleDetails) {
 	var moduleStream = highland(moduleDetails);
 
 	var mavenProjectStream = moduleStream.observe();

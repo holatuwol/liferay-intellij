@@ -80,7 +80,7 @@ function prepareProject(portalSourceFolder, otherSourceFolders) {
 
 	var moduleDetails = moduleFolders.map(getModuleDetails);
 
-	createProjectObjectModels(moduleDetails);
+	createProjectObjectModels(coreDetails, moduleDetails);
 
 	process.chdir(initialCWD);
 };
