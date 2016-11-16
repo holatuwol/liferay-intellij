@@ -48,5 +48,5 @@ popd
 mkzip $source_folder
 
 rm 'Javascript Streams.zip'
-mv *.zip ~/Work/sphinx/source/scripting
-zip -j 'Javascript Streams.zip' ~/Work/sphinx/source/scripting/streams*
+mv *.zip ~/Work/sphinx/source/train.2016q1
+zip -j 'Javascript Streams.zip' ~/Work/sphinx/source/train.2016q1/streams*
