@@ -13,6 +13,7 @@ var getModuleDetails = streams4.getModuleDetails;
 var getModuleFolders = streams3.getModuleFolders;
 var getPluginDetails = streams5.getPluginDetails;
 var isDirectory = streams2.isDirectory;
+var isFile = streams2.isFile;
 
 function createProject(portalSourceFolder, otherSourceFolders) {
 	var initialCWD = process.cwd();
@@ -29,25 +30,32 @@ function createProject(portalSourceFolder, otherSourceFolders) {
 
 	var coreFolders = getCoreFolders();
 
-	var portalSourceModulesRootPath = getFilePath(portalSourceFolder, 'modules');
-
-	var moduleFolders = getModuleFolders(portalSourceFolder, portalSourceModulesRootPath, true);
+	var includeSubRepos = true;
+	var moduleFolders = [];
 	var pluginFolders = [];
 
 	for (var i = 0; i < otherSourceFolders.length; i++) {
 		var otherSourceFolder = otherSourceFolders[i];
 
-		if (otherSourceFolder.indexOf('modules') != -1) {
-			var newFolders = getModuleFolders(portalSourceFolder, otherSourceFolder);
-
-			moduleFolders = moduleFolders.concat(newFolders);
-		}
-		else {
+		if (isPluginsSDK(otherSourceFolder)) {
 			var newFolders = getPluginFolders(portalSourceFolder, otherSourceFolder);
 
 			pluginFolders = pluginFolders.concat(newFolders);
 		}
+		else {
+			includeSubRepos &= isBladeWorkspace(otherSourceFolder);
+
+			var newFolders = getModuleFolders(portalSourceFolder, otherSourceFolder, true);
+
+			moduleFolders = moduleFolders.concat(newFolders);
+		}
 	}
+
+	var portalSourceModulesRootPath = getFilePath(portalSourceFolder, 'modules');
+
+	var newFolders = getModuleFolders(portalSourceFolder, portalSourceModulesRootPath, includeSubRepos);
+
+	moduleFolders = moduleFolders.concat(newFolders);
 
 	var coreDetails = coreFolders.map(getCoreDetails);
 	var moduleDetails = moduleFolders.map(getModuleDetails);
@@ -56,6 +64,14 @@ function createProject(portalSourceFolder, otherSourceFolders) {
 	createProjectWorkspace(coreDetails, moduleDetails);
 
 	process.chdir(initialCWD);
+};
+
+function isBladeWorkspace(otherSourceFolder) {
+	return isFile(getFilePath(otherSourceFolder, 'gradle.properties'));
+};
+
+function isPluginsSDK(otherSourceFolder) {
+	return isFile(getFilePath(otherSourceFolder, 'build-common-plugins.xml'));
 };
 
 exports.createProject = createProject;
