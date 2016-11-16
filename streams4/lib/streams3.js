@@ -72,7 +72,7 @@ function getModuleDetails(folder) {
 };
 
 function getModuleExcludeFolders(moduleIncludeFolders) {
-	var moduleExcludeFolders = [];
+	var moduleExcludeFolders = ['.settings', 'bin', 'build'];
 
 	for (key in moduleIncludeFolders) {
 		if (moduleIncludeFolders.hasOwnProperty(key)) {
