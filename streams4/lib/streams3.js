@@ -63,7 +63,7 @@ function getModuleDependencies(folder) {
 function getModuleDetails(folder) {
 	var moduleOverview = getModuleOverview(folder);
 	var moduleIncludeFolders = getModuleIncludeFolders(folder);
-	var moduleExcludeFolders = getModuleExcludeFolders(moduleIncludeFolders);
+	var moduleExcludeFolders = getModuleExcludeFolders(folder, moduleIncludeFolders);
 	var moduleDependencies = getModuleDependencies(folder);
 
 	var moduleDetailsArray = [moduleOverview, moduleIncludeFolders, moduleExcludeFolders, moduleDependencies];
@@ -71,7 +71,7 @@ function getModuleDetails(folder) {
 	return moduleDetailsArray.reduce(util._extend, {});
 };
 
-function getModuleExcludeFolders(moduleIncludeFolders) {
+function getModuleExcludeFolders(folder, moduleIncludeFolders) {
 	var moduleExcludeFolders = ['.settings', 'bin', 'build'];
 
 	for (key in moduleIncludeFolders) {

@@ -81,7 +81,7 @@ function getCoreDependencies(folder) {
 function getCoreDetails(folder) {
 	var moduleOverview = getModuleOverview(folder);
 	var moduleIncludeFolders = getCoreIncludeFolders(folder);
-	var moduleExcludeFolders = getModuleExcludeFolders(moduleIncludeFolders);
+	var moduleExcludeFolders = getModuleExcludeFolders(folder, moduleIncludeFolders);
 	var moduleDependencies = getCoreDependencies(folder);
 
 	var moduleDetailsArray = [moduleOverview, moduleIncludeFolders, moduleExcludeFolders, moduleDependencies];
