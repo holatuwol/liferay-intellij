@@ -74,6 +74,10 @@ function getModuleDetails(folder) {
 function getModuleExcludeFolders(folder, moduleIncludeFolders) {
 	var moduleExcludeFolders = ['.settings', 'bin', 'build'];
 
+	if (isFile(getFilePath(folder, 'package.json'))) {
+		moduleExcludeFolders.push('node_modules');
+	}
+
 	for (key in moduleIncludeFolders) {
 		if (moduleIncludeFolders.hasOwnProperty(key)) {
 			moduleIncludeFolders[key].reduce(updateExcludeFolders, moduleExcludeFolders);

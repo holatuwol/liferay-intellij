@@ -26,6 +26,10 @@ function createProject(portalSourceFolder, otherSourceFolders) {
 		fs.mkdirSync('.idea');
 	}
 
+	if (isFile('.idea/jsLibraryMappings.xml')) {
+		fs.unlinkSync('.idea/jsLibraryMappings.xml');
+	}
+
 	if (!isDirectory('.idea/libraries')) {
 		fs.mkdirSync('.idea/libraries');
 	}
