@@ -113,7 +113,29 @@ function createProjectWorkspace(coreDetails, moduleDetails, pluginDetails) {
 		.each(saveContent);
 
 	detailsStream.done(function() {});
+
+	addGitVersionControlSystem();
 };
+
+function addGitVersionControlSystem() {
+	if (!isDirectory('.git')) {
+		return;
+	}
+
+	var vcsXML = [
+		'<?xml version="1.0" encoding="UTF-8"?>',
+		'<project version="4">',
+		'<component name="VcsDirectoryMappings">',
+		'<mapping directory="$PROJECT_DIR$" vcs="Git" />',
+		'</component>',
+		'</project>'
+	];
+
+	saveContent({
+		name: '.idea/vcs.xml',
+		content: vcsXML.join('\n')
+	});
+}
 
 function fixLibraryDependencies(moduleVersions, module) {
 	if (!('libraryDependencies' in module)) {
