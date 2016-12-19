@@ -9,7 +9,13 @@ mkzip() {
 	echo $1
 
 	pushd $1
-	zip -r $1.zip bin lib package.json
+
+	if [ "$1" == "streams0" ]; then
+		zip -rq $1.zip bin lib node_modules package.json
+	else
+		zip -rq $1.zip bin lib package.json
+	fi
+
 	mv $1.zip ..
 	popd
 }
@@ -48,5 +54,8 @@ popd
 mkzip $source_folder
 
 rm 'Javascript Streams.zip'
-mv *.zip ~/Work/sphinx/source/train.2016q1
-zip -j 'Javascript Streams.zip' ~/Work/sphinx/source/train.2016q1/streams*
+cp *.zip ~/Work/sphinx/source/train.2016q1
+cp *.zip ~/Work/sphinx/markdown/train.2016q1
+zip -j 'Javascript Streams.zip' *.zip
+
+rm streams*.zip
