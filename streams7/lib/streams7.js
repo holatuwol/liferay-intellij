@@ -43,7 +43,11 @@ function getModuleXML(module) {
 };
 
 function getNewModuleRootManagerXML(module) {
-	var newModuleRootManagerXML = ['<content url="file://$MODULE_DIR$">'];
+	var newModuleRootManagerXML = [
+		'<output url="file://$MODULE_DIR$/classes" />',
+		'<output-test url="file://$MODULE_DIR$/test-classes" />',
+		'<content url="file://$MODULE_DIR$">'
+	];
 
 	newModuleRootManagerXML = newModuleRootManagerXML.concat(
 		module.sourceFolders.map(highland.partial(getSourceFolderElement, 'isTestSource', 'false')),
