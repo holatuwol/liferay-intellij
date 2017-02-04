@@ -12,7 +12,14 @@ var testSourceFolders = ['test/unit', 'test/integration'];
 var testResourceFolders = [];
 var webrootFolders = ['docroot'];
 
-var getFilePath = highland.ncurry(2, streams2.getFilePath);
+var getFilePath = function(item1, item2) {
+	return streams2.getFilePath(item1, item2);
+};
+
+var flipGetFilePath = function(item1, item2) {
+	return getFilePath(item2, item1);
+};
+
 var isDirectory = streams2.isDirectory;
 var isFile = streams2.isFile;
 
@@ -68,6 +75,10 @@ var customDependencyNames = {
 		libraryNames: ['development', 'global', 'portal'],
 		projectNames: ['portal-kernel', 'portal-service', 'registry-api', 'util-java']
 	}
+};
+
+function flatMap(array, lambda) {
+	return Array.prototype.concat.apply([], array.map(lambda));
 };
 
 function getCoreDependency(dependencyType, dependencyName) {
@@ -160,7 +171,7 @@ function getPluginDependencies(folder) {
 function getPluginDetails(folder) {
 	var moduleOverview = getModuleOverview(folder);
 	var moduleIncludeFolders = getPluginIncludeFolders(folder);
-	var moduleExcludeFolders = getModuleExcludeFolders(moduleIncludeFolders);
+	var moduleExcludeFolders = getModuleExcludeFolders(folder, moduleIncludeFolders);
 	var moduleDependencies = getPluginDependencies(folder);
 
 	var moduleDetailsArray = [moduleOverview, moduleIncludeFolders, moduleExcludeFolders, moduleDependencies];
@@ -168,47 +179,65 @@ function getPluginDetails(folder) {
 	return moduleDetailsArray.reduce(util._extend, {});
 };
 
-function getPluginFolders(portalSourceFolder, pluginSourceFolder) {
-	var pluginFolders = [];
+function getPluginFolder(pluginSDKRoot, pluginName) {
+	var parentRelativeFolders = ['hooks', 'modules', 'portlets', 'shared', 'themes', 'webs'];
+	var parentAbsoluteFolders = parentRelativeFolders.map(getFilePath(pluginSDKRoot));
 
-	var pluginSubFolders = ['hooks', 'modules', 'portlets', 'shared', 'webs'];
-	var pluginRootPath = path.relative(portalSourceFolder, pluginSourceFolder);
+	var getPluginPath = flipGetFilePath(pluginName);
+	var pluginCandidateFolders = parentAbsoluteFolders.map(getPluginPath);
 
-	if (isPluginFolder(pluginRootPath)) {
-		pluginFolders = pluginFolders.concat([pluginRootPath]);
+	var pluginFolders = pluginCandidateFolders.filter(isDirectory);
+
+	if (pluginFolders.length == 0) {
+		return null;
 	}
 
-	var pluginSubPaths = [];
+	return pluginFolders[0];
+};
 
-	if (pluginSubFolders.indexOf(path.basename(pluginRootPath)) != -1) {
-		pluginSubPaths = [pluginRootPath];
+function getPluginFolders(portalSourceFolder, pluginSourceFolder) {
+	var pluginFolders = null;
+
+	if (isPluginFolder(pluginSourceFolder)) {
+		pluginFolders = getPluginProjectFolders(pluginSourceFolder);
 	}
 	else {
-		var getPluginPath = highland.partial(getFilePath, pluginRootPath);
-		pluginSubPaths = pluginSubFolders.map(getPluginPath);
+		var findResults = getFolders(pluginSourceFolder, 2);
+		pluginFolders = findResults.filter(isPluginFolder);
 	}
 
-	for (var j = 0; j < pluginSubPaths.length; j++) {
-		var pluginSubPath = pluginSubPaths[j];
-		var findResults = getFolders(pluginSubPath, 2);
+	pluginFolders.sort();
 
-		pluginFolders = pluginFolders.concat(
-			findResults.filter(isPluginFolder)
-		);
-	}
+	var uniquePluginFolders = pluginFolders.filter(isUniqueAssumeSorted);
 
-	return pluginFolders;
+	var portalSourceRelativePath = highland.partial(path.relative, portalSourceFolder);
+
+	return uniquePluginFolders.map(portalSourceRelativePath);
 };
 
 function getPluginIncludeFolders(folder) {
 	var moduleIncludeFolders = getModuleIncludeFolders(folder);
 
-	if (moduleIncludeFolders.sourceFolders.length != 0) {
-		return moduleIncludeFolders;
+	if (moduleIncludeFolders.sourceFolders.length == 0) {
+		if (isDirectory(getFilePath(folder, 'src'))) {
+			moduleIncludeFolders.sourceFolders.push('src');
+		}
 	}
 
-	if (isDirectory(getFilePath(folder, 'src'))) {
-		moduleIncludeFolders.sourceFolders.push('src');
+	var projectType = path.basename(path.dirname(folder));
+
+	if (projectType == 'portlets') {
+		moduleIncludeFolders.webrootFolders.push('docroot');
+	}
+
+	var portletXmlPath = getFilePath(folder, 'docroot/WEB-INF/portlet.xml');
+
+	if (isFile(portletXmlPath)) {
+		var portletXmlContent = fs.readFileSync(portletXmlPath);
+
+		if (portletXmlContent.indexOf('com.liferay.alloy.mvc.AlloyPortlet')) {
+			moduleIncludeFolders.sourceFolders.push('docroot/WEB-INF/jsp');
+		}
 	}
 
 	return moduleIncludeFolders;
@@ -253,37 +282,79 @@ function getPluginPackageProjectDependencies(folder) {
 	var dependencyNames = ['portal-kernel', 'portal-service', 'util-bridges', 'util-java', 'util-taglib']
 		.filter(isModuleDependencyAvailable);
 
+	return dependencyNames.concat(getPluginPackageRequiredDeploymentContexts(folder));
+};
+
+function getPluginPackageRequiredDeploymentContexts(folder) {
 	var pluginPackagePath = getFilePath(folder, 'docroot/WEB-INF/liferay-plugin-package.properties');
 
-	if (isFile(pluginPackagePath)) {
-		var pluginPackageContents = fs.readFileSync(pluginPackagePath);
-		var pluginPackageLines = pluginPackageContents.toString().split('\n');
+	var deploymentContexts = [];
 
-		var foundRequiredDeploymentContext = false;
+	if (!isFile(pluginPackagePath)) {
+		return deploymentContexts;
+	}
 
-		for (var i = 0; i < pluginPackageLines.length; i++) {
-			var line = pluginPackageLines[i];
+	var pluginPackageContents = fs.readFileSync(pluginPackagePath);
+	var pluginPackageLines = pluginPackageContents.toString().split('\n');
 
-			if (line.indexOf('required-deployment-contexts') != -1) {
-				foundRequiredDeploymentContext = true;
+	var foundRequiredDeploymentContext = false;
+
+	for (var i = 0; i < pluginPackageLines.length; i++) {
+		var line = pluginPackageLines[i];
+
+		if (line.indexOf('required-deployment-contexts') != -1) {
+			foundRequiredDeploymentContext = true;
+		}
+		else if (foundRequiredDeploymentContext) {
+			var deploymentContext = line.replace(/^\s*/g, '');
+			var pos = deploymentContext.indexOf(',');
+
+			if (pos == -1) {
+				foundRequiredDeploymentContext = false;
 			}
-			else if (foundRequiredDeploymentContext) {
-				var dependencyName = line.replace(/^\s*/g, '');
-				var pos = dependencyName.indexOf(',');
-
-				if (pos == -1) {
-					foundRequiredDeploymentContext = false;
-				}
-				else {
-					dependencyName = dependencyName.substring(0, pos);
-				}
-
-				dependencyNames.push(dependencyName);
+			else {
+				deploymentContext = deploymentContext.substring(0, pos);
 			}
+
+			deploymentContexts.push(deploymentContext);
 		}
 	}
 
-	return dependencyNames;
+	return deploymentContexts;
+};
+
+function getPluginProjectFolders(folder) {
+	var pluginSDKRoot = getPluginSDKRoot(folder);
+	var getPluginRootFolder = highland.partial(getPluginFolder, pluginSDKRoot);
+
+	var sharedDependencies = getSharedDependencies(folder);
+	var sharedDependenciesFolders = sharedDependencies.map(getPluginRootFolder);
+	var pluginFolders = [folder].concat(sharedDependenciesFolders);
+
+	var newPluginNames = getPluginPackageRequiredDeploymentContexts(folder);
+	var newPluginFolders = newPluginNames.map(getPluginRootFolder);
+
+	if (newPluginFolders.length > 0) {
+		pluginFolders = pluginFolders.concat(flatMap(newPluginFolders, getPluginProjectFolders));
+	}
+
+	return pluginFolders;
+};
+
+function getPluginSDKRoot(folder) {
+	var relativeFolders = ['.', '..', '../..'];
+	var absoluteFolders = relativeFolders.map(getFilePath(folder));
+
+	var getBuildCommonPluginsPath = flipGetFilePath('build-common-plugins.xml');
+	var hasBuildCommonPlugins = highland.compose(isFile, getBuildCommonPluginsPath);
+
+	var pluginSDKRoots = absoluteFolders.filter(hasBuildCommonPlugins);
+
+	if (pluginSDKRoots.length == 0) {
+		return null;
+	}
+
+	return pluginSDKRoots[0];
 };
 
 function getSharedDependencies(folder) {
@@ -326,9 +397,14 @@ function isPluginFolder(folder) {
 	return (pluginName.indexOf('test-') != 0) && (pluginName.indexOf('sample-') != 0);
 };
 
+function isUniqueAssumeSorted(element, index, array) {
+	return index == 0 || array[index - 1] != element;
+};
+
 exports.getCoreDetails = getCoreDetails;
 exports.getCoreFolders = getCoreFolders;
 exports.getFilePath = getFilePath;
 exports.getPluginDetails = getPluginDetails;
 exports.getPluginFolders = getPluginFolders;
+exports.getPluginSDKRoot = getPluginSDKRoot;
 exports.isValidSourcePath = isValidSourcePath;

@@ -9,6 +9,8 @@ var getFilePath = streams5.getFilePath;
 var getModuleDetails = streams4.getModuleDetails;
 var getModuleFolders = streams3.getModuleFolders;
 var getPluginDetails = streams5.getPluginDetails;
+var getPluginFolders = streams5.getPluginFolders;
+var getPluginSDKRoot = streams5.getPluginSDKRoot;
 var isFile = streams2.isFile;
 
 function createProject(portalSourceFolder, otherSourceFolders) {
@@ -61,7 +63,7 @@ function isBladeWorkspace(otherSourceFolder) {
 };
 
 function isPluginsSDK(otherSourceFolder) {
-	return isFile(getFilePath(otherSourceFolder, 'build-common-plugins.xml'));
+	return getPluginSDKRoot(otherSourceFolder) != null;
 };
 
 exports.createProject = createProject;
