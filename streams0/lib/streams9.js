@@ -1,6 +1,7 @@
 var comparators = require('comparators').default;
 var fs = require('fs');
 var highland = require('highland');
+var path = require('path');
 var streams2 = require('./streams2');
 var streams5 = require('./streams5');
 var streams6 = require('./streams6');
@@ -108,6 +109,7 @@ function createProjectWorkspace(coreDetails, moduleDetails, pluginDetails) {
 
 	libraryFilesStream
 		.filter(keyExistsInObject('group'))
+		.append(getGradleLibrary())
 		.doto(setLibraryName)
 		.map(getLibraryXML)
 		.each(saveContent);
@@ -143,21 +145,33 @@ function fixLibraryDependencies(moduleVersions, module) {
 	}
 
 	var ownVersion = moduleVersions[module.moduleName];
-	var moduleHasWebroot = module.webrootFolders.length > 0;
+	var isThirdPartyModule = (module.modulePath.indexOf('sdk') != -1) ||
+		(module.modulePath.indexOf('test') != -1) ||
+		(module.modulePath.indexOf('third-party') != -1);
 
 	for (var i = module.libraryDependencies.length - 1; i >= 0; i--) {
 		var dependency = module.libraryDependencies[i];
 
+		if ((ownVersion.bundleName == dependency.name) || isThirdPartyModule) {
+			dependency.exported = true;
+		}
+	}
+
+	if (module.moduleName.indexOf('gradle-') == 0) {
+		var libraryDependency = {
+			name: 'gradlew'
+		};
+
+		module.libraryDependencies.push(libraryDependency);
+	}
+
+	var moduleHasWebroot = module.webrootFolders.length > 0;
+
+	for (var i = module.libraryDependencies.length - 1; i >= 0; i--) {
+		var dependency = module.libraryDependencies[i];
 		var dependencyGroup = dependency.group;
 
 		if (!dependencyGroup || (dependencyGroup.indexOf('com.liferay') != 0)) {
-			if ((ownVersion.bundleName == dependency.name) ||
-				(module.modulePath.indexOf('test') != -1) ||
-				(module.modulePath.indexOf('third-party') != -1)) {
-
-				dependency.exported = true;
-			}
-
 			continue;
 		}
 
@@ -193,6 +207,19 @@ function fixLibraryDependencies(moduleVersions, module) {
 function fixProjectDependencies(moduleVersions, addAsLibrary, module) {
 	if (!('projectDependencies' in module)) {
 		return module;
+	}
+
+	var ownVersion = moduleVersions[module.moduleName];
+	var isThirdPartyModule = (module.modulePath.indexOf('sdk') != -1) ||
+		(module.modulePath.indexOf('test') != -1) ||
+		(module.modulePath.indexOf('third-party') != -1);
+
+	for (var i = module.projectDependencies.length - 1; i >= 0; i--) {
+		var dependency = module.projectDependencies[i];
+
+		if ((ownVersion.bundleName == dependency.name) || isThirdPartyModule) {
+			dependency.exported = true;
+		}
 	}
 
 	var moduleHasWebroot = module.webrootFolders.length > 0;
@@ -234,6 +261,42 @@ function fixProjectDependencies(moduleVersions, addAsLibrary, module) {
 	}
 
 	return module;
+};
+
+function getFirstSubFolder(folder) {
+	var filePaths = fs.readdirSync(folder)
+		.map(getFilePath(folder))
+		.filter(isDirectory);
+
+	return filePaths[0];
+};
+
+function getGradleLibrary() {
+	var parentFolder = '.gradle/wrapper/dists';
+
+	if (!isDirectory(parentFolder)) {
+		return {
+			name: 'gradlew',
+			libraryPaths: []
+		}
+	}
+
+	var binFolder = getFirstSubFolder(parentFolder);
+	var hashFolder = getFirstSubFolder(binFolder);
+	var gradleFolder = getFirstSubFolder(hashFolder);
+	var libFolder = getFilePath(gradleFolder, 'lib');
+
+	var gradleName = path.basename(gradleFolder);
+	var gradleVersion = gradleName.substring(gradleName.indexOf('-') + 1);
+	var filePaths = fs.readdirSync(libFolder).map(getFilePath(libFolder)).filter(isFile);
+
+	var pluginFolder = getFilePath(libFolder, 'plugins');
+	var pluginPaths = fs.readdirSync(pluginFolder).map(getFilePath(pluginFolder)).filter(isFile);
+
+	return {
+		name: 'gradlew',
+		libraryPaths: filePaths.concat(pluginPaths)
+	};
 };
 
 function getGradleLibraryPaths(library) {
@@ -328,6 +391,10 @@ function getJarLibraryXML(library) {
 };
 
 function getLibraryPaths(library) {
+	if (library.libraryPaths) {
+		return library.libraryPaths;
+	}
+
 	var mavenLibraryPaths = getMavenLibraryPaths(library);
 
 	if (mavenLibraryPaths.length != 0) {
