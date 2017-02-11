@@ -101,12 +101,30 @@ function getModuleXML(module) {
 	};
 };
 
+function getOutputURLElements(module) {
+	var outputFolder = 'classes';
+
+	if (module.excludeFolders.indexOf('docroot/WEB-INF/classes') != -1) {
+		outputFolder = 'docroot/WEB-INF/classes';
+	}
+
+	var outputURLElements = ['<output url="file://$MODULE_DIR$/' + outputFolder + '" />'];
+
+	if (module.testSourceFolders.length > 0) {
+		outputURLElements.push('<output-test url="file://$MODULE_DIR$/test-classes" />');
+	}
+
+	return outputURLElements;
+};
+
 function getNewModuleRootManagerXML(module) {
-	var newModuleRootManagerXML = [
-		'<output url="file://$MODULE_DIR$/classes" />',
-		'<output-test url="file://$MODULE_DIR$/test-classes" />',
-		'<content url="file://$MODULE_DIR$">'
-	];
+	var newModuleRootManagerXML = getOutputURLElements(module);
+
+	if (module.testSourceFolders.length > 0) {
+		newModuleRootManagerXML.push('<output-test url="file://$MODULE_DIR$/test-classes" />');
+	}
+
+	newModuleRootManagerXML.push('<content url="file://$MODULE_DIR$">');
 
 	newModuleRootManagerXML = newModuleRootManagerXML.concat(
 		module.sourceFolders.map(highland.partial(getSourceFolderElement, 'isTestSource', 'false')),
@@ -171,4 +189,5 @@ exports.getIntellijXML = getIntellijXML;
 exports.getModuleIMLPath = getModuleIMLPath;
 exports.getModuleXML = getModuleXML;
 exports.getNewModuleRootManagerXML = getNewModuleRootManagerXML;
+exports.getOutputURLElements = getOutputURLElements;
 exports.saveContent = saveContent;

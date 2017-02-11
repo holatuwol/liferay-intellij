@@ -201,30 +201,7 @@ function getModuleXML(module) {
 };
 
 function getNewModuleRootManagerXML(module) {
-	var newModuleRootManagerXML = [
-		'<output url="file://$MODULE_DIR$/classes" />',
-		'<output-test url="file://$MODULE_DIR$/test-classes" />',
-		'<content url="file://$MODULE_DIR$">'
-	];
-
-	newModuleRootManagerXML = newModuleRootManagerXML.concat(
-		module.sourceFolders.map(highland.partial(getSourceFolderElement, 'isTestSource', 'false')),
-		module.resourceFolders.map(highland.partial(getSourceFolderElement, 'type', 'java-resource')),
-		module.testSourceFolders.map(highland.partial(getSourceFolderElement, 'isTestSource', 'true')),
-		module.testResourceFolders.map(highland.partial(getSourceFolderElement, 'type', 'java-test-resource')),
-		module.excludeFolders.map(getExcludeFolderElement)
-	);
-
-	newModuleRootManagerXML.push('</content>');
-	newModuleRootManagerXML.push('<orderEntry type="inheritedJdk" />');
-	newModuleRootManagerXML.push('<orderEntry type="sourceFolder" forTests="false" />');
-
-	if (module.projectDependencies) {
-		var projectOrderEntryElements = module.projectDependencies
-			.map(highland.partial(getModuleOrderEntryElement, module));
-
-		newModuleRootManagerXML = newModuleRootManagerXML.concat(projectOrderEntryElements);
-	}
+	var newModuleRootManagerXML = [streams7.getNewModuleRootManagerXML(module)];
 
 	if (module.libraryDependencies) {
 		var libraryOrderEntryElements = module.libraryDependencies
@@ -298,6 +275,7 @@ exports.getLibraryOrderEntryElement = getLibraryOrderEntryElement;
 exports.getLibraryRootElement = getLibraryRootElement;
 exports.getLibraryXML = getLibraryXML;
 exports.getModuleXML = getModuleXML;
+exports.getNewModuleRootManagerXML = getNewModuleRootManagerXML;
 exports.getPomDependencyPaths = getPomDependencyPaths;
 exports.isFirstOccurrence = isFirstOccurrence;
 exports.isSameLibraryDependency = isSameLibraryDependency;
