@@ -84,11 +84,23 @@ function getModuleGroupName(module) {
 };
 
 function getModuleOrderEntryElement(module, projectDependency) {
-	var isTestDependency = (projectDependency.name.indexOf('-test') != -1) &&
-		((module.moduleName.indexOf('-test') == -1) || (module.modulePath.indexOf('modules/') == 0));
+	var isTestDependency = false;
+
+	if (module.modulePath.indexOf('/sdk/') == -1) {
+		if (projectDependency.name.indexOf('-test') != -1) {
+			isTestDependency = (module.modulePath.indexOf('modules/') == 0) ||
+				(module.moduleName.indexOf('-test') == -1);
+		}
+		else if (module.moduleName.indexOf('-test') != -1) {
+			isTestDependency = (module.modulePath.indexOf('modules/') == 0);
+		}
+	}
 
 	if (isTestDependency) {
 		return '<orderEntry type="module" module-name="' + projectDependency.name + '" scope="TEST" />';
+	}
+	else if (projectDependency.exported) {
+		return '<orderEntry type="module" module-name="' + projectDependency.name + '" exported="" />';
 	}
 	else {
 		return '<orderEntry type="module" module-name="' + projectDependency.name + '" />';
