@@ -9,6 +9,7 @@ var streams7 = require('./streams7');
 var streams8 = require('./streams8');
 var xmlbuilder = require('xmlbuilder');
 
+var flatten = streams8.flatten;
 var getComponentXML = streams6.getComponentXML;
 var getExcludeFolderElement = streams6.getExcludeFolderElement;
 var getFacetManagerXML = streams6.getFacetManagerXML;
@@ -79,6 +80,7 @@ function createProjectWorkspace(coreDetails, moduleDetails, pluginDetails) {
 	var moduleFilesStream = detailsStream.observe();
 	var projectFileStream = detailsStream.observe();
 	var libraryFilesStream = detailsStream.observe();
+	var tagLibrariesStream = detailsStream.observe();
 
 	moduleFilesStream
 		.map(getModuleXML)
@@ -114,6 +116,16 @@ function createProjectWorkspace(coreDetails, moduleDetails, pluginDetails) {
 		.map(getLibraryXML)
 		.each(saveContent);
 
+	tagLibrariesStream
+		.flatMap(getTagLibraryPaths)
+		.reduce({}, getTagLibraryURIs)
+		.flatMap(highland.pairs)
+		.sort()
+		.map(getTagLibraryResourceElement)
+		.collect()
+		.map(getMiscXML)
+		.each(saveContent);
+
 	detailsStream.done(function() {});
 
 	addGitVersionControlSystem();
@@ -137,7 +149,7 @@ function addGitVersionControlSystem() {
 		name: '.idea/vcs.xml',
 		content: vcsXML.join('\n')
 	});
-}
+};
 
 function fixLibraryDependencies(moduleVersions, module) {
 	if (!('libraryDependencies' in module)) {
@@ -261,6 +273,10 @@ function fixProjectDependencies(moduleVersions, addAsLibrary, module) {
 	}
 
 	return module;
+};
+
+function getFilePaths(folder) {
+	return fs.readdirSync(folder).map(getFilePath(folder));
 };
 
 function getFirstSubFolder(folder) {
@@ -586,6 +602,42 @@ function getMavenSourcePath(mavenBinaryPath) {
 	return mavenBinaryPath.substring(0, pos) + '-sources' + mavenBinaryPath.substring(pos);
 };
 
+function getMiscXML(resourceElements) {
+	var miscXMLContent = [
+		'<?xml version="1.0" encoding="UTF-8"?>',
+		'<project version="4">',
+		'<component name="ProjectResources">'
+	];
+
+	miscXMLContent = miscXMLContent.concat(resourceElements);
+
+	miscXMLContent.push('</component>');
+
+	var buildPropertiesContent = fs.readFileSync('build.properties');
+
+	var languageLevel = '1.8';
+	var languageLevelRegex = /javac.source=([0-9\.]*)/g;
+	var matchResult = languageLevelRegex.exec(buildPropertiesContent);
+
+	if (matchResult) {
+		languageLevel = matchResult[1];
+	}
+
+	var languageLevelName = 'JDK_' + languageLevel.replace('.', '_');
+
+	var projectRootManager = '<component name="ProjectRootManager" version="2" languageLevel="' +
+		languageLevelName + '" default="false" assert-keyword="true" jdk-15="true" ' +
+			'project-jdk-name="1.8" project-jdk-type="JavaSDK" />';
+
+	miscXMLContent.push(projectRootManager);
+	miscXMLContent.push('</project>');
+
+	return {
+		name: '.idea/misc.xml',
+		content: miscXMLContent.join('\n')
+	}
+};
+
 function getModuleXML(module) {
 	return {
 		fileName: getModuleIMLPath(module),
@@ -617,8 +669,55 @@ function getNewModuleRootManagerXML(module) {
 	return newModuleRootManagerXML.join('\n');
 };
 
+function getTagLibraryURIs(accumulator, tagLibraryPath) {
+	var tagLibraryContent = fs.readFileSync(tagLibraryPath, {encoding: 'UTF8'});
+
+	var pos1 = tagLibraryContent.indexOf('<uri>') + 5;
+	var pos2 = tagLibraryContent.indexOf('</uri>', pos1);
+
+	var tagLibraryURI = tagLibraryContent.substring(pos1, pos2);
+
+	if (!accumulator.hasOwnProperty(tagLibraryURI) ||
+		(tagLibraryPath.indexOf('portal-web') == 0)) {
+
+		accumulator[tagLibraryURI] = tagLibraryPath;
+	}
+
+	return accumulator;
+};
+
+function getTagLibraryResourceElement(pair) {
+	return '<resource url="' + pair[0] + '" location="$PROJECT_DIR$/' + pair[1] + '" />';
+};
+
+function getTagLibraryPaths(module) {
+	var sourceFolders = module.sourceFolders
+		.map(highland.flip(getFilePath, 'META-INF'));
+
+	var resourceFolders = module.resourceFolders
+		.map(highland.flip(getFilePath, 'META-INF'));
+
+	var webrootFolders = module.webrootFolders
+		.map(highland.flip(getFilePath, 'WEB-INF/tld'));
+
+	var searchFolders = sourceFolders
+		.concat(resourceFolders)
+		.concat(webrootFolders)
+		.map(getFilePath(module.modulePath))
+		.filter(isDirectory);
+
+	return searchFolders
+		.map(getFilePaths)
+		.reduce(flatten, [])
+		.filter(isTagLibraryFile);
+};
+
 function isDevelopmentLibrary(libraryName) {
-	return libraryName.indexOf('.') == libraryName.length - 4;
+	return libraryName.indexOf('.jar') == libraryName.length - 4;
+};
+
+function isTagLibraryFile(fileName) {
+	return fileName.indexOf('.tld') == fileName.length - 4;
 };
 
 function setCoreBundleVersions(accumulator, module) {

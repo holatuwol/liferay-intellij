@@ -8,6 +8,7 @@ var streams7 = require('./streams7');
 var streams8 = require('./streams8');
 var xmlbuilder = require('xmlbuilder');
 
+var flatten = streams8.flatten;
 var getComponentXML = streams6.getComponentXML;
 var getExcludeFolderElement = streams6.getExcludeFolderElement;
 var getFacetManagerXML = streams6.getFacetManagerXML;
@@ -381,7 +382,7 @@ function getNewModuleRootManagerXML(module) {
 };
 
 function isDevelopmentLibrary(libraryName) {
-	return libraryName.indexOf('.') == libraryName.length - 4;
+	return libraryName.indexOf('.jar') == libraryName.length - 4;
 };
 
 function setCoreBundleVersions(accumulator, module) {

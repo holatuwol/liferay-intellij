@@ -270,6 +270,7 @@ function setLibraryName(library) {
 };
 
 exports.createProjectWorkspace = createProjectWorkspace;
+exports.flatten = flatten;
 exports.getGradleLibraryPaths = getGradleLibraryPaths;
 exports.getLibraryOrderEntryElement = getLibraryOrderEntryElement;
 exports.getLibraryRootElement = getLibraryRootElement;

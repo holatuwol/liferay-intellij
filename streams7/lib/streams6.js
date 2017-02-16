@@ -120,10 +120,6 @@ function getOutputURLElements(module) {
 function getNewModuleRootManagerXML(module) {
 	var newModuleRootManagerXML = getOutputURLElements(module);
 
-	if (module.testSourceFolders.length > 0) {
-		newModuleRootManagerXML.push('<output-test url="file://$MODULE_DIR$/test-classes" />');
-	}
-
 	newModuleRootManagerXML.push('<content url="file://$MODULE_DIR$">');
 
 	newModuleRootManagerXML = newModuleRootManagerXML.concat(
