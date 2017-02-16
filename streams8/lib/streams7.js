@@ -86,14 +86,8 @@ function getModuleGroupName(module) {
 function getModuleOrderEntryElement(module, projectDependency) {
 	var isTestDependency = false;
 
-	if (module.modulePath.indexOf('/sdk/') == -1) {
-		if (projectDependency.name.indexOf('-test') != -1) {
-			isTestDependency = (module.modulePath.indexOf('modules/') == 0) ||
-				(module.moduleName.indexOf('-test') == -1);
-		}
-		else if (module.moduleName.indexOf('-test') != -1) {
-			isTestDependency = (module.modulePath.indexOf('modules/') == 0);
-		}
+	if ((module.testSourceFolders.length > 0) && (module.modulePath.indexOf('modules/sdk/') == -1)) {
+		isTestDependency = (module.sourceFolders.length == 0) || (projectDependency.name.indexOf('-test') != -1);
 	}
 
 	if (isTestDependency) {
