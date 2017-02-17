@@ -19,7 +19,6 @@ var getLibraryRootElement = streams8.getLibraryRootElement;
 var getModuleElement = streams7.getModuleElement;
 var getModulesElement = streams7.getModulesElement;
 var getModuleIMLPath = streams6.getModuleIMLPath;
-var getModuleOrderEntryElement = streams7.getModuleOrderEntryElement;
 var getPomDependencyPaths = streams8.getPomDependencyPaths;
 var getSourceFolderElement = streams6.getSourceFolderElement;
 var getWorkspaceModulesXML = streams7.getWorkspaceModulesXML;
@@ -47,8 +46,14 @@ function createProjectObjectModels(coreDetails, moduleDetails) {
 };
 
 function createProjectWorkspace(coreDetails, moduleDetails) {
-	coreDetails = coreDetails.map(sortModuleAttributes);
-	moduleDetails = moduleDetails.map(sortModuleAttributes);
+	var moduleVersions = coreDetails.reduce(setCoreBundleVersions, {});
+	moduleVersions = moduleDetails.reduce(setModuleBundleVersions, moduleVersions);
+
+	moduleDetails.forEach(highland.partial(fixLibraryDependencies, moduleVersions));
+	moduleDetails.forEach(highland.partial(fixProjectDependencies, moduleVersions, true));
+
+	coreDetails.forEach(sortModuleAttributes);
+	moduleDetails.forEach(sortModuleAttributes);
 
 	var moduleStream = highland(moduleDetails);
 	var coreStream = highland(coreDetails);
@@ -103,25 +108,18 @@ function createProjectWorkspace(coreDetails, moduleDetails) {
 
 function fixLibraryDependencies(moduleVersions, module) {
 	if (!('libraryDependencies' in module)) {
-		return module;
+		module.libraryDependencies = [];
 	}
 
 	var ownVersion = moduleVersions[module.moduleName];
+
 	var moduleHasWebroot = module.webrootFolders.length > 0;
 
 	for (var i = module.libraryDependencies.length - 1; i >= 0; i--) {
 		var dependency = module.libraryDependencies[i];
-
 		var dependencyGroup = dependency.group;
 
 		if (!dependencyGroup || (dependencyGroup.indexOf('com.liferay') != 0)) {
-			if ((ownVersion.bundleName == dependency.name) ||
-				(module.modulePath.indexOf('test') != -1) ||
-				(module.modulePath.indexOf('third-party') != -1)) {
-
-				dependency.exported = true;
-			}
-
 			continue;
 		}
 
@@ -133,7 +131,8 @@ function fixLibraryDependencies(moduleVersions, module) {
 
 		var moduleVersion = moduleVersions[dependencyName];
 
-		if (moduleHasWebroot && dependency.hasWebroot) {
+		if (moduleHasWebroot && moduleVersion.hasWebroot) {
+			dependency.hasWebroot = true;
 			continue;
 		}
 
@@ -189,7 +188,8 @@ function fixProjectDependencies(moduleVersions, addAsLibrary, module) {
 			type: 'library',
 			group: 'com.liferay',
 			name: moduleVersion.bundleName,
-			version: dependency.version || moduleVersion.version
+			version: dependency.version || moduleVersion.version,
+			hasWebroot: true
 		};
 
 		module.libraryDependencies.push(libraryDependency);
@@ -237,6 +237,10 @@ function getGradleLibraryPaths(library) {
 };
 
 function getLibraryPaths(library) {
+	if (library.libraryPaths) {
+		return library.libraryPaths;
+	}
+
 	var mavenLibraryPaths = getMavenLibraryPaths(library);
 
 	if (mavenLibraryPaths.length != 0) {

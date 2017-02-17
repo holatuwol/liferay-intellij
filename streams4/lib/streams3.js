@@ -122,6 +122,10 @@ function getModuleOverview(folder) {
 };
 
 function isModuleFolder(includeSubRepos, folder) {
+	if ((folder.indexOf('/sdk/') != -1) && (folder.indexOf('-templates') != -1)) {
+		return false;
+	}
+
 	var getPath = getFilePath.bind(null, folder);
 
 	var subfiles = ['bnd.bnd', 'build.gradle'];

@@ -16,11 +16,12 @@ var getLibraryDependency = streams4.getLibraryDependency;
 var getModuleElement = streams7.getModuleElement;
 var getModulesElement = streams7.getModulesElement;
 var getModuleIMLPath = streams6.getModuleIMLPath;
-var getModuleOrderEntryElement = streams7.getModuleOrderEntryElement;
+var getOrderEntryElement = streams7.getOrderEntryElement;
 var getSourceFolderElement = streams6.getSourceFolderElement;
 var getWorkspaceModulesXML = streams7.getWorkspaceModulesXML;
 var isDirectory = streams2.isDirectory;
 var isFile = streams2.isFile;
+var isTestDependency = streams7.isTestDependency;
 var saveContent = streams6.saveContent;
 
 function createProjectWorkspace(coreDetails, moduleDetails) {
@@ -106,14 +107,17 @@ function getGradleLibraryPaths(library) {
 	return jarPaths;
 };
 
+function getLibraryOrderEntryElement(module, dependency) {
+	var extraAttributes = '';
 
-function getLibraryOrderEntryElement(library) {
-	if (library.exported) {
-		return '<orderEntry type="library" name="' + library['libraryName'] + '" exported="" level="project"/>';
+	if (isTestDependency(module, dependency)) {
+		extraAttributes = 'scope="TEST" ';
 	}
-	else {
-		return '<orderEntry type="library" name="' + library['libraryName'] + '" level="project"/>';
+	else if (dependency.exported) {
+		extraAttributes = 'exported="" ';
 	}
+
+	return '<orderEntry type="library" name="' + dependency.libraryName + '" level="project" ' + extraAttributes + '/>';
 };
 
 function getLibraryPaths(library) {
@@ -207,7 +211,7 @@ function getNewModuleRootManagerXML(module) {
 		var libraryOrderEntryElements = module.libraryDependencies
 			.filter(highland.partial(keyExistsInObject, 'group'))
 			.map(setLibraryName)
-			.map(getLibraryOrderEntryElement);
+			.map(highland.partial(getLibraryOrderEntryElement, module));
 
 		newModuleRootManagerXML = newModuleRootManagerXML.concat(libraryOrderEntryElements);
 	}

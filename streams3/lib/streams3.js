@@ -52,6 +52,10 @@ function getModuleFolders(portalSourceFolder, moduleSourceFolder, includeSubRepo
 };
 
 function isModuleFolder(includeSubRepos, folder) {
+	if ((folder.indexOf('/sdk/') != -1) && (folder.indexOf('-templates') != -1)) {
+		return false;
+	}
+
 	if (!isFile(getFilePath(folder, 'bnd.bnd'))) {
 		return false;
 	}

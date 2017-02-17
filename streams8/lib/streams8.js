@@ -18,6 +18,7 @@ var getModuleElement = streams7.getModuleElement;
 var getModulesElement = streams7.getModulesElement;
 var getModuleIMLPath = streams6.getModuleIMLPath;
 var getModuleOrderEntryElement = streams7.getModuleOrderEntryElement;
+var getOrderEntryElement = streams7.getOrderEntryElement;
 var getSourceFolderElement = streams6.getSourceFolderElement;
 var getWorkspaceModulesXML = streams7.getWorkspaceModulesXML;
 var isDirectory = streams2.isDirectory;

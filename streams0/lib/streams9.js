@@ -20,7 +20,6 @@ var getLibraryRootElement = streams8.getLibraryRootElement;
 var getModuleElement = streams7.getModuleElement;
 var getModulesElement = streams7.getModulesElement;
 var getModuleIMLPath = streams6.getModuleIMLPath;
-var getModuleOrderEntryElement = streams7.getModuleOrderEntryElement;
 var getPomDependencyPaths = streams8.getPomDependencyPaths;
 var getSourceFolderElement = streams6.getSourceFolderElement;
 var getWorkspaceModulesXML = streams7.getWorkspaceModulesXML;
@@ -59,17 +58,18 @@ function createProjectObjectModels(coreDetails, moduleDetails) {
 
 function createProjectWorkspace(coreDetails, moduleDetails, pluginDetails) {
 	if (pluginDetails) {
-		pluginDetails = pluginDetails.map(sortModuleAttributes);
+		pluginDetails.forEach(sortModuleAttributes);
 	}
 
 	var moduleVersions = coreDetails.reduce(setCoreBundleVersions, {});
 	moduleVersions = moduleDetails.reduce(setModuleBundleVersions, moduleVersions);
 
-	moduleDetails = moduleDetails.map(highland.partial(fixLibraryDependencies, moduleVersions));
-	moduleDetails = moduleDetails.map(highland.partial(fixProjectDependencies, moduleVersions, true));
+	moduleDetails.forEach(highland.partial(fixLibraryDependencies, moduleVersions));
+	moduleDetails.forEach(highland.partial(fixProjectDependencies, moduleVersions, true));
+	moduleDetails.forEach(checkExportDependencies);
 
-	coreDetails = coreDetails.map(sortModuleAttributes);
-	moduleDetails = moduleDetails.map(sortModuleAttributes);
+	coreDetails.forEach(sortModuleAttributes);
+	moduleDetails.forEach(sortModuleAttributes);
 
 	var moduleStream = highland(moduleDetails);
 	var coreStream = highland(coreDetails);
@@ -151,31 +151,61 @@ function addGitVersionControlSystem() {
 	});
 };
 
-function fixLibraryDependencies(moduleVersions, module) {
-	if (!('libraryDependencies' in module)) {
-		return module;
-	}
+function checkExportDependencies(module) {
+	var isTestModule = (module.moduleName.indexOf('test') != -1);
 
-	var ownVersion = moduleVersions[module.moduleName];
-	var isThirdPartyModule = (module.modulePath.indexOf('sdk') != -1) ||
-		(module.modulePath.indexOf('test') != -1) ||
-		(module.modulePath.indexOf('third-party') != -1);
+	if (isTestModule) {
+		var isDevelopmentLibrary = function(dependency) {
+			return dependency.name == 'development';
+		};
 
-	for (var i = module.libraryDependencies.length - 1; i >= 0; i--) {
-		var dependency = module.libraryDependencies[i];
+		module.libraryDependencies = module.libraryDependencies || [];
 
-		if ((ownVersion.bundleName == dependency.name) || isThirdPartyModule) {
-			dependency.exported = true;
+		if (!module.libraryDependencies.some(isDevelopmentLibrary)) {
+			var developmentDependency = {
+				type: 'library',
+				name: 'development',
+				libraryName: 'development'
+			};
+
+			module.libraryDependencies.push(developmentDependency);
 		}
 	}
 
 	if (module.moduleName.indexOf('gradle-') == 0) {
 		var libraryDependency = {
-			name: 'gradlew'
+			type: 'library',
+			name: 'gradlew',
+			libraryName: 'gradlew'
 		};
 
 		module.libraryDependencies.push(libraryDependency);
 	}
+
+	var isThirdPartyModule = (module.modulePath.indexOf('sdk') != -1) ||
+		(module.modulePath.indexOf('third-party') != -1);
+
+	var checkExportDependency = function(dependency) {
+		if (isTestModule || isThirdPartyModule) {
+			dependency.exported = true;
+		}
+	};
+
+	if ('libraryDependencies' in module) {
+		module.libraryDependencies.forEach(checkExportDependency);
+	}
+
+	if ('projectDependencies' in module) {
+		module.projectDependencies.forEach(checkExportDependency);
+	}
+};
+
+function fixLibraryDependencies(moduleVersions, module) {
+	if (!('libraryDependencies' in module)) {
+		module.libraryDependencies = [];
+	}
+
+	var ownVersion = moduleVersions[module.moduleName];
 
 	var moduleHasWebroot = module.webrootFolders.length > 0;
 
@@ -219,19 +249,6 @@ function fixLibraryDependencies(moduleVersions, module) {
 function fixProjectDependencies(moduleVersions, addAsLibrary, module) {
 	if (!('projectDependencies' in module)) {
 		return module;
-	}
-
-	var ownVersion = moduleVersions[module.moduleName];
-	var isThirdPartyModule = (module.modulePath.indexOf('sdk') != -1) ||
-		(module.modulePath.indexOf('test') != -1) ||
-		(module.modulePath.indexOf('third-party') != -1);
-
-	for (var i = module.projectDependencies.length - 1; i >= 0; i--) {
-		var dependency = module.projectDependencies[i];
-
-		if ((ownVersion.bundleName == dependency.name) || isThirdPartyModule) {
-			dependency.exported = true;
-		}
 	}
 
 	var moduleHasWebroot = module.webrootFolders.length > 0;
@@ -661,7 +678,7 @@ function getNewModuleRootManagerXML(module) {
 		var coreLibraryOrderEntryElements = module.libraryDependencies
 			.filter(highland.compose(highland.not, keyExistsInObject('group')))
 			.map(setLibraryName)
-			.map(getLibraryOrderEntryElement);
+			.map(highland.partial(getLibraryOrderEntryElement, module));
 
 		newModuleRootManagerXML = newModuleRootManagerXML.concat(coreLibraryOrderEntryElements);
 	}

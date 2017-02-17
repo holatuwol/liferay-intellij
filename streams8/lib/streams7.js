@@ -83,22 +83,17 @@ function getModuleGroupName(module) {
 	return 'portal';
 };
 
-function getModuleOrderEntryElement(module, projectDependency) {
-	var isTestDependency = false;
+function getModuleOrderEntryElement(module, dependency) {
+	var extraAttributes = '';
 
-	if ((module.testSourceFolders.length > 0) && (module.modulePath.indexOf('modules/sdk/') == -1)) {
-		isTestDependency = (module.sourceFolders.length == 0) || (projectDependency.name.indexOf('-test') != -1);
+	if (isTestDependency(module, dependency)) {
+		extraAttributes = 'scope="TEST" ';
+	}
+	else if (dependency.exported) {
+		extraAttributes = 'exported="" ';
 	}
 
-	if (isTestDependency) {
-		return '<orderEntry type="module" module-name="' + projectDependency.name + '" scope="TEST" />';
-	}
-	else if (projectDependency.exported) {
-		return '<orderEntry type="module" module-name="' + projectDependency.name + '" exported="" />';
-	}
-	else {
-		return '<orderEntry type="module" module-name="' + projectDependency.name + '" />';
-	}
+	return '<orderEntry type="module" module-name="' + dependency.name + '" ' + extraAttributes + '/>';
 };
 
 function getModulesElement(moduleElements) {
@@ -146,10 +141,18 @@ function getWorkspaceModulesXML(modulesElement) {
 	};
 };
 
+function isTestDependency(module, dependency) {
+	if ((module.testSourceFolders) && (module.testSourceFolders.length > 0) && (module.modulePath.indexOf('modules/sdk/') == -1)) {
+		return (module.sourceFolders.length == 0) || (dependency.name.indexOf('-test') != -1);
+	}
+
+	return false;
+};
+
 exports.createProjectWorkspace = createProjectWorkspace;
 exports.getModuleElement = getModuleElement;
-exports.getModuleOrderEntryElement = getModuleOrderEntryElement;
 exports.getModulesElement = getModulesElement;
 exports.getModuleXML = getModuleXML;
 exports.getNewModuleRootManagerXML = getNewModuleRootManagerXML;
 exports.getWorkspaceModulesXML = getWorkspaceModulesXML;
+exports.isTestDependency = isTestDependency;
