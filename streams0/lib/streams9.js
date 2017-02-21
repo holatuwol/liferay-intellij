@@ -31,6 +31,8 @@ var keyExistsInObject = highland.ncurry(2, streams8.keyExistsInObject);
 var saveContent = streams6.saveContent;
 var setLibraryName = streams8.setLibraryName;
 
+var projectRepositories = [];
+
 function createProjectObjectModels(coreDetails, moduleDetails) {
 	var moduleVersions = coreDetails.reduce(setCoreBundleVersions, {});
 	moduleVersions = moduleDetails.reduce(setModuleBundleVersions, moduleVersions);
@@ -589,20 +591,7 @@ function getMavenProject(module) {
 			packaging: 'pom',
 			dependencies: dependencyObjects,
 			repositories: {
-				repository: [
-					{
-						id: 'default',
-						name: 'Apache',
-						url: 'http://repo.maven.apache.org/maven2',
-						layout: 'default'
-					},
-					{
-						id: 'liferay',
-						name: 'Liferay',
-						url: 'http://repository.liferay.com/nexus/content/repositories/public',
-						layout: 'default'
-					}
-				]
+				repository: getProjectRepositories
 			}
 		}
 	};
@@ -685,6 +674,51 @@ function getNewModuleRootManagerXML(module) {
 
 	return newModuleRootManagerXML.join('\n');
 };
+
+function getProjectRepositories() {
+	if (projectRepositories.length > 0) {
+		return projectRepositories;
+	}
+
+	var tempProjectRepositories = [];
+
+	tempProjectRepositories.push({
+		id: 'apache',
+		name: 'Apache',
+		url: 'http://repo.maven.apache.org/maven2',
+		layout: 'default'
+	});
+
+	tempProjectRepositories.push({
+		id: 'liferay-public',
+		name: 'Liferay Public',
+		url: 'http://repository.liferay.com/nexus/content/repositories/public',
+		layout: 'default'
+	});
+
+	var buildPropertiesContent = fs.readFileSync('build.properties');
+
+	var privateRepositoryRegex = /build.repository.private.password=(\S*)\s*build.repository.private.url=https:\/\/(\S*)\s*build.repository.private.username=(\S*)/g;
+
+	var matchResult = privateRepositoryRegex.exec(buildPropertiesContent);
+
+	if (matchResult) {
+		var repositoryURL = 'https://' +
+			encodeURIComponent(matchResult[3]) + ':' + encodeURIComponent(matchResult[1]) +
+				'@' + matchResult[2];
+
+		tempProjectRepositories.push({
+			id: 'liferay-private',
+			name: 'Liferay Private',
+			url: repositoryURL,
+			layout: 'default'
+		});
+	}
+
+	projectRepositories = tempProjectRepositories;
+
+	return projectRepositories;
+}
 
 function getTagLibraryURIs(accumulator, tagLibraryPath) {
 	var tagLibraryContent = fs.readFileSync(tagLibraryPath, {encoding: 'UTF8'});
