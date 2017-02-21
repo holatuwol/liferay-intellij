@@ -72,7 +72,7 @@ function getModuleDependencies(folder) {
 
 	var dependencyText = dependencyTextResult[1];
 
-	var libraryDependencyRegex = /\sgroup: "([^"]*)", name: "([^"]*)", [^\n]*version: "([^"]*)"/;
+	var libraryDependencyRegex = /(?:test|compile|provided)[^\n]*\sgroup: "([^"]*)", name: "([^"]*)", [^\n]*version: "([^"]*)"/;
 	var projectDependencyRegex = /\sproject\(":[^"]*:([^"]*)"/;
 
 	var getLibraryDependencies = highland.partial(getDependenciesWithStreams, dependencyText, getLibraryDependency);
