@@ -109,7 +109,7 @@ function getCoreDetails(folder) {
 
 	var moduleDetailsArray = [moduleOverview, moduleIncludeFolders, moduleExcludeFolders, moduleDependencies];
 
-	return moduleDetailsArray.reduce(util._extend, {});
+	return moduleDetailsArray.reduce(util._extend, {type: 'portal'});
 };
 
 function getCoreFolders() {
@@ -176,7 +176,7 @@ function getPluginDetails(folder) {
 
 	var moduleDetailsArray = [moduleOverview, moduleIncludeFolders, moduleExcludeFolders, moduleDependencies];
 
-	return moduleDetailsArray.reduce(util._extend, {});
+	return moduleDetailsArray.reduce(util._extend, {type: 'plugins-sdk'});
 };
 
 function getPluginFolder(pluginSDKRoot, pluginName) {

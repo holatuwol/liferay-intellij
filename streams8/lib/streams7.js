@@ -1,12 +1,18 @@
 var comparators = require('comparators').default;
+var fs = require('fs');
+var path = require('path');
 var highland = require('highland');
+var streams2 = require('./streams2');
+var streams5 = require('./streams5');
 var streams6 = require('./streams6');
 
 var getExcludeFolderElement = streams6.getExcludeFolderElement;
 var getFacetManagerXML = streams6.getFacetManagerXML;
+var getFilePath = streams5.getFilePath;
 var getModuleIMLPath = streams6.getModuleIMLPath;
 var getIntellijXML = streams6.getIntellijXML;
 var getSourceFolderElement = streams6.getSourceFolderElement;
+var isFile = streams2.isFile;
 var saveContent = streams6.saveContent;
 
 function createProjectWorkspace(coreDetails, moduleDetails) {
@@ -36,6 +42,25 @@ function createProjectWorkspace(coreDetails, moduleDetails) {
 	detailsStream.done(function() {});
 };
 
+function getAncestorFiles(folder, filename) {
+	var ancestorFiles = [];
+
+	var basename = '';
+
+	while ((basename != '.') && (basename != '..')) {
+		var filePath = getFilePath(folder, filename);
+
+		if (isFile(filePath)) {
+			ancestorFiles.push(filePath);
+		}
+
+		folder = path.dirname(folder);
+		basename = path.basename(folder);
+	}
+
+	return ancestorFiles;
+};
+
 function getModuleElement(module) {
 	var moduleIMLPath = getModuleIMLPath(module);
 
@@ -46,41 +71,54 @@ function getModuleElement(module) {
 };
 
 function getModuleGroupName(module) {
-	var pos = module.modulePath.lastIndexOf('/');
-
-	var moduleGroupName = module.modulePath.substring(0, pos);
-
-	var pos = moduleGroupName.indexOf('modules/');
-
-	if (pos == 0) {
-		return moduleGroupName;
+	if (module.type == 'portal') {
+		return 'portal';
 	}
 
-	pos = moduleGroupName.indexOf('/modules/');
+	if (module.type == 'plugins-sdk') {
+		var pluginSDKRoot = path.normalize(getFilePath(module.modulePath, '../../..'));
 
-	if (pos != -1) {
-		return moduleGroupName.substring(pos + 1);
+		return module.modulePath.substring(pluginSDKRoot.length + 1);
 	}
 
-	pos = moduleGroupName.indexOf('/plugins/');
+	var groupPrefix = '';
+	var modulesRoot = '';
 
-	if (pos != -1) {
-		return moduleGroupName.substring(pos + 1);
-	}
+	var gradlePropertiesPaths = getAncestorFiles(module.modulePath, 'gradle.properties');
 
-	pos = moduleGroupName.lastIndexOf('../');
+	for (var i = 0; i < gradlePropertiesPaths.length; i++) {
+		var gradlePropertiesContent = fs.readFileSync(gradlePropertiesPaths[i]);
 
-	if (pos != -1) {
-		moduleGroupName = moduleGroupName.substring(pos + 3);
+		var projectPrefixRegex = /project.path.prefix=:(.*)/g;
+		var matchResult = projectPrefixRegex.exec(gradlePropertiesContent);
 
-		if (moduleGroupName == '..') {
-			moduleGroupName = module.modulePath.substring(module.modulePath.lastIndexOf('/') + 1);
+		if (matchResult) {
+			groupPrefix = 'modules/' + matchResult[1].split(':').join('/');
+			modulesRoot = path.dirname(gradlePropertiesPaths[0]);
+
+			break;
 		}
-
-		return moduleGroupName;
 	}
 
-	return 'portal';
+	if (groupPrefix == '') {
+		modulesRoot = path.dirname(path.dirname(gradlePropertiesPaths[0]));
+	}
+
+	var relativeGroupName = path.dirname(module.modulePath);
+
+	if ((modulesRoot != '') && (modulesRoot != '.')) {
+		relativeGroupName = path.dirname(module.modulePath.substring(modulesRoot.length + 1));
+	}
+
+	if (groupPrefix == '') {
+		return relativeGroupName;
+	}
+	else if (relativeGroupName == '.') {
+		return groupPrefix;
+	}
+	else {
+		return groupPrefix + '/' + relativeGroupName;
+	}
 };
 
 function getModuleOrderEntryElement(module, dependency) {

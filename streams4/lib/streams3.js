@@ -69,7 +69,7 @@ function getModuleDetails(folder) {
 
 	var moduleDetailsArray = [moduleOverview, moduleIncludeFolders, moduleExcludeFolders, moduleDependencies];
 
-	return moduleDetailsArray.reduce(util._extend, {});
+	return moduleDetailsArray.reduce(util._extend, {type: 'module'});
 };
 
 function getModuleExcludeFolders(folder, moduleIncludeFolders) {
