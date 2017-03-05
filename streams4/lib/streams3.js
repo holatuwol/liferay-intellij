@@ -8,6 +8,7 @@ var isDirectory = streams2.isDirectory;
 var isFile = streams2.isFile;
 var isHidden = streams2.isHidden;
 var isRepoModePull = streams2.isRepoModePull;
+var isSymbolicLink = streams2.isSymbolicLink;
 
 var sourceFolders = ['docroot/WEB-INF/service', 'docroot/WEB-INF/src', 'src/main/java'];
 var resourceFolders = ['src/main/resources'];
@@ -31,7 +32,7 @@ var excludeFolderMap = {
 function getFolders(folderPath, maxDepth) {
 	var folders = [];
 
-	if (!isDirectory(folderPath)) {
+	if (!isVisibleDirectory(folderPath)) {
 		return folders;
 	}
 
@@ -152,7 +153,7 @@ function isSubRepo(folder) {
 	var isAnyGitRepoModePull = possibleGitRepoFileLocations
 		.map(getPath)
 		.filter(isFile)
-		.map(fs.readFileSync)
+		.map(readFileSync)
 		.some(isRepoModePull);
 
 	return isAnyGitRepoModePull;
@@ -165,7 +166,11 @@ function isValidSourcePath(moduleRoot, sourceFolder) {
 };
 
 function isVisibleDirectory(filePath) {
-	return isDirectory(filePath) && !isHidden(filePath);
+	return isDirectory(filePath) && !isSymbolicLink(filePath) && !isHidden(filePath);
+};
+
+function readFileSync(filePath) {
+	return fs.readFileSync(filePath);
 };
 
 function updateExcludeFolders(excludeFolders, includeFolder) {

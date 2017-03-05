@@ -97,4 +97,8 @@ function isSubRepo(folder) {
 	return false;
 };
 
+function readFileSync(filePath) {
+	return fs.readFileSync(filePath);
+};
+
 exports.getModuleFolders = getModuleFolders;
