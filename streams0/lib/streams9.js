@@ -108,12 +108,12 @@ function createProjectWorkspace(coreDetails, moduleDetails, pluginDetails) {
 
 	coreLibraryFilesStream
 		.where({'group': undefined})
+		.append(getGradleLibrary())
 		.map(getJarLibraryXML)
 		.each(saveContent);
 
 	libraryFilesStream
 		.filter(keyExistsInObject('group'))
-		.append(getGradleLibrary())
 		.doto(setLibraryName)
 		.map(getLibraryXML)
 		.each(saveContent);
@@ -307,31 +307,9 @@ function getFirstSubFolder(folder) {
 };
 
 function getGradleLibrary() {
-	var parentFolder = '.gradle/wrapper/dists';
-
-	if (!isDirectory(parentFolder)) {
-		return {
-			name: 'gradlew',
-			libraryPaths: []
-		}
-	}
-
-	var binFolder = getFirstSubFolder(parentFolder);
-	var hashFolder = getFirstSubFolder(binFolder);
-	var gradleFolder = getFirstSubFolder(hashFolder);
-	var libFolder = getFilePath(gradleFolder, 'lib');
-
-	var gradleName = path.basename(gradleFolder);
-	var gradleVersion = gradleName.substring(gradleName.indexOf('-') + 1);
-	var filePaths = fs.readdirSync(libFolder).map(getFilePath(libFolder)).filter(isFile);
-
-	var pluginFolder = getFilePath(libFolder, 'plugins');
-	var pluginPaths = fs.readdirSync(pluginFolder).map(getFilePath(pluginFolder)).filter(isFile);
-
 	return {
-		name: 'gradlew',
-		libraryPaths: filePaths.concat(pluginPaths)
-	};
+
+	}
 };
 
 function getGradleLibraryPaths(library) {
@@ -402,7 +380,10 @@ function getJarLibraryTableXML(library) {
 		'<JAVADOC />',
 		'<SOURCES />');
 
-	if (library.name != 'development') {
+	if (library.name == 'gradlew') {
+		libraryTableXML.push('<jarDirectory url="file://$PROJECT_DIR$/.gradle/wrapper/dists" recursive="true" />');
+	}
+	else if (library.name != 'development') {
 		libraryTableXML.push('<jarDirectory url="file://$PROJECT_DIR$/lib/' + library.name + '" recursive="false" />');
 	}
 
