@@ -1,9 +1,11 @@
 var fs = require('fs');
+var highland = require('highland');
 var path = require('path');
 var shelljs = require('shelljs');
 
 var isFile = shelljs.test.bind(shelljs, '-f');
 var isDirectory = shelljs.test.bind(shelljs, '-d');
+var isSymbolicLink = shelljs.test.bind(shelljs, '-L');
 
 function getFilePath(folderPath, fileName) {
 	if (folderPath == '.') {
@@ -20,7 +22,7 @@ function getFilePath(folderPath, fileName) {
 function getFolders(folderPath, maxDepth) {
 	var folders = [];
 
-	if (!isDirectory(folderPath)) {
+	if (!isDirectory(folderPath) || isSymbolicLink(folderPath) || isHidden(folderPath)) {
 		return folders;
 	}
 
@@ -31,7 +33,7 @@ function getFolders(folderPath, maxDepth) {
 
 		var filePath = getFilePath(folderPath, fileName);
 
-		if (isDirectory(filePath) && !isHidden(filePath)) {
+		if (isDirectory(filePath) && !isSymbolicLink(foderPath) && !isHidden(filePath)) {
 			folders.push(filePath);
 
 			if (maxDepth > 0) {
@@ -99,23 +101,11 @@ function isRepoModePull(gitRepoFileContents) {
 function isSubRepo(folder) {
 	var possibleGitRepoFileLocations = ['.gitrepo', '../.gitrepo', '../../.gitrepo'];
 
-	for (var i = 0; i < possibleGitRepoFileLocations; i++) {
-		var possibleGitRepoFileLocation = possibleGitRepoFileLocations[i];
-		var gitRepoFilePath = getFilePath(folder, possibleGitRepoFileLocation);
-		var gitRepoFileExists = isFile(gitRepoFilePath);
-
-		if (!gitRepoFileExists) {
-			continue;
-		}
-
-		var gitRepoFileContents = fs.readFileSync(gitRepoFilePath);
-
-		if (isRepoModePull(gitRepoFileContents)) {
-			return true;
-		}
-	}
-
-	return false;
+	return possibleGitRepoFileLocations
+		.map(getFilePath.bind(null, folder))
+		.filter(isFile)
+		.map(highland.ncurry(1, fs.getFilePath))
+		.some(isRepoModePull);
 };
 
 exports.getFilePath = getFilePath;
@@ -126,3 +116,4 @@ exports.isFile = isFile;
 exports.isHidden = isHidden;
 exports.isModuleFolder = isModuleFolder;
 exports.isRepoModePull = isRepoModePull;
+exports.isSymbolicLink = isSymbolicLink;
