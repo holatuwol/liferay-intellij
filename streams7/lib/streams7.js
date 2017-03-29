@@ -42,6 +42,10 @@ function getAncestorFiles(folder, filename) {
 		basename = path.basename(folder);
 	}
 
+	if ((basename != '..') && isFile(filename)) {
+		ancestorFiles.push(filename);
+	}
+
 	return ancestorFiles;
 };
 
@@ -76,13 +80,32 @@ function getModuleGroupName(module) {
 	}
 
 	if (groupPrefix == '') {
-		modulesRoot = path.dirname(path.dirname(gradlePropertiesPaths[0]));
+		var gradlePaths = getAncestorFiles(module.modulePath, 'gradlew');
+
+		if (gradlePaths.length > 0) {
+			var pos = gradlePaths[gradlePaths.length - 1].lastIndexOf('/');
+
+			if (pos != -1) {
+				modulesRoot = module.modulePath.substring(0, pos);
+			}
+			else {
+				modulesRoot = '';
+			}
+		}
+		else {
+			console.error('Unable to find gradlew for', module.modulePath);
+		}
 	}
 
 	var relativeGroupName = path.dirname(module.modulePath);
 
 	if ((modulesRoot != '') && (modulesRoot != '.')) {
-		relativeGroupName = path.dirname(module.modulePath.substring(modulesRoot.length + 1));
+		if (modulesRoot.indexOf('../') != -1) {
+			relativeGroupName = path.dirname(module.modulePath.substring(path.dirname(modulesRoot).length + 1));
+		}
+		else {
+			relativeGroupName = path.dirname(module.modulePath.substring(modulesRoot.length + 1));
+		}
 	}
 
 	if (groupPrefix == '') {

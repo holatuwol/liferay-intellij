@@ -797,7 +797,9 @@ function setModuleBundleVersions(accumulator, module) {
 	var bundleNameRegex = /Bundle-SymbolicName: ([^\n]+)/g;
 	var bundleVersionRegex = /Bundle-Version: ([^\n]+)/g;
 
-	var bundleName = bundleNameRegex.exec(bndContent)[1];
+	var bundleNameMatcher = bundleNameRegex.exec(bndContent);
+
+	var bundleName = bundleNameMatcher ? bundleNameMatcher[1] : module.moduleName;
 	var bundleVersion = bundleVersionRegex.exec(bndContent)[1];
 
 	accumulator[bundleName] = {
