@@ -91,7 +91,7 @@ In our case, though, we will want to keep tracking of multiple matches within th
 .. code-block:: javascript
 
 	var libraryDependencyRegex1 = /(?:test|compile|provided)[^\n]*\sgroup: ['"]([^'"]*)['"], name: ['"]([^'"]*)['"], [^\n]*version: ['"]([^'"]*)['"]/;
-	var libraryDependencyRegex2 = /(?:test|compile|provided)\s['"]([^'"]*):([^'"]*):([^'"]*)['"]/;
+	var libraryDependencyRegex2 = /(?:test|compile|provided)[^\n]*\s['"]([^'"]*):([^'"]*):([^'"]*)['"]/;
 
 Now that we have a regular expression, we know that we can create an object representing a match from any match result provided it has three items and they are always in ``group``, ``name``, and ``version`` order. This allows us to create the following extraction function.
 
