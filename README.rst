@@ -1,5 +1,5 @@
-Tools for DXP 1: IntelliJ Modules Setup Script
-==============================================
+IntelliJ Modules Setup Script
+=============================
 
 .. contents:: :local:
 
