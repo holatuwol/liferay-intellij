@@ -133,20 +133,21 @@ Change Log
 
 This is a change log for when I started keeping track of the changes that were made.
 
+* **2017-03-30**: Process each block of if-statement dependencies, like ``portal-dao-db``
 * **2017-03-29**: Fix handling of dependencies declared as a Maven path
-* **2017-03-29**: Fix odd grouping issues when pointing to the liferay-gradle subfolder of liferay-blade-samples
-* **2017-03-05**: Group submodules based on the project path in gradle.properties
+* **2017-03-29**: Fix odd grouping issues when pointing to the ``liferay-gradle`` subfolder of ``liferay-blade-samples``
+* **2017-03-05**: Group submodules based on the project path in ``gradle.properties``
 * **2017-02-16**: Add development library to all test modules for Mockito, exclude SDK templates modules
-* **2017-02-15**: Simplify test dependencies detection to fix problems with test-util modules
-* **2017-02-15**: Add tag libraries detected in modules to misc.xml
+* **2017-02-15**: Simplify test dependencies detection to fix problems with ``test-util`` modules
+* **2017-02-15**: Add tag libraries detected in modules to ``misc.xml``
 * **2017-02-10**: Add Gradle wrapper as a dependency if detected (run ``ant setup-sdk`` beforehand)
 * **2017-02-04**: Add plugins SDK dependency modules to projects to make it easier to use IntelliJ to update Loop
 * **2017-01-08**: Recognize version control system root
 * **2016-11-16**: Add support for Blade workspaces
-* **2016-09-14**: Update subrepo detection to check mode=pull
+* **2016-09-14**: Update subrepo detection to check ``mode=pull``
 * **2016-09-03**: Fix project to library conversion when Liferay Gradle caches are not updated
-* **2016-08-31**: Fix relationship between portal-test-integration and other modules
-* **2016-08-29**: Add lib/portal/bnd.jar to development library (fixes portal-kernel services)
-* **2016-08-19**: Ignore any module-like dependencies in development library (fixes WebKeys)
+* **2016-08-31**: Fix relationship between ``portal-test-integration`` and other modules
+* **2016-08-29**: Add ``lib/portal/bnd.jar`` to development library (fixes ``portal-kernel`` services)
+* **2016-08-19**: Ignore any module-like dependencies in development library (fixes ``WebKeys``)
 * **2016-08-18**: Handle transitive dependencies (useful for test modules)
-* **2016-08-15**: Make sure pom.xml files do not include portal sources
+* **2016-08-15**: Make sure ``pom.xml`` files do not try to download portal sources

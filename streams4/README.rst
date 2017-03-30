@@ -64,16 +64,14 @@ From here, we will want to extract the dependency text, which we can capture wit
 
 .. code-block:: javascript
 
-	var dependencyTextRegex = /dependencies \{([^\}]*)\n\}/;
-	var dependencyTextResult = dependencyTextRegex.exec(buildGradleContents);
+	var dependencyTextRegex = /dependencies \{([^\}]*)\n\s*\}/g;
+	var dependencyTextResult = null;
 
-	if (!dependencyTextResult) {
-		return {};
+	while ((dependencyTextResult = dependencyTextRegex.exec(buildGradleContents)) !== null) {
+		var dependencyText = dependencyTextResult[1];
+
+		// continue dependency extraction here
 	}
-
-	var dependencyText = dependencyTextResult[1];
-
-	// continue dependency extraction here
 
 And that's essentially the first use of a regular expression! All it does is create a capture group where we expect there to be exactly one match, and we work with that one match.
 
@@ -148,9 +146,24 @@ Update our ``getModuleDependencies`` function so that it uses this function in o
 .. code-block:: javascript
 
 	var moduleDependencies = {
-		libraryDependencies: getDependenciesWithWhileLoop(dependencyText, getLibraryDependency, libraryDependencyRegex1).concat(getDependenciesWithWhileLoop(dependencyText, getLibraryDependency, libraryDependencyRegex2)),
+		libraryDependencies: [],
 		projectDependencies: []
 	};
+
+	var libraryDependencyRegex1 = /(?:test|compile|provided)[^\n]*\sgroup: ['"]([^'"]*)['"], name: ['"]([^'"]*)['"], [^\n]*version: ['"]([^'"]*)['"]/;
+	var libraryDependencyRegex2 = /(?:test|compile|provided)[^\n]*\s['"]([^'"]*):([^'"]*):([^'"]*)['"]/;
+
+	while ((dependencyTextResult = dependencyTextRegex.exec(buildGradleContents)) !== null) {
+		var dependencyText = dependencyTextResult[1];
+
+		Array.prototype.push.apply(
+			moduleDependencies.libraryDependencies,
+			getDependenciesWithWhileLoop(dependencyText, getLibraryDependency, libraryDependencyRegex1));
+
+		Array.prototype.push.apply(
+			moduleDependencies.libraryDependencies,
+			getDependenciesWithWhileLoop(dependencyText, getLibraryDependency, libraryDependencyRegex2));
+	}
 
 	return moduleDependencies;
 
@@ -193,10 +206,8 @@ We can then call it from ``getModuleDependencies`` and have the appropriate retu
 
 .. code-block:: javascript
 
-	return {
-		libraryDependencies: getLibraryDependencies(libraryDependencyRegex1).concat(getLibraryDependencies(libraryDependencyRegex2)),
-		projectDependencies: []
-	};
+	Array.prototype.push.apply(moduleDependencies.libraryDependencies, getLibraryDependencies(libraryDependencyRegex1));
+	Array.prototype.push.apply(moduleDependencies.libraryDependencies, getLibraryDependencies(libraryDependencyRegex2));
 
 Partial Function Application 2
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -237,12 +248,7 @@ Define a regular expression in a variable ``projectDependencyRegex`` which you c
 
 .. code-block:: javascript
 
-	var moduleDependencies = {
-		libraryDependencies: getLibraryDependencies(libraryDependencyRegex1).concat(getLibraryDependencies(libraryDependencyRegex2)),
-		projectDependencies: getProjectDependencies(projectDependencyRegex)
-	};
-
-	return moduleDependencies;
+	Array.prototype.push.apply(moduleDependencies.projectDependencies, getProjectDependencies(projectDependencyRegex));
 
 In case you need something to help debug your regular expressions, there are several online tools you can use which will help you determine if you've identified the correct regular expression.
 

@@ -63,26 +63,29 @@ function getModuleDependencies(folder) {
 
 	var buildGradleContents = fs.readFileSync(buildGradlePath);
 
-	var dependencyTextRegex = /dependencies \{([^\}]*)\n\}/;
-	var dependencyTextResult = dependencyTextRegex.exec(buildGradleContents);
+	var dependencyTextRegex = /dependencies \{([^\}]*)\n\s*\}/g;
+	var dependencyTextResult = null;
 
-	if (!dependencyTextResult) {
-		return {};
-	}
-
-	var dependencyText = dependencyTextResult[1];
+	var moduleDependencies = {
+		libraryDependencies: [],
+		projectDependencies: []
+	};
 
 	var libraryDependencyRegex1 = /(?:test|compile|provided)[^\n]*\sgroup: ['"]([^'"]*)['"], name: ['"]([^'"]*)['"], [^\n]*version: ['"]([^'"]*)['"]/;
 	var libraryDependencyRegex2 = /(?:test|compile|provided)[^\n]*\s['"]([^'"]*):([^'"]*):([^'"]*)['"]/;
 	var projectDependencyRegex = /\sproject\(['"]:(?:[^'"]*:)?([^'"]*)['"]/;
 
-	var getLibraryDependencies = highland.partial(getDependenciesWithStreams, dependencyText, getLibraryDependency);
-	var getProjectDependencies = highland.partial(getDependenciesWithStreams, dependencyText, getProjectDependency);
+	while ((dependencyTextResult = dependencyTextRegex.exec(buildGradleContents)) !== null) {
+		var dependencyText = dependencyTextResult[1];
 
-	var moduleDependencies = {
-		libraryDependencies: getLibraryDependencies(libraryDependencyRegex1).concat(getLibraryDependencies(libraryDependencyRegex2)),
-		projectDependencies: getProjectDependencies(projectDependencyRegex)
-	};
+		var getLibraryDependencies = highland.partial(getDependenciesWithStreams, dependencyText, getLibraryDependency);
+		var getProjectDependencies = highland.partial(getDependenciesWithStreams, dependencyText, getProjectDependency);
+
+		Array.prototype.push.apply(moduleDependencies.libraryDependencies, getLibraryDependencies(libraryDependencyRegex1));
+		Array.prototype.push.apply(moduleDependencies.libraryDependencies, getLibraryDependencies(libraryDependencyRegex2));
+
+		Array.prototype.push.apply(moduleDependencies.projectDependencies, getProjectDependencies(projectDependencyRegex));
+	}
 
 	if (isDirectory(path.join(folder, 'src/test')) ||
 		isDirectory(path.join(folder, 'src/testIntegration'))) {
