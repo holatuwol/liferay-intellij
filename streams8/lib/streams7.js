@@ -12,6 +12,7 @@ var getFilePath = streams5.getFilePath;
 var getModuleIMLPath = streams6.getModuleIMLPath;
 var getIntellijXML = streams6.getIntellijXML;
 var getSourceFolderElement = streams6.getSourceFolderElement;
+var isDirectory = streams2.isDirectory;
 var isFile = streams2.isFile;
 var saveContent = streams6.saveContent;
 
@@ -50,7 +51,7 @@ function getAncestorFiles(folder, filename) {
 	while ((basename != '.') && (basename != '..')) {
 		var filePath = getFilePath(folder, filename);
 
-		if (isFile(filePath)) {
+		if (isFile(filePath) || isDirectory(filePath)) {
 			ancestorFiles.push(filePath);
 		}
 
@@ -58,7 +59,7 @@ function getAncestorFiles(folder, filename) {
 		basename = path.basename(folder);
 	}
 
-	if ((basename != '..') && isFile(filename)) {
+	if ((basename != '..') && (isFile(filename) || isDirectory(filename))) {
 		ancestorFiles.push(filename);
 	}
 
@@ -211,6 +212,7 @@ function isTestDependency(module, dependency) {
 };
 
 exports.createProjectWorkspace = createProjectWorkspace;
+exports.getAncestorFiles = getAncestorFiles;
 exports.getModuleElement = getModuleElement;
 exports.getModulesElement = getModulesElement;
 exports.getModuleXML = getModuleXML;
