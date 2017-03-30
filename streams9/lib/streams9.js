@@ -9,6 +9,7 @@ var streams8 = require('./streams8');
 var xmlbuilder = require('xmlbuilder');
 
 var flatten = streams8.flatten;
+var getAncestorFiles = streams7.getAncestorFiles;
 var getComponentXML = streams6.getComponentXML;
 var getExcludeFolderElement = streams6.getExcludeFolderElement;
 var getFacetManagerXML = streams6.getFacetManagerXML;
@@ -29,6 +30,18 @@ var isSameLibraryDependency = streams8.isSameLibraryDependency;
 var keyExistsInObject = highland.ncurry(2, streams8.keyExistsInObject);
 var saveContent = streams6.saveContent;
 var setLibraryName = streams8.setLibraryName;
+
+var gradleCaches = new Set();
+
+function checkForGradleCache(module) {
+	if (!module.modulePath) {
+		return;
+	}
+
+	var candidates = getAncestorFiles(module.modulePath, '.gradle/caches/modules-2/files-2.1');
+
+	candidates.forEach(Set.prototype.add.bind(gradleCaches));
+};
 
 function createProjectObjectModels(coreDetails, moduleDetails) {
 	var moduleStream = highland(moduleDetails);
@@ -54,6 +67,14 @@ function createProjectWorkspace(coreDetails, moduleDetails) {
 
 	coreDetails.forEach(sortModuleAttributes);
 	moduleDetails.forEach(sortModuleAttributes);
+
+	moduleDetails.forEach(checkForGradleCache);
+
+	var homeGradleCache = getFilePath(os.homedir(), '.gradle/caches/modules-2/files-2.1');
+
+	if (isDirectory(homeGradleCache)) {
+		gradleCaches.add(homeGradleCache);
+	}
 
 	var moduleStream = highland(moduleDetails);
 	var coreStream = highland(coreDetails);
@@ -198,12 +219,10 @@ function fixProjectDependencies(moduleVersions, addAsLibrary, module) {
 	return module;
 };
 
-function getGradleLibraryPaths(library) {
+function getGradleLibraryPaths(gradleBasePath, library) {
 	if (!('group' in library)) {
 		return [];
 	}
-
-	var gradleBasePath = '.gradle/caches/modules-2/files-2.1';
 
 	var folderPath = [library.group, library.name, library.version].reduce(getFilePath, gradleBasePath);
 
@@ -247,10 +266,12 @@ function getLibraryPaths(library) {
 		return mavenLibraryPaths;
 	}
 
-	var gradleLibraryPaths = getGradleLibraryPaths(library);
+	for (gradleCache of gradleCaches) {
+		gradleLibraryPaths = getGradleLibraryPaths(gradleCache, library);
 
-	if (gradleLibraryPaths.length != 0) {
-		return gradleLibraryPaths;
+		if (gradleLibraryPaths.length != 0) {
+			return gradleLibraryPaths;
+		}
 	}
 
 	return [];
