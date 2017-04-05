@@ -102,24 +102,13 @@ IntelliJ recognizes tag libraries when we tell it where to find the TLD files, b
 Download Dependency Sources
 ---------------------------
 
-The zip also contains a ``bin/pom.js`` script generates pom.xml files that list module library dependencies. Having these files allows you to use Maven to download sources for libraries that the modules use. You can run the script as follows.
+The zip also contains a ``bin/pom.js`` script generates pom.xml files that list module library dependencies. Having these files allows you to use Maven to download sources for libraries that the modules use. If you'd prefer to have this always run, you can use the following Bash function for ``ij`` instead of the one specified previously.
 
 .. code-block:: bash
 
-	node bin/pom.js /path/to/portal/source
-
-You would download the dependency sources by running the following command.
-
-.. code-block:: bash
-
-	mvn dependency:sources
-
-However, there is no cleanup script, so you'll need to cleanup the files this script creates. The fastest way is to simply parse the ``pom.xml`` generated in the root folder and use it to identify what needs to be deleted, and then delete the ``pom.xml`` in the root folder.
-
-.. code-block:: bash
-
-	grep '<module>.*</module>' pom.xml | awk -F'[<>]' '{ print $3 "/pom.xml" }' | xargs rm
-	rm pom.xml
+	ij() {
+		/path/to/clone/location/intellij_libsources $@
+	}
 
 Additional Notes
 ----------------
