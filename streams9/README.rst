@@ -424,7 +424,8 @@ A script which generates the ``pom.xml`` files, runs ``mvn dependency:sources``,
 	pushd /path/to/portal/source
 
 	mvn dependency:sources
-	find . -name pom.xml | grep -v -F .gradle | xargs rm
+	grep '<module>.*</module>' pom.xml | awk -F'[<>]' '{ print $3 "/pom.xml" }' | xargs rm
+	rm pom.xml
 
 	popd
 
