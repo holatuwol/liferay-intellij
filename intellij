@@ -10,6 +10,4 @@ fi
 
 node $(dirname $0)/streams0/bin/run.js $PWD $@
 
-pushd $1 > /dev/null
 git ls-files | grep '\(\.idea\|\.iml\)' | xargs git update-index --assume-unchanged
-popd > /dev/null
