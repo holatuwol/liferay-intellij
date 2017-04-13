@@ -33,8 +33,19 @@ var keyExistsInObject = highland.ncurry(2, streams8.keyExistsInObject);
 var saveContent = streams6.saveContent;
 var setLibraryName = streams8.setLibraryName;
 
+var gitRoots = new Set();
 var gradleCaches = new Set();
 var projectRepositories = [];
+
+function checkForGitRoot(module) {
+	if (!module.modulePath) {
+		return;
+	}
+
+	var candidates = getAncestorFiles(module.modulePath, '.git');
+
+	candidates.forEach(Set.prototype.add.bind(gitRoots));
+}
 
 function checkForGradleCache(module) {
 	if (!module.modulePath) {
@@ -85,6 +96,7 @@ function createProjectWorkspace(coreDetails, moduleDetails, pluginDetails) {
 	coreDetails.forEach(sortModuleAttributes);
 	moduleDetails.forEach(sortModuleAttributes);
 
+	moduleDetails.forEach(checkForGitRoot);
 	moduleDetails.forEach(checkForGradleCache);
 
 	var homeGradleCache = getFilePath(os.homedir(), '.gradle/caches/modules-2/files-2.1');
@@ -153,18 +165,24 @@ function createProjectWorkspace(coreDetails, moduleDetails, pluginDetails) {
 };
 
 function addGitVersionControlSystem() {
-	if (!isDirectory('.git')) {
-		return;
-	}
-
 	var vcsXML = [
 		'<?xml version="1.0" encoding="UTF-8"?>',
 		'<project version="4">',
-		'<component name="VcsDirectoryMappings">',
-		'<mapping directory="$PROJECT_DIR$" vcs="Git" />',
-		'</component>',
-		'</project>'
+		'<component name="VcsDirectoryMappings">'
 	];
+
+	for (gitRoot of gitRoots) {
+		var vcsRootPath = path.dirname(gitRoot);
+
+		vcsRootPath = (vcsRootPath == '.') ? '$PROJECT_DIR$' : '$PROJECT_DIR$/' + vcsRootPath;
+
+		var vcsXMLElement = '<mapping directory="' + vcsRootPath + '" vcs="Git" />';
+
+		vcsXML.push(vcsXMLElement);
+	}
+
+	vcsXML.push('</component>');
+	vcsXML.push('</project>');
 
 	saveContent({
 		name: '.idea/vcs.xml',
