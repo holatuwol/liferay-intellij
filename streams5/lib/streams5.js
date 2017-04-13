@@ -115,7 +115,11 @@ function getCoreDetails(folder) {
 function getCoreFolders() {
 	var findResultFolders = getFolders('.', 0);
 	var coreFolders = findResultFolders.filter(isCoreFolder);
-	return coreFolders;
+
+	var coreResourceFolders = ['definitions', 'sql'];
+	coreResourceFolders = coreResourceFolders.filter(isDirectory);
+
+	return coreFolders.concat(coreResourceFolders);
 };
 
 function getCoreIncludeFolders(folder) {
@@ -128,6 +132,15 @@ function getCoreIncludeFolders(folder) {
 		testResourceFolders: testResourceFolders.filter(isValidSourceFolder),
 		webrootFolders: webrootFolders.filter(isValidSourceFolder)
 	};
+
+	if ((moduleIncludeFolders.sourceFolders.length == 0) &&
+		(moduleIncludeFolders.resourceFolders.length == 0) &&
+		(moduleIncludeFolders.testSourceFolders.length == 0) &&
+		(moduleIncludeFolders.testResourceFolders.length == 0) &&
+		(moduleIncludeFolders.webrootFolders.length == 0)) {
+
+		moduleIncludeFolders.resourceFolders.push('.');
+	}
 
 	return moduleIncludeFolders;
 };
