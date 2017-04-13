@@ -228,8 +228,6 @@ function fixLibraryDependencies(moduleVersions, module) {
 
 	var ownVersion = moduleVersions[module.moduleName];
 
-	var moduleHasWebroot = module.webrootFolders.length > 0;
-
 	for (var i = module.libraryDependencies.length - 1; i >= 0; i--) {
 		var dependency = module.libraryDependencies[i];
 		var dependencyGroup = dependency.group;
@@ -246,19 +244,16 @@ function fixLibraryDependencies(moduleVersions, module) {
 
 		var moduleVersion = moduleVersions[dependencyName];
 
-		if (moduleHasWebroot && moduleVersion.hasWebroot) {
-			dependency.hasWebroot = true;
+		if (module.hasInitJsp && moduleVersion.hasInitJsp) {
+			dependency.hasInitJsp = true;
 			continue;
 		}
-
-		var dependencyVersion = dependency.version;
 
 		module.libraryDependencies.splice(i, 1);
 
 		var projectDependency = {
 			type: 'project',
 			name: moduleVersion.projectName,
-			version: dependencyVersion
 		};
 
 		module.projectDependencies.push(projectDependency);
@@ -272,9 +267,7 @@ function fixProjectDependencies(moduleVersions, addAsLibrary, module) {
 		return module;
 	}
 
-	var moduleHasWebroot = module.webrootFolders.length > 0;
-
-	if (!moduleHasWebroot) {
+	if (!module.hasInitJsp) {
 		return module;
 	}
 
@@ -293,7 +286,7 @@ function fixProjectDependencies(moduleVersions, addAsLibrary, module) {
 
 		var moduleVersion = moduleVersions[dependencyName];
 
-		if (!moduleVersion.hasWebroot) {
+		if (!moduleVersion.hasInitJsp) {
 			continue;
 		}
 
@@ -304,7 +297,7 @@ function fixProjectDependencies(moduleVersions, addAsLibrary, module) {
 			group: 'com.liferay',
 			name: moduleVersion.bundleName,
 			version: dependency.version || moduleVersion.version,
-			hasWebroot: true
+			hasInitJsp: true
 		};
 
 		module.libraryDependencies.push(libraryDependency);
@@ -343,7 +336,7 @@ function getGradleLibraryPaths(gradleBasePath, library) {
 		.map(highland.flip(getFilePath, jarName))
 		.filter(isFile);
 
-	if ((library.group == 'com.liferay') && library.hasWebroot) {
+	if ((library.group == 'com.liferay') && library.hasInitJsp) {
 		return jarPaths;
 	}
 
@@ -543,7 +536,7 @@ function getMavenLibraryPaths(library) {
 		jarPaths = [getFilePath('$MAVEN_REPOSITORY$', jarRelativePath)];
 	}
 
-	if ((library.group == 'com.liferay') && library.hasWebroot) {
+	if ((library.group == 'com.liferay') && library.hasInitJsp) {
 		return jarPaths;
 	}
 
@@ -815,16 +808,18 @@ function setModuleBundleVersions(accumulator, module) {
 	var bundleName = bundleNameMatcher ? bundleNameMatcher[1] : module.moduleName;
 	var bundleVersion = bundleVersionRegex.exec(bndContent)[1];
 
+	var hasInitJsp = module.webrootFolders.length > 0 && module.webrootFolders.some(highland.compose(isFile, highland.flip(getFilePath, 'init.jsp')));
+
 	accumulator[bundleName] = {
 		projectName: module.moduleName,
 		version: bundleVersion,
-		hasWebroot: module.webrootFolders.length > 0
+		hasInitJsp: hasInitJsp
 	};
 
 	accumulator[module.moduleName] = {
 		bundleName: bundleName,
 		version: bundleVersion,
-		hasWebroot: module.webrootFolders.length > 0
+		hasInitJsp: hasInitJsp
 	};
 
 	return accumulator;
