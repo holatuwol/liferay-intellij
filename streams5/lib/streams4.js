@@ -47,10 +47,6 @@ function getLibraryDependency(matchResult) {
 		version: matchResult[3]
 	};
 
-	if (dependency.version.indexOf('SNAPSHOT') != -1) {
-		return null;
-	}
-
 	return dependency;
 };
 

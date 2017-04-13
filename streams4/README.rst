@@ -107,10 +107,6 @@ Now that we have a regular expression, we know that we can create an object repr
 			version: matchResult[3]
 		};
 
-		if (dependency.version.indexOf('SNAPSHOT') != -1) {
-			return null;
-		}
-
 		return dependency;
 	};
 
