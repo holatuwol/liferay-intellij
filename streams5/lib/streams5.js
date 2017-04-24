@@ -116,7 +116,7 @@ function getCoreFolders() {
 	var findResultFolders = getFolders('.', 0);
 	var coreFolders = findResultFolders.filter(isCoreFolder);
 
-	var coreResourceFolders = ['definitions', 'sql'];
+	var coreResourceFolders = ['definitions', 'lib', 'sql'];
 	coreResourceFolders = coreResourceFolders.filter(isDirectory);
 
 	return coreFolders.concat(coreResourceFolders);
