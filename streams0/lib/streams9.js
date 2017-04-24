@@ -93,6 +93,7 @@ function createProjectWorkspace(coreDetails, moduleDetails, pluginDetails) {
 
 	moduleDetails.forEach(highland.partial(fixLibraryDependencies, moduleVersions));
 	moduleDetails.forEach(highland.partial(fixProjectDependencies, moduleVersions, true));
+	moduleDetails.forEach(checkExportDependencies);
 
 	coreDetails.forEach(sortModuleAttributes);
 	moduleDetails.forEach(sortModuleAttributes);
