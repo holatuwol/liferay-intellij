@@ -1,3 +1,4 @@
+var child_process = require('child_process');
 var comparators = require('comparators').default;
 var fs = require('fs');
 var highland = require('highland');
@@ -701,7 +702,7 @@ function getProjectRepositories() {
 		layout: 'default'
 	});
 
-	var buildPropertiesContent = fs.readFileSync('build.properties');
+	var buildPropertiesContent = child_process.execSync('git show upstream/ee-7.0.x:build.properties');
 
 	var privateRepositoryRegex = /build.repository.private.password=(\S*)\s*build.repository.private.url=https:\/\/(\S*)\s*build.repository.private.username=(\S*)/g;
 
