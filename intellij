@@ -8,6 +8,29 @@ if [ -d modules ] && [ ! -d tools/sdk ]; then
 	fi
 fi
 
+if [[ -n "$WINDIR" ]]; then
+	pushd "$(dirname "${BASH_SOURCE[0]}")" > /dev/null
+
+	for target_file in $(git ls-files -s | grep '^120000' | awk '{ print $4 }'); do
+		rm $target_file
+		source_file=$(git ls-files -s | grep -F $(basename $target_file) | grep -v '^120000' | awk '{ print $4 }')
+		cp $source_file $target_file
+	done
+
+	popd > /dev/null
+fi
+
 node $(dirname $0)/streams0/bin/run.js $PWD $@
+
+if [[ -n "$WINDIR" ]]; then
+	pushd "$(dirname "${BASH_SOURCE[0]}")" > /dev/null
+
+	for target_file in $(git ls-files -s | grep '^120000' | awk '{ print $4 }'); do
+		rm $target_file
+		git checkout $target_file
+	done
+
+	popd > /dev/null
+fi
 
 git ls-files | grep '\(\.idea\|\.iml\)' | xargs git update-index --assume-unchanged
