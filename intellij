@@ -13,8 +13,8 @@ if [[ -n "$WINDIR" ]]; then
 
 	for target_file in $(git ls-files -s | grep '^120000' | awk '{ print $4 }'); do
 		rm $target_file
-		source_file=$(git ls-files -s | grep -F $(basename $target_file) | grep -v '^120000' | awk '{ print $4 }')
-		cp $source_file $target_file
+		source_file=$(git ls-files -s | grep -F $(basename $target_file) | grep -v '^120000' | awk '{ print $4 }' | sort -u | tail -1)
+		cp $source_file $(dirname $target_file)
 	done
 
 	popd > /dev/null
