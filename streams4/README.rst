@@ -64,7 +64,7 @@ From here, we will want to extract the dependency text, which we can capture wit
 
 .. code-block:: javascript
 
-	var dependencyTextRegex = /dependencies \{([^\}]*)\n\s*\}/g;
+	var dependencyTextRegex = /dependencies \{([\s\S]*)\n\s*\}/g;
 	var dependencyTextResult = null;
 
 	while ((dependencyTextResult = dependencyTextRegex.exec(buildGradleContents)) !== null) {
@@ -72,6 +72,13 @@ From here, we will want to extract the dependency text, which we can capture wit
 
 		// continue dependency extraction here
 	}
+
+If you're not yet able to parse the regular expression above and you'd like to get more familiar with tools that explain what regular expressions mean, you can use a regular expression explanation tool.
+
+* `RegEx101 <https://regex101.com/#javascript>`__
+* `Debuggex <https://www.debuggex.com/>`__
+* `RegViz <http://www.regviz.org/>`__
+* `RegExr <http://regexr.com/>`__
 
 And that's essentially the first use of a regular expression! All it does is create a capture group where we expect there to be exactly one match, and we work with that one match.
 
@@ -245,13 +252,6 @@ Define a regular expression in a variable ``projectDependencyRegex`` which you c
 .. code-block:: javascript
 
 	Array.prototype.push.apply(moduleDependencies.projectDependencies, getProjectDependencies(projectDependencyRegex));
-
-In case you need something to help debug your regular expressions, there are several online tools you can use which will help you determine if you've identified the correct regular expression.
-
-* `RegEx101 <https://regex101.com/#javascript>`__
-* `Debuggex <https://www.debuggex.com/>`__
-* `RegViz <http://www.regviz.org/>`__
-* `RegExr <http://regexr.com/>`__
 
 Checkpoint 2
 ~~~~~~~~~~~~

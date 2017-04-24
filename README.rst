@@ -122,7 +122,8 @@ Change Log
 
 This is a change log for when I started keeping track of the changes that were made.
 
-* **2017-04-12**: Convert library dependencies to project dependencies as long as there is no init.jsp, re-allow snapshot libraries, add definitions and sql folders as resource roots
+* **2017-04-24**: Handle symlinks on Windows, don't skip over dependencies if we use string interpolation for version numbers
+* **2017-04-12**: Convert library dependencies to project dependencies as long as there is no init.jsp, re-allow snapshot libraries, add resource-only folders like definitions and sql
 * **2017-03-30**: When wiring libraries, check ``.gradle`` caches outside of the portal source folder
 * **2017-03-30**: Process each block of if-statement dependencies, like ``portal-dao-db``
 * **2017-03-29**: Fix handling of dependencies declared as a Maven path
