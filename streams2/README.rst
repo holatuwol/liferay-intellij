@@ -324,7 +324,7 @@ We can then create a function that detects whether we have a module folder by ac
 			return false;
 		}
 
-		if (!isFile(getFilePath(folder, 'bnd.bnd')) && !isFile(getFilePath(folder, 'liferay-theme.json'))) {
+		if (!isFile(getFilePath(folder, 'bnd.bnd')) && !isFile(getFilePath(folder, 'package.json'))) {
 			return false;
 		}
 

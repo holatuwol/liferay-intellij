@@ -818,28 +818,44 @@ function setCoreBundleVersions(accumulator, module) {
 
 function setModuleBundleVersions(accumulator, module) {
 	var bndPath = getFilePath(module.modulePath, 'bnd.bnd');
-	var bndContent = fs.readFileSync(bndPath);
+	var packageJsonPath = getFilePath(module.modulePath, 'package.json');
 
-	var bundleNameRegex = /Bundle-SymbolicName: ([^\n]+)/g;
-	var bundleVersionRegex = /Bundle-Version: ([^\n]+)/g;
+	var bundleName, bundleVersion;
 
-	var bundleNameMatcher = bundleNameRegex.exec(bndContent);
+	if (isFile(bndPath)) {
+		var bndContent = fs.readFileSync(bndPath);
 
-	var bundleName = bundleNameMatcher ? bundleNameMatcher[1] : module.moduleName;
-	var bundleVersion = bundleVersionRegex.exec(bndContent)[1];
+		var bundleNameRegex = /Bundle-SymbolicName: ([^\n]+)/g;
+		var bundleVersionRegex = /Bundle-Version: ([^\n]+)/g;
 
-	var hasInitJsp = module.webrootFolders.length > 0 && module.webrootFolders.some(highland.compose(isFile, highland.flip(getFilePath, 'init.jsp')));
+		var bundleNameMatcher = bundleNameRegex.exec(bndContent);
+
+		bundleName = bundleNameMatcher ? bundleNameMatcher[1] : module.moduleName;
+		bundleVersion = bundleVersionRegex.exec(bndContent)[1];
+	}
+	else if (isFile(packageJsonPath)) {
+		var packageJsonContent = fs.readFileSync(packageJsonPath);
+
+		var packageJson = JSON.parse(packageJsonContent);
+
+		bundleName = packageJson.name;
+		bundleVersion = packageJson.version;
+	}
+	else {
+		console.warn('Unable to find project name for ' + module.modulePath);
+		return accumulator;
+	}
 
 	accumulator[bundleName] = {
 		projectName: module.moduleName,
 		version: bundleVersion,
-		hasInitJsp: hasInitJsp
+		hasWebroot: module.webrootFolders.length > 0
 	};
 
 	accumulator[module.moduleName] = {
 		bundleName: bundleName,
 		version: bundleVersion,
-		hasInitJsp: hasInitJsp
+		hasWebroot: module.webrootFolders.length > 0
 	};
 
 	return accumulator;

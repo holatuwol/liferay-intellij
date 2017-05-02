@@ -129,11 +129,13 @@ function isModuleFolder(includeSubRepos, folder) {
 
 	var getPath = getFilePath.bind(null, folder);
 
-	var subfiles = ['bnd.bnd', 'build.gradle'];
-	var subfolders = ['docroot', 'src'];
+	var requiredFiles = ['build.gradle'];
+	var descriptors = ['bnd.bnd', 'package.json'];
+	var sourceRoots = ['docroot', 'src'];
 
-	var isPotentialModuleFolder = subfiles.map(getPath).every(isFile) &&
-		subfolders.map(getPath).some(isDirectory);
+	var isPotentialModuleFolder = requiredFiles.map(getPath).every(isFile) &&
+		descriptors.map(getPath).some(isFile) &&
+		sourceRoots.map(getPath).some(isDirectory);
 
 	if (!isPotentialModuleFolder) {
 		return false;

@@ -113,7 +113,7 @@ Checkpoint 1
 			return false;
 		}
 
-		if (!isFile(getFilePath(folder, 'bnd.bnd')) && !isFile(getFilePath(folder, 'liferay-theme.json'))) {
+		if (!isFile(getFilePath(folder, 'bnd.bnd')) && !isFile(getFilePath(folder, 'package.json'))) {
 			return false;
 		}
 
@@ -146,7 +146,7 @@ Update our ``isModuleFolder`` function to use ``map`` in order to convert the na
 		var getPath = getFilePath.bind(null, folder);
 
 		var requiredFiles = ['build.gradle'];
-		var descriptors = ['bnd.bnd', 'liferay-theme.json'];
+		var descriptors = ['bnd.bnd', 'package.json'];
 		var sourceRoots = ['docroot', 'src'];
 
 		// Determine whether it is potentially a module folder

@@ -450,27 +450,36 @@ function setCoreBundleVersions(accumulator, module) {
 
 function setModuleBundleVersions(accumulator, module) {
 	var bndPath = getFilePath(module.modulePath, 'bnd.bnd');
-	var bndContent = fs.readFileSync(bndPath);
+	var packageJsonPath = getFilePath(module.modulePath, 'package.json');
 
-	var bundleNameRegex = /Bundle-SymbolicName: ([^\n]+)/g;
-	var bundleVersionRegex = /Bundle-Version: ([^\n]+)/g;
+	if (isFile(bndPath)) {
+		var bndContent = fs.readFileSync(bndPath);
 
-	var bundleName = bundleNameMatcher ? bundleNameMatcher[1] : module.moduleName;
-	var bundleVersion = bundleVersionRegex.exec(bndContent)[1];
+		var bundleNameRegex = /Bundle-SymbolicName: ([^\n]+)/g;
+		var bundleVersionRegex = /Bundle-Version: ([^\n]+)/g;
 
-	accumulator[bundleName] = {
-		projectName: module.moduleName,
-		version: bundleVersion,
-		hasWebroot: module.webrootFolders.length > 0
-	};
+		var bundleName = bundleNameMatcher ? bundleNameMatcher[1] : module.moduleName;
+		var bundleVersion = bundleVersionRegex.exec(bndContent)[1];
 
-	accumulator[module.moduleName] = {
-		bundleName: bundleName,
-		version: bundleVersion,
-		hasWebroot: module.webrootFolders.length > 0
-	};
+		accumulator[bundleName] = {
+			projectName: module.moduleName,
+			version: bundleVersion,
+			hasWebroot: module.webrootFolders.length > 0
+		};
 
-	return accumulator;
+		accumulator[module.moduleName] = {
+			bundleName: bundleName,
+			version: bundleVersion,
+			hasWebroot: module.webrootFolders.length > 0
+		};
+
+		return accumulator;
+	}
+	else {
+		var packageJsonContent = fs.readFileSync(packageJsonPath);
+
+		return accumulator;
+	}
 };
 
 function sortModuleAttributes(module) {

@@ -56,7 +56,7 @@ function isModuleFolder(includeSubRepos, folder) {
 		return false;
 	}
 
-	if (!isFile(getFilePath(folder, 'bnd.bnd'))) {
+	if (!isFile(getFilePath(folder, 'bnd.bnd')) && !isFile(getFilePath(folder, 'package.json'))) {
 		return false;
 	}
 
