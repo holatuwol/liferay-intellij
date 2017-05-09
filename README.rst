@@ -122,6 +122,7 @@ Change Log
 
 This is a change log for when I started keeping track of the changes that were made.
 
+* **2017-05-01**: Use package.json as a marker for theme-only projects
 * **2017-04-24**: Handle symlinks on Windows, don't skip over dependencies if we use string interpolation for version numbers
 * **2017-04-12**: Convert library dependencies to project dependencies as long as there is no init.jsp, re-allow snapshot libraries, add resource-only folders like definitions and sql
 * **2017-03-30**: When wiring libraries, check ``.gradle`` caches outside of the portal source folder
