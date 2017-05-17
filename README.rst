@@ -50,8 +50,10 @@ To setup the script, please use the following steps.
 
 .. code-block:: bash
 
+	IJ_CLONE_PATH=/path/to/clone/location
+
 	ij() {
-		/path/to/clone/location/intellij $@
+		${IJ_CLONE_PATH}/intellij $@
 	}
 
 7. Navigate to the portal source.
@@ -97,7 +99,7 @@ This is Ctrl+Click navigation working inside of JSPs.
    :height: 360
    :width: 480
 
-IntelliJ recognizes tag libraries when we tell it where to find the TLD files, but not the variables that those tags inject. Thus the ``configurationActionURL`` and ``configurationRenderURL`` in this screenshot is in red. If anyone has any ideas on how to get that working, please let me know!
+IntelliJ recognizes tag libraries when we tell it where to find the TLD files, but not the variables that those tags inject. Thus the ``configurationActionURL`` and ``configurationRenderURL`` in this screenshot is in red. If anyone has any ideas on how to get that working (even if it's just the manual steps you perform in IntelliJ), please let me know!
 
 Download Dependency Sources
 ---------------------------
@@ -106,8 +108,10 @@ The zip also contains a ``bin/pom.js`` script generates pom.xml files that list 
 
 .. code-block:: bash
 
+	IJ_CLONE_PATH=/path/to/clone/location
+
 	ij() {
-		/path/to/clone/location/intellij_libsources $@
+		${IJ_CLONE_PATH}/intellij_libsources $@
 	}
 
 Additional Notes
