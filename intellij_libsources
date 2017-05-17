@@ -1,5 +1,11 @@
 #!/bin/bash
 
+if [ ! -f release.properties ]; then
+	echo 'Please run this script from a Liferay source folder'
+	echo 'Arguments are additional source roots (blade workspaces, subrepositories, plugins SDK, etc.)'
+	exit 1
+fi
+
 if [ -d modules ] && [ ! -d tools/sdk ]; then
 	JAVA_VERSION=$(java -version 2>&1 | head -1 | cut -d'"' -f 2 | cut -d'.' -f 2)
 
