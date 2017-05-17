@@ -1,6 +1,16 @@
 #!/bin/bash
 
 if [ -d modules ] && [ ! -d tools/sdk ]; then
+	JAVA_VERSION=$(java -version 2>&1 | head -1 | cut -d'"' -f 2 | cut -d'.' -f 2)
+
+	ANT_OPTS='-Xms2g -Xmx2g'
+
+	if [[ 8 -gt $JAVA_VERSION ]]; then
+		ANT_OPTS="$ANT_OPTS -XX:MaxPermSize=1g"
+	fi
+
+	export ANT_OPTS
+
 	if [ -f "lib/portal/dependencies.properties" ]; then
 		ant setup-sdk setup-libs
 	else
