@@ -394,6 +394,10 @@ function getJarLibraryTableXML(library) {
 			libraryTableXML.push(getLibraryRootElement('lib/portal/bnd.jar'));
 		}
 	}
+	else if (library.name == 'gradlew') {
+		libraryTableXML.push(
+			'<root url="file://$PROJECT_DIR$/.gradle/wrapper/dists" />');
+	}
 	else {
 		libraryTableXML.push(
 			'<root url="file://$PROJECT_DIR$/lib/' + library.name + '" />');

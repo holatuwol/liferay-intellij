@@ -123,7 +123,7 @@ function getModuleOverview(folder) {
 };
 
 function isModuleFolder(includeSubRepos, folder) {
-	if ((folder.indexOf('/archetype-resources') != -1)) {
+	if ((folder.indexOf('/archetype-resources') != -1) || (folder.indexOf('/gradleTest') != -1)) {
 		return false;
 	}
 
