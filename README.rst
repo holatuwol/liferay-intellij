@@ -122,7 +122,9 @@ Change Log
 
 This is a change log for when I started keeping track of the changes that were made.
 
-* **2017-05-17**: Fix Gradle wrapper detection for newer IntelliJ, add support for archetype-resources projects (Java files only parse if you fix the class and package)
+* **2017-05-17**: Fix Felix logger dependencies, switch library/project dependency ordering so that other OSGi imports still work
+* **2017-05-17**: Fix Gradle wrapper detection for newer IntelliJ
+* **2017-05-17**: Re-add support for archetype-resources projects (Java files only parse if you fix the class and package)
 * **2017-05-01**: Use package.json as a marker for theme-only projects
 * **2017-04-24**: Handle symlinks on Windows, don't skip over dependencies if we use string interpolation for version numbers
 * **2017-04-12**: Convert library dependencies to project dependencies as long as there is no init.jsp, re-allow snapshot libraries, add resource-only folders like definitions and sql
@@ -131,7 +133,7 @@ This is a change log for when I started keeping track of the changes that were m
 * **2017-03-29**: Fix handling of dependencies declared as a Maven path
 * **2017-03-29**: Fix odd grouping issues when pointing to the ``liferay-gradle`` subfolder of ``liferay-blade-samples``
 * **2017-03-05**: Group submodules based on the project path in ``gradle.properties``
-* **2017-02-16**: Add development library to all test modules for Mockito, exclude SDK templates modules
+* **2017-02-16**: Add development library to all test modules for Mockito, exclude archetype-resources modules
 * **2017-02-15**: Simplify test dependencies detection to fix problems with ``test-util`` modules
 * **2017-02-15**: Add tag libraries detected in modules to ``misc.xml``
 * **2017-02-10**: Add Gradle wrapper as a dependency if detected (run ``ant setup-sdk`` beforehand)
