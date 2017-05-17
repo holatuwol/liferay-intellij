@@ -224,6 +224,7 @@ function checkExportDependencies(module) {
 	}
 
 	var isThirdPartyModule = (module.modulePath.indexOf('sdk') != -1) ||
+		((module.modulePath.indexOf('core') != -1) && (module.moduleName.indexOf('osgi') != -1)) ||
 		(module.modulePath.indexOf('third-party') != -1);
 
 	var checkExportDependency = function(dependency) {
@@ -325,6 +326,17 @@ function fixProjectDependencies(moduleVersions, addAsLibrary, module) {
 
 	return module;
 };
+
+function getCoreLibraryOrderEntryElements(module) {
+	if (!module.libraryDependencies) {
+		return [];
+	}
+
+	return module.libraryDependencies
+		.filter(highland.compose(highland.not, keyExistsInObject('group')))
+		.map(setLibraryName)
+		.map(highland.partial(getLibraryOrderEntryElement, module));
+}
 
 function getFilePaths(folder) {
 	return fs.readdirSync(folder).map(getFilePath(folder));
@@ -672,16 +684,11 @@ function getModuleXML(module) {
 };
 
 function getNewModuleRootManagerXML(module) {
-	var newModuleRootManagerXML = [streams8.getNewModuleRootManagerXML(module)];
+	var newModuleRootManagerXML = [streams6.getNewModuleRootManagerXML(module)];
 
-	if (module.libraryDependencies) {
-		var coreLibraryOrderEntryElements = module.libraryDependencies
-			.filter(highland.compose(highland.not, keyExistsInObject('group')))
-			.map(setLibraryName)
-			.map(highland.partial(getLibraryOrderEntryElement, module));
-
-		newModuleRootManagerXML = newModuleRootManagerXML.concat(coreLibraryOrderEntryElements);
-	}
+	newModuleRootManagerXML = newModuleRootManagerXML.concat(streams8.getModuleLibraryOrderEntryElements(module));
+	newModuleRootManagerXML = newModuleRootManagerXML.concat(streams7.getProjectOrderEntryElements(module));
+	newModuleRootManagerXML = newModuleRootManagerXML.concat(getCoreLibraryOrderEntryElements(module));
 
 	return newModuleRootManagerXML.join('\n');
 };

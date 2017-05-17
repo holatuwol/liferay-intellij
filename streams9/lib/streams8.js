@@ -188,6 +188,17 @@ function getLibraryXML(library) {
 	};
 };
 
+function getModuleLibraryOrderEntryElements(module) {
+	if (!module.libraryDependencies) {
+		return [];
+	}
+
+	return module.libraryDependencies
+		.filter(highland.partial(keyExistsInObject, 'group'))
+		.map(setLibraryName)
+		.map(highland.partial(getLibraryOrderEntryElement, module));
+};
+
 function getModuleXML(module) {
 	return {
 		fileName: getModuleIMLPath(module),
@@ -205,16 +216,10 @@ function getModuleXML(module) {
 };
 
 function getNewModuleRootManagerXML(module) {
-	var newModuleRootManagerXML = [streams7.getNewModuleRootManagerXML(module)];
+	var newModuleRootManagerXML = [streams6.getNewModuleRootManagerXML(module)];
 
-	if (module.libraryDependencies) {
-		var libraryOrderEntryElements = module.libraryDependencies
-			.filter(highland.partial(keyExistsInObject, 'group'))
-			.map(setLibraryName)
-			.map(highland.partial(getLibraryOrderEntryElement, module));
-
-		newModuleRootManagerXML = newModuleRootManagerXML.concat(libraryOrderEntryElements);
-	}
+	newModuleRootManagerXML = newModuleRootManagerXML.concat(getModuleLibraryOrderEntryElements(module));
+	newModuleRootManagerXML = newModuleRootManagerXML.concat(streams7.getProjectOrderEntryElements(module));
 
 	return newModuleRootManagerXML.join('\n');
 };
@@ -279,8 +284,8 @@ exports.getGradleLibraryPaths = getGradleLibraryPaths;
 exports.getLibraryOrderEntryElement = getLibraryOrderEntryElement;
 exports.getLibraryRootElement = getLibraryRootElement;
 exports.getLibraryXML = getLibraryXML;
+exports.getModuleLibraryOrderEntryElements = getModuleLibraryOrderEntryElements;
 exports.getModuleXML = getModuleXML;
-exports.getNewModuleRootManagerXML = getNewModuleRootManagerXML;
 exports.getPomDependencyPaths = getPomDependencyPaths;
 exports.isFirstOccurrence = isFirstOccurrence;
 exports.isSameLibraryDependency = isSameLibraryDependency;

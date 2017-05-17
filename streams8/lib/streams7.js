@@ -181,14 +181,18 @@ function getModuleXML(module) {
 function getNewModuleRootManagerXML(module) {
 	var newModuleRootManagerXML = [streams6.getNewModuleRootManagerXML(module)];
 
-	if (module.projectDependencies) {
-		var projectOrderEntryElements = module.projectDependencies
-			.map(highland.partial(getModuleOrderEntryElement, module));
-
-		newModuleRootManagerXML = newModuleRootManagerXML.concat(projectOrderEntryElements);
-	}
+	newModuleRootManagerXML = newModuleRootManagerXML.concat(getProjectOrderEntryElements(module));
 
 	return newModuleRootManagerXML.join('\n');
+};
+
+function getProjectOrderEntryElements(module) {
+	if (!module.projectDependencies) {
+		return [];
+	}
+
+	return module.projectDependencies
+		.map(highland.partial(getModuleOrderEntryElement, module));
 };
 
 function getWorkspaceModulesXML(modulesElement) {
@@ -216,6 +220,6 @@ exports.getAncestorFiles = getAncestorFiles;
 exports.getModuleElement = getModuleElement;
 exports.getModulesElement = getModulesElement;
 exports.getModuleXML = getModuleXML;
-exports.getNewModuleRootManagerXML = getNewModuleRootManagerXML;
+exports.getProjectOrderEntryElements = getProjectOrderEntryElements;
 exports.getWorkspaceModulesXML = getWorkspaceModulesXML;
 exports.isTestDependency = isTestDependency;
