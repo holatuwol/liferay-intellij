@@ -1,6 +1,8 @@
+var child_process = require('child_process');
 var comparators = require('comparators').default;
 var fs = require('fs');
 var highland = require('highland');
+var os = require('os');
 var streams2 = require('./streams2');
 var streams5 = require('./streams5');
 var streams6 = require('./streams6');
@@ -32,6 +34,7 @@ var saveContent = streams6.saveContent;
 var setLibraryName = streams8.setLibraryName;
 
 var gradleCaches = new Set();
+var projectRepositories = [];
 
 function checkForGradleCache(module) {
 	if (!module.modulePath) {
@@ -134,8 +137,6 @@ function fixLibraryDependencies(moduleVersions, module) {
 
 	var ownVersion = moduleVersions[module.moduleName];
 
-	var moduleHasWebroot = module.webrootFolders.length > 0;
-
 	for (var i = module.libraryDependencies.length - 1; i >= 0; i--) {
 		var dependency = module.libraryDependencies[i];
 		var dependencyGroup = dependency.group;
@@ -152,19 +153,16 @@ function fixLibraryDependencies(moduleVersions, module) {
 
 		var moduleVersion = moduleVersions[dependencyName];
 
-		if (moduleHasWebroot && moduleVersion.hasWebroot) {
-			dependency.hasWebroot = true;
+		if (module.hasInitJsp && moduleVersion.hasInitJsp) {
+			dependency.hasInitJsp = true;
 			continue;
 		}
-
-		var dependencyVersion = dependency.version;
 
 		module.libraryDependencies.splice(i, 1);
 
 		var projectDependency = {
 			type: 'project',
 			name: moduleVersion.projectName,
-			version: dependencyVersion
 		};
 
 		module.projectDependencies.push(projectDependency);
@@ -178,9 +176,7 @@ function fixProjectDependencies(moduleVersions, addAsLibrary, module) {
 		return module;
 	}
 
-	var moduleHasWebroot = module.webrootFolders.length > 0;
-
-	if (!moduleHasWebroot) {
+	if (!module.hasInitJsp) {
 		return module;
 	}
 
@@ -199,7 +195,7 @@ function fixProjectDependencies(moduleVersions, addAsLibrary, module) {
 
 		var moduleVersion = moduleVersions[dependencyName];
 
-		if (!moduleVersion.hasWebroot) {
+		if (!moduleVersion.hasInitJsp) {
 			continue;
 		}
 
@@ -210,13 +206,23 @@ function fixProjectDependencies(moduleVersions, addAsLibrary, module) {
 			group: 'com.liferay',
 			name: moduleVersion.bundleName,
 			version: dependency.version || moduleVersion.version,
-			hasWebroot: true
+			hasInitJsp: true
 		};
 
 		module.libraryDependencies.push(libraryDependency);
 	}
 
 	return module;
+};
+
+function getCoreLibraryOrderEntryElements(module) {
+	if (!module.libraryDependencies) {
+		return [];
+	}
+
+	// TODO: Perform work on module.libraryDependencies here
+
+	return [];
 };
 
 function getGradleLibraryPaths(gradleBasePath, library) {
@@ -253,6 +259,66 @@ function getGradleLibraryPaths(gradleBasePath, library) {
 	}
 
 	return jarPaths;
+};
+
+function getJarLibraryTableXML(library) {
+	var libraryTableXML = [
+		'<library name="' + library.name + '">',
+		'<CLASSES>'
+	];
+
+	if (library.name == 'development') {
+		var libraryPath = getFilePath('lib', 'development');
+		var jarFiles = fs.readdirSync(libraryPath);
+
+		Array.prototype.push.apply(
+			libraryTableXML,
+			jarFiles.filter(isDevelopmentLibrary)
+				.map(highland.partial(getFilePath, libraryPath))
+				.map(getLibraryRootElement));
+
+		if (isFile('lib/portal/bnd.jar')) {
+			libraryTableXML.push(getLibraryRootElement('lib/portal/bnd.jar'));
+		}
+	}
+	else if (library.name == 'gradlew') {
+		libraryTableXML.push(
+			'<root url="file://$PROJECT_DIR$/.gradle/wrapper/dists" />');
+	}
+	else {
+		libraryTableXML.push(
+			'<root url="file://$PROJECT_DIR$/lib/' + library.name + '" />');
+	}
+
+	libraryTableXML.push(
+		'</CLASSES>',
+		'<JAVADOC />',
+		'<SOURCES />');
+
+	if (library.name == 'gradlew') {
+		libraryTableXML.push('<jarDirectory url="file://$PROJECT_DIR$/.gradle/wrapper/dists" recursive="true" />');
+	}
+	else if (library.name != 'development') {
+		libraryTableXML.push('<jarDirectory url="file://$PROJECT_DIR$/lib/' + library.name + '" recursive="false" />');
+	}
+
+	libraryTableXML.push('</library>');
+
+	return libraryTableXML.join('\n');
+};
+
+function getJarLibraryXML(library) {
+	var fileName = library.name + '.xml';
+
+	var libraryTableComponent = {
+		name: 'libraryTable',
+		content: getJarLibraryTableXML(library)
+	};
+
+	return {
+		name: '.idea/libraries/' + fileName,
+		content: getComponentXML(libraryTableComponent)
+	};
 };
 
 function getLibraryPaths(library) {
@@ -326,6 +392,29 @@ function getLibraryXML(library) {
 	};
 };
 
+function getMavenAggregator(modulePaths) {
+	var project = {
+		project: {
+			'@xmlns': 'http://maven.apache.org/POM/4.0.0',
+			'@xmlns:xsi': 'http://www.w3.org/2001/XMLSchema-instance',
+			'@xsi:schemaLocation': 'http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd',
+			modelVersion: '4.0.0',
+			groupId: 'com.liferay.dependencies',
+			artifactId: 'parent',
+			version: '1.0.0-SNAPSHOT',
+			packaging: 'pom',
+			modules: {
+				module: modulePaths
+			}
+		}
+	};
+
+	return {
+		name: 'pom.xml',
+		content: xmlbuilder.create(project).end({pretty: true})
+	};
+};
+
 function getMavenDependencyElement(library) {
 	var dependencyElement = {
 		'groupId': library.group,
@@ -374,6 +463,48 @@ function getMavenLibraryPaths(library) {
 	return jarPaths.concat(getPomDependencyPaths(pomAbsolutePath, library.version)).filter(isFirstOccurrence);
 };
 
+function getMavenProject(module) {
+	var dependencyObjects = {};
+
+	if (module.libraryDependencies) {
+		var libraryDependencies = module.libraryDependencies
+			.filter(
+				// TODO: Filter the dependencies
+			)
+
+		if (libraryDependencies.length > 0) {
+			dependencyObjects = {
+				dependency:
+					libraryDependencies.map(
+						// TODO: Convert the dependencies into XML elements
+					)
+			};
+		}
+	}
+
+	var project = {
+		project: {
+			'@xmlns': 'http://maven.apache.org/POM/4.0.0',
+			'@xmlns:xsi': 'http://www.w3.org/2001/XMLSchema-instance',
+			'@xsi:schemaLocation': 'http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd',
+			modelVersion: '4.0.0',
+			groupId: 'com.liferay.dependencies',
+			artifactId: module.moduleName,
+			version: '1.0.0-SNAPSHOT',
+			packaging: 'pom',
+			dependencies: dependencyObjects,
+			repositories: {
+				repository: getProjectRepositories()
+			}
+		}
+	};
+
+	return {
+		name: getFilePath(module.modulePath, 'pom.xml'),
+		content: xmlbuilder.create(project).end({pretty: true})
+	};
+};
+
 function getMavenSourcePath(mavenBinaryPath) {
 	var pos = mavenBinaryPath.lastIndexOf('.');
 
@@ -397,13 +528,58 @@ function getModuleXML(module) {
 };
 
 function getNewModuleRootManagerXML(module) {
-	var newModuleRootManagerXML = [streams8.getNewModuleRootManagerXML(module)];
+	var newModuleRootManagerXML = [streams6.getNewModuleRootManagerXML(module)];
 
-	if (module.libraryDependencies) {
-		// TODO: Perform work on module.libraryDependencies here
-	}
+	newModuleRootManagerXML = newModuleRootManagerXML.concat(streams8.getModuleLibraryOrderEntryElements(module));
+	newModuleRootManagerXML = newModuleRootManagerXML.concat(streams7.getProjectOrderEntryElements(module));
+	newModuleRootManagerXML = newModuleRootManagerXML.concat(getCoreLibraryOrderEntryElements(module));
 
 	return newModuleRootManagerXML.join('\n');
+};
+
+function getProjectRepositories() {
+	if (projectRepositories.length > 0) {
+		return projectRepositories;
+	}
+
+	var tempProjectRepositories = [];
+
+	tempProjectRepositories.push({
+		id: 'apache',
+		name: 'Apache',
+		url: 'http://repo.maven.apache.org/maven2',
+		layout: 'default'
+	});
+
+	tempProjectRepositories.push({
+		id: 'liferay-public',
+		name: 'Liferay Public',
+		url: 'http://repository.liferay.com/nexus/content/repositories/public',
+		layout: 'default'
+	});
+
+	var buildPropertiesContent = child_process.execSync('git show upstream/ee-7.0.x:build.properties');
+
+	var privateRepositoryRegex = /build.repository.private.password=(\S*)\s*build.repository.private.url=https:\/\/(\S*)\s*build.repository.private.username=(\S*)/g;
+
+	var matchResult = privateRepositoryRegex.exec(buildPropertiesContent);
+
+	if (matchResult) {
+		var repositoryURL = 'https://' +
+			encodeURIComponent(matchResult[3]) + ':' + encodeURIComponent(matchResult[1]) +
+				'@' + matchResult[2];
+
+		tempProjectRepositories.push({
+			id: 'liferay-private',
+			name: 'Liferay Private',
+			url: repositoryURL,
+			layout: 'default'
+		});
+	}
+
+	projectRepositories = tempProjectRepositories;
+
+	return projectRepositories;
 };
 
 function isDevelopmentLibrary(libraryName) {
@@ -452,34 +628,45 @@ function setModuleBundleVersions(accumulator, module) {
 	var bndPath = getFilePath(module.modulePath, 'bnd.bnd');
 	var packageJsonPath = getFilePath(module.modulePath, 'package.json');
 
+	var bundleName, bundleVersion;
+
 	if (isFile(bndPath)) {
 		var bndContent = fs.readFileSync(bndPath);
 
 		var bundleNameRegex = /Bundle-SymbolicName: ([^\n]+)/g;
 		var bundleVersionRegex = /Bundle-Version: ([^\n]+)/g;
 
-		var bundleName = bundleNameMatcher ? bundleNameMatcher[1] : module.moduleName;
-		var bundleVersion = bundleVersionRegex.exec(bndContent)[1];
+		var bundleNameMatcher = bundleNameRegex.exec(bndContent);
 
-		accumulator[bundleName] = {
-			projectName: module.moduleName,
-			version: bundleVersion,
-			hasWebroot: module.webrootFolders.length > 0
-		};
-
-		accumulator[module.moduleName] = {
-			bundleName: bundleName,
-			version: bundleVersion,
-			hasWebroot: module.webrootFolders.length > 0
-		};
-
-		return accumulator;
+		bundleName = bundleNameMatcher ? bundleNameMatcher[1] : module.moduleName;
+		bundleVersion = bundleVersionRegex.exec(bndContent)[1];
 	}
-	else {
+	else if (isFile(packageJsonPath)) {
 		var packageJsonContent = fs.readFileSync(packageJsonPath);
 
+		var packageJson = JSON.parse(packageJsonContent);
+
+		bundleName = packageJson.name;
+		bundleVersion = packageJson.version;
+	}
+	else {
+		console.warn('Unable to find project name for ' + module.modulePath);
 		return accumulator;
 	}
+
+	accumulator[bundleName] = {
+		projectName: module.moduleName,
+		version: bundleVersion,
+		hasWebroot: module.webrootFolders.length > 0
+	};
+
+	accumulator[module.moduleName] = {
+		bundleName: bundleName,
+		version: bundleVersion,
+		hasWebroot: module.webrootFolders.length > 0
+	};
+
+	return accumulator;
 };
 
 function sortModuleAttributes(module) {

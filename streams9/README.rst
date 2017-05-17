@@ -33,55 +33,7 @@ Since the ``development``, ``global``, ``portal`` libraries are essentially stil
 		</library>
 	</component>
 
-Since this only requires a library name (and we already have the library name as part of the hard-coded values we created in ``lib/streams5.js``), we can generate the component content by providing a new function ``getJarLibraryTableXML`` which is essentially a variant of our existing function ``getLibraryTableXML``, but with explicit special handling for the different library types.
-
-.. code-block:: javascript
-
-	function getJarLibraryTableXML(library) {
-		var libraryTableXML = [
-			'<library name="' + library.name + '">',
-			'<CLASSES>'
-		];
-
-		if (library.name == 'development') {
-			var libraryPath = getFilePath('lib', 'development');
-			var jarFiles = fs.readdirSync(libraryPath);
-
-			Array.prototype.push.apply(
-				libraryTableXML,
-				jarFiles.filter(isDevelopmentLibrary)
-					.map(highland.partial(getFilePath, libraryPath))
-					.map(getLibraryRootElement));
-
-			if (isFile('lib/portal/bnd.jar')) {
-				libraryTableXML.push(getLibraryRootElement('lib/portal/bnd.jar'));
-			}
-		}
-		else if (library.name == 'gradlew') {
-			libraryTableXML.push(
-				'<root url="file://$PROJECT_DIR$/.gradle/wrapper/dists" />');
-		}
-		else {
-			libraryTableXML.push(
-				'<root url="file://$PROJECT_DIR$/lib/' + library.name + '" />');
-		}
-
-		libraryTableXML.push(
-			'</CLASSES>',
-			'<JAVADOC />',
-			'<SOURCES />');
-
-		if (library.name == 'gradlew') {
-			libraryTableXML.push('<jarDirectory url="file://$PROJECT_DIR$/.gradle/wrapper/dists" recursive="true" />');
-		}
-		else if (library.name != 'development') {
-			libraryTableXML.push('<jarDirectory url="file://$PROJECT_DIR$/lib/' + library.name + '" recursive="false" />');
-		}
-
-		libraryTableXML.push('</library>');
-
-		return libraryTableXML.join('\n');
-	};
+Since this only requires a library name (and we already have the library name as part of the hard-coded values we created in ``lib/streams5.js``), we can generate the component content by providing a new function ``getJarLibraryTableXML`` which is essentially a variant of our existing function ``getLibraryTableXML``, but with explicit special handling for the different library types. You can find this function in ``lib/streams9.js``.
 
 Checkpoint
 ~~~~~~~~~~
@@ -90,25 +42,7 @@ As noted in the previous section, finding out if a key is missing from an object
 
 * `highland.where <http://highlandjs.org/#where>`__
 
-We then add a new function which uses ``getJarLibraryTableXML`` that mirrors ``getLibraryTableXML`` in order to generate the proper XML file content.
-
-.. code-block:: javascript
-
-	function getJarLibraryXML(library) {
-		var fileName = library.name + '.xml';
-
-		var libraryTableComponent = {
-			name: 'libraryTable',
-			content: getJarLibraryTableXML(library)
-		};
-
-		return {
-			name: '.idea/libraries/' + fileName,
-			content: getComponentXML(libraryTableComponent)
-		};
-	};
-
-Use ``where`` in order to filter our ``coreLibraryFilesStream`` and identify the library files that are missing the ``group`` attribute. Use ``getJarLibraryXML`` in order to transform this filtered stream into ``development.xml``, ``global.xml``, and ``portal.xml`` files in our ``.idea/libraries`` folder.
+Use ``where`` and the function ``getJarLibraryXML`` (which you should see in your ``lib/streams9.js``) in order to filter our ``coreLibraryFilesStream`` and identify the library files that are missing the ``group`` attribute. Use ``getJarLibraryXML`` in order to transform this filtered stream into ``development.xml``, ``global.xml``, and ``portal.xml`` files in our ``.idea/libraries`` folder.
 
 Confirm you have completed the exercise by checking for the existence of these files.
 
@@ -126,7 +60,7 @@ Intuitively, we could simply create a new function that specifically negates the
 Checkpoint
 ~~~~~~~~~~
 
-Update the ``getNewModuleRootManagerXML`` function to add additional ``orderEntry`` elements for libraries that do not have the ``group`` attribute. The functions you may need to use from ``lib/streams8.js`` include ``keyExistsInObject``, ``setLibraryName``, and ``getLibraryOrderEntryElement``, which have already been included as variables in ``lib/streams9.js``. Confirm that ``portal-impl.iml`` contains the following:
+The ``getNewModuleRootManagerXML`` has been updated to call ``getCoreLibraryOrderEntryElements`` to add additional ``orderEntry`` elements for libraries that do not have the ``group`` attribute. Update this ``getCoreLibraryOrderEntryElements`` function to do the right thing. The functions you may need to use from ``lib/streams8.js`` include ``keyExistsInObject``, ``setLibraryName``, and ``getLibraryOrderEntryElement``, which have already been included as variables in ``lib/streams9.js``. Confirm that ``portal-impl.iml`` contains the following:
 
 .. code-block:: xml
 
@@ -251,64 +185,7 @@ We will now be calling the ``createProjectObjectModels`` function. Make sure to 
 	var moduleVersions = moduleDetails.reduce(setModuleBundleVersions, {});
 	moduleDetails = moduleDetails.map(highland.partial(updateProjectDependencies, moduleVersions));
 
-For simplicity, we will start with the following function, which generates a ``pom.xml`` with no dependencies (you do not need to update the TODO just yet, as that will be a later exercise).
-
-.. code-block:: javascript
-
-	function getMavenProject(module) {
-		var dependencyObjects = {};
-
-		if ('libraryDependencies' in module) {
-			// TODO: Specify the actual dependencies
-
-			var libraryDependencies = [];
-
-			if (libraryDependencies.length > 0) {
-				dependencyObjects = {
-					dependency: libraryDependencies
-						.map(
-							// TODO: Convert the dependencies into XML elements
-						)
-				};
-			}
-
-		}
-
-		var project = {
-			project: {
-				'@xmlns': 'http://maven.apache.org/POM/4.0.0',
-				'@xmlns:xsi': 'http://www.w3.org/2001/XMLSchema-instance',
-				'@xsi:schemaLocation': 'http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd',
-				modelVersion: '4.0.0',
-				groupId: 'com.liferay.dependencies',
-				artifactId: module.moduleName,
-				version: '1.0.0-SNAPSHOT',
-				packaging: 'pom',
-				dependencies: dependencyObjects,
-				repositories: {
-					repository: [
-						{
-							id: 'default',
-							name: 'Apache',
-							url: 'http://repo.maven.apache.org/maven2',
-							layout: 'default'
-						},
-						{
-							id: 'liferay',
-							name: 'Liferay',
-							url: 'http://repository.liferay.com/nexus/content/repositories/public',
-							layout: 'default'
-						}
-					]
-				}
-			}
-		};
-
-		return {
-			name: getFilePath(module.modulePath, 'pom.xml'),
-			content: xmlbuilder.create(project).end({pretty: true})
-		};
-	};
+For simplicity, we will start with the ``getMavenProject`` function, which generates a ``pom.xml`` with no dependencies (you do not need to update the TODO just yet, as that will be a later exercise).
 
 Perform operations on ``mavenProjectStream`` in the function ``createProjectObjectModels`` and generate the ``pom.xml`` files and use ``saveContent`` to persist these ``pom.xml`` files. Confirm that you've got the correct code by checking the ``pom.xml`` for the ``portal-impl`` module and confirm that it matches the following.
 
@@ -380,32 +257,7 @@ We now have a problem that is very similar to the one that inspired this project
 Checkpoint 1
 ~~~~~~~~~~~~
 
-Use the streams functions you've learned so far in order to update ``createProjectObjectModels`` to take the following function and generate a ``pom.xml`` at the root of the portal project path containing an aggregation of all modules.
-
-.. code-block:: javascript
-
-	function getMavenAggregator(modulePaths) {
-		var project = {
-			project: {
-				'@xmlns': 'http://maven.apache.org/POM/4.0.0',
-				'@xmlns:xsi': 'http://www.w3.org/2001/XMLSchema-instance',
-				'@xsi:schemaLocation': 'http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd',
-				modelVersion: '4.0.0',
-				groupId: 'com.liferay.dependencies',
-				artifactId: module.moduleName,
-				version: '1.0.0-SNAPSHOT',
-				packaging: 'pom',
-				modules: {
-					module: modulePaths
-				}
-			}
-		};
-
-		return {
-			name: 'pom.xml',
-			content: xmlbuilder.create(project).end({pretty: true})
-		};
-	};
+Use the streams functions you've learned so far in order to update ``createProjectObjectModels`` to take the ``getMavenAggregator`` function and generate a ``pom.xml`` at the root of the portal project path containing an aggregation of all modules.
 
 Keep in mind that you want to extract the ``modulePath`` attribute from each module in the stream, transform the stream of single elements to a stream consisting of a single array, generate the XML file, and then store the XML file to disk. Confirm that this works by opening the ``pom.xml`` generated at the end.
 
@@ -417,7 +269,9 @@ Use this ``pom.xml`` to download all the sources for all submodules by running `
 Summary
 -------
 
-We've now finished creating our tool! You can compare the code you've created in ``lib/streams9.js`` with the answer key ending point, though the answer key ending point actually adds a lot more capabilities that are unrelated to the tutorial material (so it's just Javascript code without relating to streams in any way).
+We've now finished creating our tool! You can compare the code you've created in ``lib/streams9.js`` with the answer key ending point.
+
+There are a lot more capabilities that are unrelated to the tutorial material (so it's just Javascript code without relating to streams in any way) that were added to ``lib/streams0.js`` which extend what you've built up into a more fully-featured tool.
 
 A script which generates the ``pom.xml`` files, runs ``mvn dependency:sources``, deletes the extra ``pom.xml`` files and then runs something to create the IntelliJ module and library files would appear as follows:
 

@@ -3,10 +3,10 @@ var streams2 = require('./streams2');
 var streams3 = require('./streams3');
 var streams4 = require('./streams4');
 var streams5 = require('./streams5');
-var streams9 = require('./streams9');
+var streams0 = require('./streams0');
 
-var createProjectObjectModels = streams9.createProjectObjectModels;
-var createProjectWorkspace = streams9.createProjectWorkspace;
+var createProjectObjectModels = streams0.createProjectObjectModels;
+var createProjectWorkspace = streams0.createProjectWorkspace;
 var getCoreDetails = streams5.getCoreDetails;
 var getCoreFolders = streams5.getCoreFolders;
 var getFilePath = streams5.getFilePath;

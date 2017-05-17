@@ -3,7 +3,6 @@ var comparators = require('comparators').default;
 var fs = require('fs');
 var highland = require('highland');
 var os = require('os');
-var path = require('path');
 var streams2 = require('./streams2');
 var streams5 = require('./streams5');
 var streams6 = require('./streams6');
@@ -34,19 +33,8 @@ var keyExistsInObject = highland.ncurry(2, streams8.keyExistsInObject);
 var saveContent = streams6.saveContent;
 var setLibraryName = streams8.setLibraryName;
 
-var gitRoots = new Set();
 var gradleCaches = new Set();
 var projectRepositories = [];
-
-function checkForGitRoot(module) {
-	if (!module.modulePath) {
-		return;
-	}
-
-	var candidates = getAncestorFiles(module.modulePath, '.git');
-
-	candidates.forEach(Set.prototype.add.bind(gitRoots));
-}
 
 function checkForGradleCache(module) {
 	if (!module.modulePath) {
@@ -98,7 +86,6 @@ function createProjectWorkspace(coreDetails, moduleDetails, pluginDetails) {
 	coreDetails.forEach(sortModuleAttributes);
 	moduleDetails.forEach(sortModuleAttributes);
 
-	moduleDetails.forEach(checkForGitRoot);
 	moduleDetails.forEach(checkForGradleCache);
 
 	var homeGradleCache = getFilePath(os.homedir(), '.gradle/caches/modules-2/files-2.1');
@@ -151,45 +138,7 @@ function createProjectWorkspace(coreDetails, moduleDetails, pluginDetails) {
 		.map(getLibraryXML)
 		.each(saveContent);
 
-	tagLibrariesStream
-		.flatMap(getTagLibraryPaths)
-		.reduce({}, getTagLibraryURIs)
-		.flatMap(highland.pairs)
-		.sort()
-		.map(getTagLibraryResourceElement)
-		.collect()
-		.map(getMiscXML)
-		.each(saveContent);
-
 	detailsStream.done(function() {});
-
-	addGitVersionControlSystem();
-};
-
-function addGitVersionControlSystem() {
-	var vcsXML = [
-		'<?xml version="1.0" encoding="UTF-8"?>',
-		'<project version="4">',
-		'<component name="VcsDirectoryMappings">'
-	];
-
-	for (gitRoot of gitRoots) {
-		var vcsRootPath = path.dirname(gitRoot);
-
-		vcsRootPath = (vcsRootPath == '.') ? '$PROJECT_DIR$' : '$PROJECT_DIR$/' + vcsRootPath;
-
-		var vcsXMLElement = '<mapping directory="' + vcsRootPath + '" vcs="Git" />';
-
-		vcsXML.push(vcsXMLElement);
-	}
-
-	vcsXML.push('</component>');
-	vcsXML.push('</project>');
-
-	saveContent({
-		name: '.idea/vcs.xml',
-		content: vcsXML.join('\n')
-	});
 };
 
 function checkExportDependencies(module) {
@@ -336,18 +285,6 @@ function getCoreLibraryOrderEntryElements(module) {
 		.filter(highland.compose(highland.not, keyExistsInObject('group')))
 		.map(setLibraryName)
 		.map(highland.partial(getLibraryOrderEntryElement, module));
-}
-
-function getFilePaths(folder) {
-	return fs.readdirSync(folder).map(getFilePath(folder));
-};
-
-function getFirstSubFolder(folder) {
-	var filePaths = fs.readdirSync(folder)
-		.map(getFilePath(folder))
-		.filter(isDirectory);
-
-	return filePaths[0];
 };
 
 function getGradleLibraryPaths(gradleBasePath, library) {
@@ -614,7 +551,7 @@ function getMavenProject(module) {
 			packaging: 'pom',
 			dependencies: dependencyObjects,
 			repositories: {
-				repository: getProjectRepositories
+				repository: getProjectRepositories()
 			}
 		}
 	};
@@ -629,42 +566,6 @@ function getMavenSourcePath(mavenBinaryPath) {
 	var pos = mavenBinaryPath.lastIndexOf('.');
 
 	return mavenBinaryPath.substring(0, pos) + '-sources' + mavenBinaryPath.substring(pos);
-};
-
-function getMiscXML(resourceElements) {
-	var miscXMLContent = [
-		'<?xml version="1.0" encoding="UTF-8"?>',
-		'<project version="4">',
-		'<component name="ProjectResources">'
-	];
-
-	miscXMLContent = miscXMLContent.concat(resourceElements);
-
-	miscXMLContent.push('</component>');
-
-	var buildPropertiesContent = fs.readFileSync('build.properties');
-
-	var languageLevel = '1.8';
-	var languageLevelRegex = /javac.source=([0-9\.]*)/g;
-	var matchResult = languageLevelRegex.exec(buildPropertiesContent);
-
-	if (matchResult) {
-		languageLevel = matchResult[1];
-	}
-
-	var languageLevelName = 'JDK_' + languageLevel.replace('.', '_');
-
-	var projectRootManager = '<component name="ProjectRootManager" version="2" languageLevel="' +
-		languageLevelName + '" default="false" assert-keyword="true" jdk-15="true" ' +
-			'project-jdk-name="1.8" project-jdk-type="JavaSDK" />';
-
-	miscXMLContent.push(projectRootManager);
-	miscXMLContent.push('</project>');
-
-	return {
-		name: '.idea/misc.xml',
-		content: miscXMLContent.join('\n')
-	}
 };
 
 function getModuleXML(module) {
@@ -736,57 +637,10 @@ function getProjectRepositories() {
 	projectRepositories = tempProjectRepositories;
 
 	return projectRepositories;
-}
-
-function getTagLibraryURIs(accumulator, tagLibraryPath) {
-	var tagLibraryContent = fs.readFileSync(tagLibraryPath, {encoding: 'UTF8'});
-
-	var pos1 = tagLibraryContent.indexOf('<uri>') + 5;
-	var pos2 = tagLibraryContent.indexOf('</uri>', pos1);
-
-	var tagLibraryURI = tagLibraryContent.substring(pos1, pos2);
-
-	if (!accumulator.hasOwnProperty(tagLibraryURI) ||
-		(tagLibraryPath.indexOf('portal-web') == 0)) {
-
-		accumulator[tagLibraryURI] = tagLibraryPath;
-	}
-
-	return accumulator;
-};
-
-function getTagLibraryResourceElement(pair) {
-	return '<resource url="' + pair[0] + '" location="$PROJECT_DIR$/' + pair[1] + '" />';
-};
-
-function getTagLibraryPaths(module) {
-	var sourceFolders = module.sourceFolders
-		.map(highland.flip(getFilePath, 'META-INF'));
-
-	var resourceFolders = module.resourceFolders
-		.map(highland.flip(getFilePath, 'META-INF'));
-
-	var webrootFolders = module.webrootFolders
-		.map(highland.flip(getFilePath, 'WEB-INF/tld'));
-
-	var searchFolders = sourceFolders
-		.concat(resourceFolders)
-		.concat(webrootFolders)
-		.map(getFilePath(module.modulePath))
-		.filter(isDirectory);
-
-	return searchFolders
-		.map(getFilePaths)
-		.reduce(flatten, [])
-		.filter(isTagLibraryFile);
 };
 
 function isDevelopmentLibrary(libraryName) {
 	return libraryName.indexOf('.jar') == libraryName.length - 4;
-};
-
-function isTagLibraryFile(fileName) {
-	return fileName.indexOf('.tld') == fileName.length - 4;
 };
 
 function setCoreBundleVersions(accumulator, module) {
@@ -889,5 +743,15 @@ function sortModuleAttributes(module) {
 	return module;
 };
 
+exports.checkExportDependencies = checkExportDependencies;
+exports.checkForGradleCache = checkForGradleCache;
 exports.createProjectObjectModels = createProjectObjectModels;
 exports.createProjectWorkspace = createProjectWorkspace;
+exports.fixLibraryDependencies = fixLibraryDependencies;
+exports.fixProjectDependencies = fixProjectDependencies;
+exports.getJarLibraryXML = getJarLibraryXML;
+exports.getLibraryXML = getLibraryXML;
+exports.getModuleXML = getModuleXML;
+exports.setCoreBundleVersions = setCoreBundleVersions;
+exports.setModuleBundleVersions = setModuleBundleVersions;
+exports.sortModuleAttributes = sortModuleAttributes;
