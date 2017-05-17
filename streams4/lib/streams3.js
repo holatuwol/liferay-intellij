@@ -10,8 +10,8 @@ var isHidden = streams2.isHidden;
 var isRepoModePull = streams2.isRepoModePull;
 var isSymbolicLink = streams2.isSymbolicLink;
 
-var sourceFolders = ['docroot/WEB-INF/service', 'docroot/WEB-INF/src', 'src/main/java'];
-var resourceFolders = ['src/main/resources'];
+var sourceFolders = ['docroot/WEB-INF/service', 'docroot/WEB-INF/src', 'src/main/java', 'src/main/resources/archetype-resources/src/main/java'];
+var resourceFolders = ['src/main/resources', 'src/main/resources/archetype-resources/src/main/resources'];
 var testSourceFolders = ['src/test/java', 'src/testIntegration/java', 'test/integration', 'test/unit'];
 var testResourceFolders = ['src/test/resources', 'src/testIntegration/resources'];
 var webrootFolders = ['src/main/resources/META-INF/resources'];
@@ -123,7 +123,7 @@ function getModuleOverview(folder) {
 };
 
 function isModuleFolder(includeSubRepos, folder) {
-	if ((folder.indexOf('/sdk/') != -1) && (folder.indexOf('-templates') != -1)) {
+	if ((folder.indexOf('/archetype-resources') != -1)) {
 		return false;
 	}
 

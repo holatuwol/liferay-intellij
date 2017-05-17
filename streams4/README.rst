@@ -43,18 +43,20 @@ Like in the case of ``readdir`` where we used the synchronous version ``readdirS
 
 .. code-block:: javascript
 
-	function getModuleDependencies(folder) {
+	function getModuleDependencies(folder, moduleDependencies) {
+		moduleDependencies = moduleDependencies || {};
+
 		var buildGradlePath = path.join(folder, 'build.gradle');
 
 		if (!isFile(buildGradlePath)) {
-			return {};
+			return moduleDependencies;
 		}
 
 		var buildGradleContents = fs.readFileSync(buildGradlePath);
 
 		// continue dependency extraction here
 
-		return {};
+		return moduleDependencies;
 	};
 
 Regular Expressions 1

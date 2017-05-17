@@ -50,22 +50,27 @@ function getLibraryDependency(matchResult) {
 	return dependency;
 };
 
-function getModuleDependencies(folder) {
+function getModuleDependencies(folder, moduleDependencies) {
+	moduleDependencies = moduleDependencies || {};
+
 	var buildGradlePath = path.join(folder, 'build.gradle');
 
 	if (!isFile(buildGradlePath)) {
-		return {};
+		return moduleDependencies;
+	}
+
+	if (!moduleDependencies.libraryDependencies) {
+		moduleDependencies.libraryDependencies = [];
+	}
+
+	if (!moduleDependencies.projectDependencies) {
+		moduleDependencies.projectDependencies = [];
 	}
 
 	var buildGradleContents = fs.readFileSync(buildGradlePath);
 
 	var dependencyTextRegex = /dependencies \{([\s\S]*?)\n\s*\}/g;
 	var dependencyTextResult = null;
-
-	var moduleDependencies = {
-		libraryDependencies: [],
-		projectDependencies: []
-	};
 
 	var libraryDependencyRegex1 = /(?:test|compile|provided)[^\n]*\sgroup: ['"]([^'"]*)['"], name: ['"]([^'"]*)['"], [^\n]*version: ['"]([^'"]*)['"]/;
 	var libraryDependencyRegex2 = /(?:test|compile|provided)[^\n]*\s['"]([^'"]*):([^'"]*):([^'"]*)['"]/;
@@ -107,6 +112,9 @@ function getModuleDetails(folder) {
 	var moduleIncludeFolders = getModuleIncludeFolders(folder);
 	var moduleExcludeFolders = getModuleExcludeFolders(folder, moduleIncludeFolders);
 	var moduleDependencies = getModuleDependencies(folder);
+
+	var archetypeResourcesFolder = path.join(folder, 'src/main/resources/archetype-resources');
+	moduleDependencies = getModuleDependencies(archetypeResourcesFolder, moduleDependencies);
 
 	var moduleDetailsArray = [moduleOverview, moduleIncludeFolders, moduleExcludeFolders, moduleDependencies];
 

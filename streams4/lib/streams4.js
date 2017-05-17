@@ -15,7 +15,8 @@ var isFile = streams2.isFile;
 
 function getModuleDependencies(folder) {
 	return {
-		libraryDependencies: []
+		libraryDependencies: [],
+		projectDependencies: []
 	};
 };
 
@@ -24,6 +25,9 @@ function getModuleDetails(folder) {
 	var moduleIncludeFolders = getModuleIncludeFolders(folder);
 	var moduleExcludeFolders = getModuleExcludeFolders(folder, moduleIncludeFolders);
 	var moduleDependencies = getModuleDependencies(folder);
+
+	var archetypeResourcesFolder = path.join(folder, 'src/main/resources/archetype-resources');
+	moduleDependencies = getModuleDependencies(archetypeResourcesFolder, moduleDependencies);
 
 	var moduleDetailsArray = [moduleOverview, moduleIncludeFolders, moduleExcludeFolders, moduleDependencies];
 
