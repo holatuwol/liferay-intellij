@@ -39,6 +39,14 @@ for folder in $(git ls-files | grep build.gradle | grep -v gradleTest | grep -v 
 	fi
 done
 
+GRADLE_OPTS='-Xms3g -Xmx3g -Dorg.gradle.workers.max=1'
+
+if [[ 8 -gt $JAVA_VERSION ]]; then
+	GRADLE_OPTS="$GRADLE_OPTS -XX:MaxPermSize=512m"
+fi
+
+export GRADLE_OPTS
+
 cat ../.idea/projects.txt | tr '/' ':' | awk '{ print ":" $1 ":idea" }' | xargs ../gradlew --continue
 
 popd > /dev/null
