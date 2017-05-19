@@ -1,5 +1,16 @@
 #!/bin/bash
 
+NODEJS=$(which nodejs)
+
+if [ "" == "$NODEJS" ]; then
+	NODEJS=$(which node)
+fi
+
+if [ "" == "$NODEJS" ]; then
+	echo "Please install node.js"
+	exit 1
+fi
+
 if [ ! -f release.properties ]; then
 	echo 'Please run this script from a Liferay source folder'
 	echo 'Arguments are additional source roots (blade workspaces, subrepositories, plugins SDK, etc.)'
@@ -36,7 +47,7 @@ if [[ -n "$WINDIR" ]]; then
 	popd > /dev/null
 fi
 
-nodejs $(dirname $0)/streams0/bin/run.js $PWD $@
+"$NODEJS" $(dirname $0)/streams0/bin/run.js $PWD $@
 
 if [[ -n "$WINDIR" ]]; then
 	pushd "$(dirname "${BASH_SOURCE[0]}")" > /dev/null
