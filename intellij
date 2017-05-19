@@ -36,7 +36,7 @@ if [[ -n "$WINDIR" ]]; then
 	popd > /dev/null
 fi
 
-node $(dirname $0)/streams0/bin/run.js $PWD $@
+nodejs $(dirname $0)/streams0/bin/run.js $PWD $@
 
 if [[ -n "$WINDIR" ]]; then
 	pushd "$(dirname "${BASH_SOURCE[0]}")" > /dev/null
