@@ -11,6 +11,24 @@ if [ "" == "$NODEJS" ]; then
 	exit 1
 fi
 
+pushd "$(dirname "${BASH_SOURCE[0]}")" > /dev/null
+
+for folder in $(ls -1 | grep streams); do
+	if [ ! -d $folder/node_modules ]; then
+		pushd $folder > /dev/null
+
+		if [ "" != "$(which yarn)" ]; then
+			yarn
+		else
+			npm install
+		fi
+
+		popd > /dev/null
+	fi
+done
+
+popd > /dev/null
+
 if [ ! -f release.properties ]; then
 	echo 'Please run this script from a Liferay source folder'
 	echo 'Arguments are additional source roots (blade workspaces, subrepositories, plugins SDK, etc.)'

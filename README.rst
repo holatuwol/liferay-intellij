@@ -39,14 +39,7 @@ To setup the script, please use the following steps.
 
 	git clone git@github.com:holatuwol/liferay-intellij.git
 
-4. Make sure that the ``node_modules`` folder is populated. You can use ``yarn`` or ``npm install`` in order to do so.
-
-.. code-block:: bash
-
-	cd liferay-intellij
-	for folder in $(ls -1 | grep streams); do pushd $folder; yarn; popd; done
-
-5. Add a Bash function that makes it easy for you to call it and do any other setup. Replace ``/path/to/clone/location`` with the path to the ``liferay-intellij`` folder that you created by cloning the repository in step 3.
+4. Add a Bash function that makes it easy for you to call it and do any other setup. Replace ``/path/to/clone/location`` with the path to the ``liferay-intellij`` folder that you created by cloning the repository in step 3.
 
 .. code-block:: bash
 
@@ -56,19 +49,19 @@ To setup the script, please use the following steps.
 		${IJ_CLONE_PATH}/intellij $@
 	}
 
-7. Navigate to the portal source.
+5. Navigate to the portal source.
 
 .. code-block:: bash
 
 	cd /path/to/portal/source
 
-8. Run the following command in order to have it generate the IntelliJ project (workspace will be in the portal source)
+6. Run the following command in order to have it generate the IntelliJ project (workspace will be in the portal source)
 
 .. code-block:: bash
 
 	ij
 
-9. Have IntelliJ open the project rooted at the portal source, and it will load your populated project!
+7. Have IntelliJ open the project rooted at the portal source, and it will load your populated project!
 
 Screenshots of End Result
 -------------------------
