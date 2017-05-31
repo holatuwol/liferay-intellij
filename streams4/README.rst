@@ -113,7 +113,8 @@ Now that we have a regular expression, we know that we can create an object repr
 			type: 'library',
 			group: matchResult[1],
 			name: matchResult[2],
-			version: matchResult[3]
+			version: matchResult[3],
+			testScope: matchResult[0].indexOf('test') == 0
 		};
 
 		return dependency;

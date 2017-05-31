@@ -44,7 +44,8 @@ function getLibraryDependency(matchResult) {
 		type: 'library',
 		group: matchResult[1],
 		name: matchResult[2],
-		version: matchResult[3]
+		version: matchResult[3],
+		testScope: matchResult[0].indexOf('test') == 0
 	};
 
 	return dependency;
@@ -74,7 +75,7 @@ function getModuleDependencies(folder, moduleDependencies) {
 
 	var libraryDependencyRegex1 = /(?:test|compile|provided)[^\n]*\sgroup: ['"]([^'"]*)['"], name: ['"]([^'"]*)['"], [^\n]*version: ['"]([^'"]*)['"]/;
 	var libraryDependencyRegex2 = /(?:test|compile|provided)[^\n]*\s['"]([^'"]*):([^'"]*):([^'"]*)['"]/;
-	var projectDependencyRegex = /\sproject\(['"]:(?:[^'"]*:)?([^'"]*)['"]/;
+	var projectDependencyRegex = /(?:test|compile|provided)[^\n]*\sproject\(['"]:(?:[^'"]*:)?([^'"]*)['"]/;
 
 	while ((dependencyTextResult = dependencyTextRegex.exec(buildGradleContents)) !== null) {
 		var dependencyText = dependencyTextResult[1];

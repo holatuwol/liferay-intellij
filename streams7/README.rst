@@ -236,6 +236,10 @@ If we had a project dependency (one of the array elements contained in the ``pro
 	};
 
 	function isTestDependency(module, dependency) {
+		if (dependency.testScope) {
+			return true;
+		}
+
 		if ((module.testSourceFolders) && (module.testSourceFolders.length > 0) && (module.modulePath.indexOf('modules/sdk/') == -1)) {
 			return (module.sourceFolders.length == 0) || (dependency.name.indexOf('-test') != -1);
 		}

@@ -224,6 +224,7 @@ function fixLibraryDependencies(moduleVersions, module) {
 		var projectDependency = {
 			type: 'project',
 			name: moduleVersion.projectName,
+			testScope: dependency.testScope
 		};
 
 		module.projectDependencies.push(projectDependency);
@@ -267,6 +268,7 @@ function fixProjectDependencies(moduleVersions, addAsLibrary, module) {
 			group: 'com.liferay',
 			name: moduleVersion.bundleName,
 			version: dependency.version || moduleVersion.version,
+			testScope: dependency.testScope,
 			hasInitJsp: true
 		};
 
