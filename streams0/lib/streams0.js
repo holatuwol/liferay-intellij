@@ -34,7 +34,7 @@ var setLibraryName = streams8.setLibraryName;
 var sortModuleAttributes = streams9.sortModuleAttributes;
 
 var gitRoots = new Set();
-var gradleCaches = new Set();
+var gradleCaches = streams9.gradleCaches;
 
 function createProjectWorkspace(coreDetails, moduleDetails, pluginDetails) {
 	if (pluginDetails) {

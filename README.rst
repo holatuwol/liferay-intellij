@@ -119,6 +119,8 @@ Change Log
 
 This is a change log for when I started keeping track of the changes that were made.
 
+* **2017-06-06**: Re-enable using global gradle cache in user home
+* **2017-05-31**: Do not force test dependency to false if it's explicitly set as a test dependency in build.gradle
 * **2017-05-17**: Fix Felix logger dependencies, switch library/project dependency ordering so that other OSGi imports still work
 * **2017-05-17**: Fix Gradle wrapper detection for newer IntelliJ
 * **2017-05-17**: Re-add support for archetype-resources projects (Java files only parse if you fix the class and package)

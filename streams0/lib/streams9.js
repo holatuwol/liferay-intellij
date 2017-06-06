@@ -751,6 +751,7 @@ exports.createProjectObjectModels = createProjectObjectModels;
 exports.createProjectWorkspace = createProjectWorkspace;
 exports.fixLibraryDependencies = fixLibraryDependencies;
 exports.fixProjectDependencies = fixProjectDependencies;
+exports.gradleCaches = gradleCaches;
 exports.getJarLibraryXML = getJarLibraryXML;
 exports.getLibraryXML = getLibraryXML;
 exports.getModuleXML = getModuleXML;
