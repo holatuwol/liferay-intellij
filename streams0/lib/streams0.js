@@ -51,7 +51,9 @@ function createProjectWorkspace(coreDetails, moduleDetails, pluginDetails) {
 	coreDetails.forEach(sortModuleAttributes);
 	moduleDetails.forEach(sortModuleAttributes);
 
+	coreDetails.forEach(checkForGitRoot);
 	moduleDetails.forEach(checkForGitRoot);
+
 	moduleDetails.forEach(checkForGradleCache);
 
 	var homeGradleCache = getFilePath(os.homedir(), '.gradle/caches/modules-2/files-2.1');
