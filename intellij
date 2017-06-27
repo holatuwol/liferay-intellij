@@ -1,9 +1,9 @@
 #!/bin/bash
 
-NODEJS=$(which nodejs)
+NODEJS=$(which nodejs 2> /dev/null)
 
 if [ "" == "$NODEJS" ]; then
-	NODEJS=$(which node)
+	NODEJS=$(which node 2> /dev/null)
 fi
 
 if [ "" == "$NODEJS" ]; then
@@ -17,7 +17,7 @@ for folder in $(ls -1 | grep streams); do
 	if [ ! -d $folder/node_modules ]; then
 		pushd $folder > /dev/null
 
-		if [ "" != "$(which yarn)" ]; then
+		if [ "" != "$(which yarn 2> /dev/null)" ]; then
 			yarn
 		else
 			npm install
