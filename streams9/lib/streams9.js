@@ -600,7 +600,7 @@ function setCoreBundleVersions(accumulator, module) {
 	var buildXmlContent = fs.readFileSync(buildXmlPath);
 
 	var bundleNameRegex = /property name="manifest.bundle.symbolic.name" value="([^"\;]*)/g;
-	var bundleVersionRegex = /Bundle-Version: ([^\n]+)/g;
+	var bundleVersionRegex = /Bundle-Version: ([^\r\n]+)/g;
 
 	var matchResult = bundleNameRegex.exec(buildXmlContent);
 
@@ -635,8 +635,8 @@ function setModuleBundleVersions(accumulator, module) {
 	if (isFile(bndPath)) {
 		var bndContent = fs.readFileSync(bndPath);
 
-		var bundleNameRegex = /Bundle-SymbolicName: ([^\n]+)/g;
-		var bundleVersionRegex = /Bundle-Version: ([^\n]+)/g;
+		var bundleNameRegex = /Bundle-SymbolicName: ([^\r\n]+)/g;
+		var bundleVersionRegex = /Bundle-Version: ([^\r\n]+)/g;
 
 		var bundleNameMatcher = bundleNameRegex.exec(bndContent);
 
