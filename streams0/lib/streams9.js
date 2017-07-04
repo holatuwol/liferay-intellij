@@ -752,6 +752,7 @@ exports.createProjectWorkspace = createProjectWorkspace;
 exports.fixLibraryDependencies = fixLibraryDependencies;
 exports.fixProjectDependencies = fixProjectDependencies;
 exports.gradleCaches = gradleCaches;
+exports.getLibraryPaths = getLibraryPaths;
 exports.getJarLibraryXML = getJarLibraryXML;
 exports.getLibraryXML = getLibraryXML;
 exports.getModuleXML = getModuleXML;

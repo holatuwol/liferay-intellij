@@ -1,8 +1,10 @@
+var child_process = require('child_process');
 var comparators = require('comparators').default;
 var fs = require('fs');
 var highland = require('highland');
 var os = require('os');
 var path = require('path');
+var shelljs = require('shelljs');
 var streams2 = require('./streams2');
 var streams5 = require('./streams5');
 var streams6 = require('./streams6');
@@ -12,6 +14,7 @@ var streams9 = require('./streams9');
 
 var checkExportDependencies = streams9.checkExportDependencies;
 var checkForGradleCache = streams9.checkForGradleCache;
+var execFileSync = child_process.execFileSync;
 var fixLibraryDependencies = streams9.fixLibraryDependencies;
 var fixProjectDependencies = streams9.fixProjectDependencies;
 var flatten = streams8.flatten;
@@ -19,6 +22,7 @@ var getAncestorFiles = streams7.getAncestorFiles;
 var getFilePath = streams5.getFilePath;
 var getIntellijXML = streams6.getIntellijXML;
 var getJarLibraryXML = streams9.getJarLibraryXML;
+var getLibraryPaths = streams9.getLibraryPaths;
 var getLibraryXML = streams9.getLibraryXML;
 var getModuleElement = streams7.getModuleElement;
 var getModulesElement = streams7.getModulesElement;
@@ -41,6 +45,8 @@ function createProjectWorkspace(coreDetails, moduleDetails, pluginDetails) {
 		pluginDetails.forEach(sortModuleAttributes);
 	}
 
+	console.log('Processing dependencies');
+
 	var moduleVersions = coreDetails.reduce(setCoreBundleVersions, {});
 	moduleVersions = moduleDetails.reduce(setModuleBundleVersions, moduleVersions);
 
@@ -54,6 +60,8 @@ function createProjectWorkspace(coreDetails, moduleDetails, pluginDetails) {
 	coreDetails.forEach(checkForGitRoot);
 	moduleDetails.forEach(checkForGitRoot);
 
+	console.log('Updating Gradle cache');
+
 	moduleDetails.forEach(checkForGradleCache);
 
 	var homeGradleCache = getFilePath(os.homedir(), '.gradle/caches/modules-2/files-2.1');
@@ -61,6 +69,10 @@ function createProjectWorkspace(coreDetails, moduleDetails, pluginDetails) {
 	if (isDirectory(homeGradleCache)) {
 		gradleCaches.add(homeGradleCache);
 	}
+
+	completeGradleCache(coreDetails, moduleDetails, pluginDetails);
+
+	console.log('Generating IntelliJ workspace');
 
 	var moduleStream = highland(moduleDetails);
 	var coreStream = highland(coreDetails);
@@ -157,9 +169,90 @@ function checkForGitRoot(module) {
 	candidates.forEach(Set.prototype.add.bind(gitRoots));
 };
 
+function completeGradleCache(coreDetails, moduleDetails, pluginDetails) {
+	var moduleStream = highland(moduleDetails);
+	var coreStream = highland(coreDetails);
+	var pluginStream = highland(pluginDetails);
+
+	var detailsStream = highland.merge([moduleStream, coreStream, pluginStream]);
+
+	detailsStream
+		.pluck('libraryDependencies')
+		.compact()
+		.flatten()
+		.uniqBy(isSameLibraryDependency)
+		.filter(keyExistsInObject('group'))
+		.doto(setLibraryName)
+		.filter(highland.compose(highland.not, hasLibraryPath))
+		.map(getGradleEntry)
+		.collect()
+		.each(executeGradleFile);
+};
+
+function executeGradleFile(entries) {
+	if (entries.length == 0) {
+		return;
+	}
+
+	var buildGradleContent = [
+		'apply plugin: "java"',
+		'dependencies {'
+	];
+
+	buildGradleContent = buildGradleContent.concat(entries);
+
+	buildGradleContent = buildGradleContent.concat([
+		'}',
+		'repositories {',
+		'\tmavenLocal()',
+		'\tmaven {',
+		'\t\turl "https://cdn.lfrs.sl/repository.liferay.com/nexus/content/groups/public"',
+		'\t}',
+		'}',
+		'task completeGradleCache(type: Exec) {',
+		'\tconfigurations.compile.files',
+		'\tcommandLine "echo", "Missing items from Gradle cache have been downloaded"',
+		'}'
+	]);
+
+	var buildGradleFolder = path.join(process.cwd(), 'modules', 'ij-missing-dependencies');
+
+	shelljs.mkdir('-p', buildGradleFolder);
+
+	fs.writeFileSync(path.join(buildGradleFolder, 'build.gradle'), buildGradleContent.join('\n'));
+
+	var executable = path.join(process.cwd(), 'gradlew');
+	var args = ['completeGradleCache'];
+	var options = {
+		'cwd': buildGradleFolder,
+		'stdio': [0,1,2]
+	};
+
+	try {
+		execFileSync(executable, args, options);
+	}
+	catch (e) {
+	}
+
+	shelljs.rm('-rf', buildGradleFolder);
+}
+
 function getFilePaths(folder) {
 	return fs.readdirSync(folder).map(getFilePath(folder));
 };
+
+function getGradleEntry(library) {
+	return '\tcompile group: "' + library['group'] + '", name: "' + library['name'] + '", version: "' + library['version'] + '"';
+};
+
+function getGradleFile(entries) {
+
+
+	return {
+		name: 'modules/ij-missing-dependencies/build.gradle',
+		content: buildGradleContent.join('\n')
+	};
+}
 
 function getMiscXML(resourceElements) {
 	var miscXMLContent = [
@@ -238,6 +331,12 @@ function getTagLibraryPaths(module) {
 		.map(getFilePaths)
 		.reduce(flatten, [])
 		.filter(isTagLibraryFile);
+};
+
+function hasLibraryPath(library) {
+	var libraryPaths = getLibraryPaths(library);
+
+	return libraryPaths.length != 0;
 };
 
 function isTagLibraryFile(fileName) {
