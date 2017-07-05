@@ -27,6 +27,7 @@ var getLibraryXML = streams9.getLibraryXML;
 var getModuleElement = streams7.getModuleElement;
 var getModulesElement = streams7.getModulesElement;
 var getModuleXML = streams9.getModuleXML;
+var getProjectRepositories = streams9.getProjectRepositories;
 var getWorkspaceModulesXML = streams7.getWorkspaceModulesXML;
 var isDirectory = streams2.isDirectory;
 var isSameLibraryDependency = streams8.isSameLibraryDependency;
@@ -189,26 +190,58 @@ function completeGradleCache(coreDetails, moduleDetails, pluginDetails) {
 		.each(executeGradleFile);
 };
 
+function getGradleRepositoriesBlock(currentValue, repository) {
+	if (currentValue.length == 0) {
+		currentValue = [
+			'repositories {',
+			'\tmavenLocal()',
+			'}'
+		];
+	}
+
+	var newGradleContent = [
+		'\tmaven {',
+		'\t\turl "' + repository.scheme + '://' + repository.path + '"'
+	];
+
+	if (repository.username) {
+		newGradleContent.push('\t\tcredentials {');
+		newGradleContent.push('\t\t\tusername ' + JSON.stringify(repository.username));
+		newGradleContent.push('\t\t\tpassword ' + JSON.stringify(repository.password));
+		newGradleContent.push('\t\t}');
+	}
+
+	newGradleContent.push('}');
+
+	currentValue.splice(currentValue.length - 1, 1);
+	currentValue = currentValue.concat(newGradleContent);
+	currentValue.push('}');
+
+	return currentValue;
+}
+
 function executeGradleFile(entries) {
 	if (entries.length == 0) {
 		return;
 	}
 
+	var gradleRepositoriesBlock = getProjectRepositories().reduce(getGradleRepositoriesBlock, []);
+
 	var buildGradleContent = [
-		'apply plugin: "java"',
-		'dependencies {'
+		'apply plugin: "java"'
 	];
 
+	buildGradleContent.push('buildscript {');
+	buildGradleContent = buildGradleContent.concat(gradleRepositoriesBlock);
+	buildGradleContent.push('}');
+
+	buildGradleContent.push('dependencies {');
 	buildGradleContent = buildGradleContent.concat(entries);
+	buildGradleContent.push('}');
+
+	buildGradleContent = buildGradleContent.concat(gradleRepositoriesBlock);
 
 	buildGradleContent = buildGradleContent.concat([
-		'}',
-		'repositories {',
-		'\tmavenLocal()',
-		'\tmaven {',
-		'\t\turl "https://cdn.lfrs.sl/repository.liferay.com/nexus/content/groups/public"',
-		'\t}',
-		'}',
 		'task completeGradleCache(type: Exec) {',
 		'\tconfigurations.compile.files',
 		'\tcommandLine "echo", "Missing items from Gradle cache have been downloaded"',

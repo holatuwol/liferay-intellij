@@ -496,7 +496,7 @@ function getMavenProject(module) {
 			packaging: 'pom',
 			dependencies: dependencyObjects,
 			repositories: {
-				repository: getProjectRepositories()
+				repository: getProjectRepositories().map(getProjectRepositoriesXMLEntry)
 			}
 		}
 	};
@@ -549,14 +549,16 @@ function getProjectRepositories() {
 	tempProjectRepositories.push({
 		id: 'apache',
 		name: 'Apache',
-		url: 'http://repo.maven.apache.org/maven2',
+		scheme: 'http',
+		path: 'repo.maven.apache.org/maven2',
 		layout: 'default'
 	});
 
 	tempProjectRepositories.push({
 		id: 'liferay-public',
 		name: 'Liferay Public',
-		url: 'http://repository.liferay.com/nexus/content/repositories/public',
+		scheme: 'http',
+		path: 'repository.liferay.com/nexus/content/repositories/public',
 		layout: 'default'
 	});
 
@@ -567,14 +569,13 @@ function getProjectRepositories() {
 	var matchResult = privateRepositoryRegex.exec(buildPropertiesContent);
 
 	if (matchResult) {
-		var repositoryURL = 'https://' +
-			encodeURIComponent(matchResult[3]) + ':' + encodeURIComponent(matchResult[1]) +
-				'@' + matchResult[2];
-
 		tempProjectRepositories.push({
 			id: 'liferay-private',
 			name: 'Liferay Private',
-			url: repositoryURL,
+			scheme: 'https',
+			username: matchResult[3],
+			password: matchResult[1],
+			path: matchResult[2],
 			layout: 'default'
 		});
 	}
@@ -582,6 +583,23 @@ function getProjectRepositories() {
 	projectRepositories = tempProjectRepositories;
 
 	return projectRepositories;
+};
+
+function getProjectRepositoriesXMLEntry(repository) {
+	var repositoryBasicAuth = '';
+
+	if (repository.username) {
+		repositoryBasicAuth = encodeURIComponent(repository.username) + ':' + encodeURIComponent(repository.password) + '@';
+	}
+
+	var repositoryURL = repository.scheme + '://' + repositoryBasicAuth + repository.path;
+
+	return {
+		id: repository.id,
+		name: repository.name,
+		url: repositoryURL,
+		layout: repository.layout
+	};
 };
 
 function isDevelopmentLibrary(libraryName) {
