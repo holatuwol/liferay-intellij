@@ -211,7 +211,7 @@ function getGradleRepositoriesBlock(currentValue, repository) {
 		newGradleContent.push('\t\t}');
 	}
 
-	newGradleContent.push('}');
+	newGradleContent.push('\t}');
 
 	currentValue.splice(currentValue.length - 1, 1);
 	currentValue = currentValue.concat(newGradleContent);

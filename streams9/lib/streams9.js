@@ -257,7 +257,7 @@ function getGradleLibraryPaths(gradleBasePath, library) {
 		.filter(isFile);
 
 	if (pomPaths.length > 0) {
-		return jarPaths.concat(getPomDependencyPaths(pomPaths[0], library.version)).filter(isFirstOccurrence);
+		return jarPaths.concat(getPomDependencyPaths(pomPaths[0], library)).filter(isFirstOccurrence);
 	}
 
 	return jarPaths;
@@ -462,7 +462,7 @@ function getMavenLibraryPaths(library) {
 		return jarPaths;
 	}
 
-	return jarPaths.concat(getPomDependencyPaths(pomAbsolutePath, library.version)).filter(isFirstOccurrence);
+	return jarPaths.concat(getPomDependencyPaths(pomAbsolutePath, library)).filter(isFirstOccurrence);
 };
 
 function getMavenProject(module) {

@@ -101,7 +101,7 @@ function getGradleLibraryPaths(library) {
 		.filter(isFile);
 
 	if (pomPaths.length > 0) {
-		return jarPaths.concat(getPomDependencyPaths(pomPaths[0], library.version)).filter(isFirstOccurrence);
+		return jarPaths.concat(getPomDependencyPaths(pomPaths[0], library)).filter(isFirstOccurrence);
 	}
 
 	return jarPaths;
@@ -224,8 +224,13 @@ function getNewModuleRootManagerXML(module) {
 	return newModuleRootManagerXML.join('\n');
 };
 
-function getPomDependencyPaths(pomAbsolutePath, libraryVersion) {
+function getPomDependencyPaths(pomAbsolutePath, library) {
 	var pomContents = fs.readFileSync(pomAbsolutePath);
+
+	var parentRegex = /<parent>[^<]*<groupId>([^>]*)<\/groupId>[^<]*<artifactId>([^>]*)<\/artifactId>[^<]*<version>([^>]*)<\/version>/g;
+
+	if ((matchResult = parentRegex.exec(pomContents)) !== null) {
+	}
 
 	var dependencyTextRegex = /<dependencies>([\s\S]*?)<\/dependencies>/g;
 	var dependencyTextResult = dependencyTextRegex.exec(pomContents);
@@ -240,7 +245,7 @@ function getPomDependencyPaths(pomAbsolutePath, libraryVersion) {
 	var libraryDependencies = getDependenciesWithWhileLoop(dependencyText, getLibraryDependency, libraryDependencyRegex);
 
 	return libraryDependencies
-		.map(highland.partial(replaceProjectVersion, libraryVersion))
+		.map(highland.partial(replaceProjectVersion, library.version))
 		.map(getLibraryPaths)
 		.reduce(flatten, [])
 };
