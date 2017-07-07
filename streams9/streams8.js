@@ -347,7 +347,23 @@ function processPomDependencies(library) {
 	var pomText = fs.readFileSync(pomAbsolutePath);
 	var pom = cheerio.load(pomText);
 
-	// Next, parse all the variables
+	// If we've relocated, parse that one instead
+
+	var relocated = pom('distributionManagement > relocation');
+
+	if (relocated.length > 0) {
+		var newGroupId = relocated.children('groupId').text();
+
+		var newLibrary = initializeLibrary(newGroupId, library.name, library.version);
+
+		for (key in newLibrary) {
+			library[key] = newLibrary[key];
+		}
+
+		return;
+	}
+
+	// Otherwise, parse all the variables if we haven't already
 
 	var variables = library['variables'];
 
