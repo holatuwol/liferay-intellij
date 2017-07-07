@@ -1,5 +1,17 @@
 #!/bin/bash
 
+setantopts() {
+	JAVA_VERSION=$(java -version 2>&1 | head -1 | cut -d'"' -f 2 | cut -d'.' -f 2)
+
+	ANT_OPTS='-Xms2g -Xmx2g'
+
+	if [[ 8 -gt $JAVA_VERSION ]]; then
+		ANT_OPTS="$ANT_OPTS -XX:MaxPermSize=1g"
+	fi
+
+	export ANT_OPTS
+}
+
 NODEJS=$(which nodejs 2> /dev/null)
 
 if [ "" == "$NODEJS" ]; then
@@ -34,20 +46,16 @@ if [ ! -f release.properties ]; then
 fi
 
 if [ -d modules ] && [ ! -d tools/sdk ]; then
-	JAVA_VERSION=$(java -version 2>&1 | head -1 | cut -d'"' -f 2 | cut -d'.' -f 2)
+	setantopts
 
-	ANT_OPTS='-Xms2g -Xmx2g'
+	ant setup-sdk
+fi
 
-	if [[ 8 -gt $JAVA_VERSION ]]; then
-		ANT_OPTS="$ANT_OPTS -XX:MaxPermSize=1g"
-	fi
+if [ -f "lib/portal/dependencies.properties" ]; then
+	if [[ $(ls -1 "lib/portal" | wc -l) -lt $(cat "lib/portal/dependencies.properties" | wc -l) ]]; then
+		setantopts
 
-	export ANT_OPTS
-
-	if [ -f "lib/portal/dependencies.properties" ]; then
-		ant setup-sdk setup-libs
-	else
-		ant setup-sdk
+		ant setup-libs
 	fi
 fi
 
