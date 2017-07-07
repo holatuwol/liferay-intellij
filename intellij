@@ -14,17 +14,15 @@ fi
 pushd "$(dirname "${BASH_SOURCE[0]}")" > /dev/null
 
 for folder in $(ls -1 | grep streams); do
-	if [ ! -d $folder/node_modules ]; then
-		pushd $folder > /dev/null
+	pushd $folder > /dev/null
 
-		if [ "" != "$(which yarn 2> /dev/null)" ]; then
-			yarn
-		else
-			npm install
-		fi
-
-		popd > /dev/null
+	if [ "" != "$(which yarn 2> /dev/null)" ]; then
+		yarn
+	else
+		npm install
 	fi
+
+	popd > /dev/null
 done
 
 popd > /dev/null
