@@ -25,6 +25,8 @@ fi
 
 pushd "$(dirname "${BASH_SOURCE[0]}")" > /dev/null
 
+echo 'Running npm/yarn to update script dependencies'
+
 for folder in $(ls -1 | grep streams); do
 	pushd $folder > /dev/null
 
@@ -48,12 +50,16 @@ fi
 if [ -d modules ] && [ ! -d tools/sdk ]; then
 	setantopts
 
+	echo 'Running ant setup-sdk to initialize gradle configuration'
+
 	ant setup-sdk
 fi
 
 if [ -f "lib/portal/dependencies.properties" ]; then
 	if [[ $(ls -1 "lib/portal" | wc -l) -lt $(cat "lib/portal/dependencies.properties" | wc -l) ]]; then
 		setantopts
+
+		echo 'Running ant setup-libs to initialize portal libraries'
 
 		ant setup-libs
 	fi
