@@ -10,7 +10,6 @@ var streams7 = require('../streams8/streams7');
 var streams8 = require('./streams8');
 var xmlbuilder = require('xmlbuilder');
 
-var flatten = streams8.flatten;
 var getAncestorFiles = streams7.getAncestorFiles;
 var getComponentXML = streams6.getComponentXML;
 var getExcludeFolderElement = streams6.getExcludeFolderElement;

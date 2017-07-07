@@ -99,18 +99,6 @@ function checkForMavenCache(obj) {
 	candidates.forEach(Set.prototype.add.bind(mavenCaches));
 };
 
-function flatten(accumulator, next) {
-	if (!accumulator) {
-		return next;
-	}
-
-	if (!next) {
-		return accumulator;
-	}
-
-	return accumulator.concat(next);
-};
-
 function getLibraryOrderEntryElement(module, dependency) {
 	var extraAttributes = '';
 
@@ -505,7 +493,6 @@ function setPropertiesAsVariables(variables, library, index, node) {
 exports.checkForGradleCache = checkForGradleCache;
 exports.checkForMavenCache = checkForMavenCache;
 exports.createProjectWorkspace = createProjectWorkspace;
-exports.flatten = flatten;
 exports.getLibraryJarPaths = getLibraryJarPaths;
 exports.getLibraryOrderEntryElement = getLibraryOrderEntryElement;
 exports.getLibraryRootElement = getLibraryRootElement;

@@ -146,137 +146,14 @@ You'll know if you've managed to successfully achieve this by replacing your cal
 Checkpoint 2
 ~~~~~~~~~~~~
 
-There are theoretically two places that a dependency can come from: a Gradle cache (in the case of modules plugins in core) and a local Maven repository (in the case of plugins SDK modules). We can encapsulate that with a function that will eventually check for both, but for now, only checks for Gradle.
+There are theoretically two places that a dependency can come from: a Gradle cache (in the case of modules plugins in core) and a local Maven repository (in the case of plugins SDK modules). We can encapsulate that with a function ``getLibraryJarPaths``, which is already provided in ``streams8.js``.
 
-.. code-block:: javascript
-
-	function getLibraryPaths(library) {
-		var gradleLibraryPaths = getGradleLibraryPaths(library);
-
-		if (gradleLibraryPaths.length != 0) {
-			return gradleLibraryPaths;
-		}
-
-		return [];
-	};
-
-For Gradle, we will want the following function which converts a library description into a Gradle JAR if the library has a ``group`` attribute (anything without such an attribute is something like a core library which is just a folder).
-
-.. code-block:: javascript
-
-	function getGradleLibraryPaths(library) {
-		if (!('group' in library)) {
-			return [];
-		}
-
-		var gradleBasePath = '.gradle/caches/modules-2/files-2.1';
-
-		var folderPath = [library.group, library.name, library.version].reduce(getFilePath, gradleBasePath);
-
-		if (!isDirectory(folderPath)) {
-			return [];
-		}
-
-		var jarName = library.name + '-' + library.version + '.jar';
-
-		var jarPaths = fs.readdirSync(folderPath)
-			.map(getFilePath(folderPath))
-			.map(highland.flip(getFilePath, jarName))
-			.filter(isFile);
-
-		return jarPaths;
-	}
-
-Update our work on the ``libraryFilesStream`` in order to use ``getLibraryPaths`` in order to return the arrays of Gradle library paths corresponding to each library and log the result.
+Update our work on the ``libraryFilesStream`` in order to use ``getLibraryJarPaths`` in order to return the arrays of Gradle library paths corresponding to each library and log the result.
 
 .. code-block:: javascript
 
 	libraryFilesStream
 		.each(console.log);
-
-Checkpoint 3
-~~~~~~~~~~~~
-
-Dependencies come in two forms: regular JAR dependencies, and POM wrapper dependencies. Let's assume we have the following function.
-
-.. code-block:: javascript
-
-	function isFirstOccurrence(value, index, array) {
-		return array.indexOf(value) == index;
-	};
-
-With this function, the following code can be added to our existing ``getGradleLibraryPaths`` in order to return the result of parsing such a ``pom.xml`` file.
-
-.. code-block:: javascript
-
-	var pomName = library.name + '-' + library.version + '.pom';
-
-	var pomPaths = fs.readdirSync(folderPath)
-		.map(getFilePath(folderPath))
-		.map(highland.flip(getFilePath, pomName))
-		.filter(isFile);
-
-	if (pomPaths.length > 0) {
-		return jarPaths.concat(getPomDependencyPaths(pomPaths[0], library.version)).sort().filter(isFirstOccurrence);
-	}
-
-	return jarPaths;
-
-This code contains logic which attempts to handle wrapper dependencies. A wrapper dependency is something similar to the ``shrinkwrap-depchain`` module from ``org.jboss.shrinkwrap``), where there is no JAR file and only a ``pom.xml`` file describing the library's dependencies. This leads to the following code to read in a ``pom.xml``.
-
-.. code-block:: javascript
-
-	function getPomDependencyPaths(pomAbsolutePath, libraryVersion) {
-		var pomContents = fs.readFileSync(pomAbsolutePath);
-
-		var dependencyTextRegex = /<dependencies>([\s\S]*?)<\/dependencies>/g;
-		var dependencyTextResult = dependencyTextRegex.exec(pomContents);
-
-		if (!dependencyTextResult) {
-			return [];
-		}
-
-		var dependencyText = dependencyTextResult[1];
-
-		var libraryDependencyRegex = /<groupId>([^>]*)<\/groupId>[^<]*<artifactId>([^>]*)<\/artifactId>[^<]*<version>([^>]*)<\/version>/g;
-		var libraryDependencies = getDependenciesWithWhileLoop(dependencyText, getLibraryDependency, libraryDependencyRegex);
-
-		return libraryDependencies
-			.map(getLibraryPaths);
-	};
-
-Checkpoint 4
-~~~~~~~~~~~~
-
-You may have noticed that we now have an array of arrays whenever we have to switch to parsing a ``pom.xml``. In streams, we would collapse these arrays with a ``flatten``, but no such built-in function exists in handling arrays. Therefore, we will need to write one.
-
-.. code-block:: javascript
-
-	function flatten(accumulator, next) {
-		if (!accumulator) {
-			return next;
-		}
-
-		if (!next) {
-			return accumulator;
-		}
-
-		return accumulator.concat(next);
-	};
-
-You may have also noticed that the libraries a literal ``${project.version}`` which stands for the current project's version is to be passed onto its dependencies. Assume you have the following function which can replace the version specified on the library with a version specified as an argument in the function.
-
-.. code-block:: javascript
-
-	function replaceProjectVersion(version, library) {
-		if (library.version == '${project.version}') {
-			library.version = version;
-		}
-
-		return library;
-	};
-
-Use these two functions in order to ensure that the library version is properly updated and that we have a flattened array consisting only of JAR paths.
 
 Create Library Files
 --------------------
@@ -341,7 +218,7 @@ Leveraging this function, we can declare a function which generates the XML cont
 		libraryTableXML.push('<library name="' + library['libraryName'] + '" type="repository">');
 		libraryTableXML.push('<properties maven-id="' + library['libraryName'] + '" />');
 
-		var binaryPaths = getLibraryPaths(library);
+		var binaryPaths = getLibraryJarPaths(library);
 
 		if (binaryPaths.length > 0) {
 			libraryTableXML.push('<CLASSES>');

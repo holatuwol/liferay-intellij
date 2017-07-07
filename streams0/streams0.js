@@ -18,7 +18,6 @@ var checkForMavenCache = streams8.checkForMavenCache;
 var execFileSync = child_process.execFileSync;
 var fixLibraryDependencies = streams9.fixLibraryDependencies;
 var fixProjectDependencies = streams9.fixProjectDependencies;
-var flatten = streams8.flatten;
 var getAncestorFiles = streams7.getAncestorFiles;
 var getFilePath = streams5.getFilePath;
 var getIntellijXML = streams6.getIntellijXML;
@@ -189,6 +188,18 @@ function completeGradleCache(coreDetails, moduleDetails, pluginDetails) {
 		.map(getGradleEntry)
 		.collect()
 		.each(executeGradleFile);
+};
+
+function flatten(accumulator, next) {
+	if (!accumulator) {
+		return next;
+	}
+
+	if (!next) {
+		return accumulator;
+	}
+
+	return accumulator.concat(next);
 };
 
 function getGradleRepositoriesBlock(currentValue, repository) {
