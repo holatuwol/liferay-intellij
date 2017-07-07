@@ -13,7 +13,8 @@ var streams8 = require('./streams8');
 var streams9 = require('./streams9');
 
 var checkExportDependencies = streams9.checkExportDependencies;
-var checkForGradleCache = streams9.checkForGradleCache;
+var checkForGradleCache = streams8.checkForGradleCache;
+var checkForMavenCache = streams8.checkForMavenCache;
 var execFileSync = child_process.execFileSync;
 var fixLibraryDependencies = streams9.fixLibraryDependencies;
 var fixProjectDependencies = streams9.fixProjectDependencies;
@@ -22,7 +23,7 @@ var getAncestorFiles = streams7.getAncestorFiles;
 var getFilePath = streams5.getFilePath;
 var getIntellijXML = streams6.getIntellijXML;
 var getJarLibraryXML = streams9.getJarLibraryXML;
-var getLibraryPaths = streams9.getLibraryPaths;
+var getLibraryJarPaths = streams8.getLibraryJarPaths;
 var getLibraryXML = streams9.getLibraryXML;
 var getModuleElement = streams7.getModuleElement;
 var getModulesElement = streams7.getModulesElement;
@@ -39,14 +40,16 @@ var setLibraryName = streams8.setLibraryName;
 var sortModuleAttributes = streams9.sortModuleAttributes;
 
 var gitRoots = new Set();
+
 var gradleCaches = streams9.gradleCaches;
+var mavenCaches = streams9.mavenCaches;
 
 function createProjectWorkspace(coreDetails, moduleDetails, pluginDetails) {
 	if (pluginDetails) {
 		pluginDetails.forEach(sortModuleAttributes);
 	}
 
-	console.log('Processing dependencies');
+	console.log('Processing dependency versions');
 
 	var moduleVersions = coreDetails.reduce(setCoreBundleVersions, {});
 	moduleVersions = moduleDetails.reduce(setModuleBundleVersions, moduleVersions);
@@ -61,15 +64,13 @@ function createProjectWorkspace(coreDetails, moduleDetails, pluginDetails) {
 	coreDetails.forEach(checkForGitRoot);
 	moduleDetails.forEach(checkForGitRoot);
 
-	console.log('Updating Gradle cache');
-
 	moduleDetails.forEach(checkForGradleCache);
+	checkForGradleCache(os.homedir());
 
-	var homeGradleCache = getFilePath(os.homedir(), '.gradle/caches/modules-2/files-2.1');
+	moduleDetails.forEach(checkForMavenCache);
+	checkForMavenCache(os.homedir());
 
-	if (isDirectory(homeGradleCache)) {
-		gradleCaches.add(homeGradleCache);
-	}
+	console.log('Processing dependency artifacts');
 
 	completeGradleCache(coreDetails, moduleDetails, pluginDetails);
 
@@ -248,7 +249,7 @@ function executeGradleFile(entries) {
 		'}'
 	]);
 
-	var buildGradleFolder = path.join(process.cwd(), 'modules', 'ij-missing-dependencies');
+	var buildGradleFolder = path.join(process.cwd(), 'tmp/ijbuild');
 
 	shelljs.mkdir('-p', buildGradleFolder);
 
@@ -267,7 +268,7 @@ function executeGradleFile(entries) {
 	catch (e) {
 	}
 
-	shelljs.rm('-rf', buildGradleFolder);
+	//shelljs.rm('-rf', buildGradleFolder);
 }
 
 function getFilePaths(folder) {
@@ -279,10 +280,8 @@ function getGradleEntry(library) {
 };
 
 function getGradleFile(entries) {
-
-
 	return {
-		name: 'modules/ij-missing-dependencies/build.gradle',
+		name: path.join(process.cwd(), 'tmp/ijbuild/build.gradle'),
 		content: buildGradleContent.join('\n')
 	};
 }
@@ -367,7 +366,7 @@ function getTagLibraryPaths(module) {
 };
 
 function hasLibraryPath(library) {
-	var libraryPaths = getLibraryPaths(library);
+	var libraryPaths = getLibraryJarPaths(library);
 
 	return libraryPaths.length != 0;
 };

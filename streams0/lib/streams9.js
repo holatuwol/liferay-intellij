@@ -11,18 +11,20 @@ var streams8 = require('./streams8');
 var xmlbuilder = require('xmlbuilder');
 
 var flatten = streams8.flatten;
+var checkForGradleCache = streams8.checkForGradleCache;
+var checkForMavenCache = streams8.checkForMavenCache;
 var getAncestorFiles = streams7.getAncestorFiles;
 var getComponentXML = streams6.getComponentXML;
 var getExcludeFolderElement = streams6.getExcludeFolderElement;
 var getFacetManagerXML = streams6.getFacetManagerXML;
 var getFilePath = streams5.getFilePath;
 var getIntellijXML = streams6.getIntellijXML;
+var getLibraryJarPaths = streams8.getLibraryJarPaths;
 var getLibraryOrderEntryElement = streams8.getLibraryOrderEntryElement;
 var getLibraryRootElement = streams8.getLibraryRootElement;
 var getModuleElement = streams7.getModuleElement;
 var getModulesElement = streams7.getModulesElement;
 var getModuleIMLPath = streams6.getModuleIMLPath;
-var getPomDependencyPaths = streams8.getPomDependencyPaths;
 var getSourceFolderElement = streams6.getSourceFolderElement;
 var getWorkspaceModulesXML = streams7.getWorkspaceModulesXML;
 var isDirectory = streams2.isDirectory;
@@ -33,18 +35,10 @@ var keyExistsInObject = highland.ncurry(2, streams8.keyExistsInObject);
 var saveContent = streams6.saveContent;
 var setLibraryName = streams8.setLibraryName;
 
-var gradleCaches = new Set();
+var gradleCaches = streams8.gradleCaches;
+var mavenCaches = streams8.mavenCaches;
+
 var projectRepositories = [];
-
-function checkForGradleCache(module) {
-	if (!module.modulePath) {
-		return;
-	}
-
-	var candidates = getAncestorFiles(module.modulePath, '.gradle/caches/modules-2/files-2.1');
-
-	candidates.forEach(Set.prototype.add.bind(gradleCaches));
-};
 
 function createProjectObjectModels(coreDetails, moduleDetails) {
 	var moduleVersions = coreDetails.reduce(setCoreBundleVersions, {});
@@ -87,12 +81,10 @@ function createProjectWorkspace(coreDetails, moduleDetails, pluginDetails) {
 	moduleDetails.forEach(sortModuleAttributes);
 
 	moduleDetails.forEach(checkForGradleCache);
+	checkForGradleCache(os.homedir());
 
-	var homeGradleCache = getFilePath(os.homedir(), '.gradle/caches/modules-2/files-2.1');
-
-	if (isDirectory(homeGradleCache)) {
-		gradleCaches.add(homeGradleCache);
-	}
+	moduleDetails.forEach(checkForMavenCache);
+	checkForMavenCache(os.homedir());
 
 	var moduleStream = highland(moduleDetails);
 	var coreStream = highland(coreDetails);
@@ -289,42 +281,6 @@ function getCoreLibraryOrderEntryElements(module) {
 		.map(highland.partial(getLibraryOrderEntryElement, module));
 };
 
-function getGradleLibraryPaths(gradleBasePath, library) {
-	if (!('group' in library)) {
-		return [];
-	}
-
-	var folderPath = [library.group, library.name, library.version].reduce(getFilePath, gradleBasePath);
-
-	if (!isDirectory(folderPath)) {
-		return [];
-	}
-
-	var jarName = library.name + '-' + library.version + '.jar';
-
-	var jarPaths = fs.readdirSync(folderPath)
-		.map(getFilePath(folderPath))
-		.map(highland.flip(getFilePath, jarName))
-		.filter(isFile);
-
-	if ((library.group == 'com.liferay') && library.hasInitJsp) {
-		return jarPaths;
-	}
-
-	var pomName = library.name + '-' + library.version + '.pom';
-
-	var pomPaths = fs.readdirSync(folderPath)
-		.map(getFilePath(folderPath))
-		.map(highland.flip(getFilePath, pomName))
-		.filter(isFile);
-
-	if (pomPaths.length > 0) {
-		return jarPaths.concat(getPomDependencyPaths(pomPaths[0], library)).filter(isFirstOccurrence);
-	}
-
-	return jarPaths;
-};
-
 function getJarLibraryTableXML(library) {
 	var libraryTableXML = [
 		'<library name="' + library.name + '">',
@@ -385,35 +341,13 @@ function getJarLibraryXML(library) {
 	};
 };
 
-function getLibraryPaths(library) {
-	if (library.libraryPaths) {
-		return library.libraryPaths;
-	}
-
-	var mavenLibraryPaths = getMavenLibraryPaths(library);
-
-	if (mavenLibraryPaths.length != 0) {
-		return mavenLibraryPaths;
-	}
-
-	for (gradleCache of gradleCaches) {
-		gradleLibraryPaths = getGradleLibraryPaths(gradleCache, library);
-
-		if (gradleLibraryPaths.length != 0) {
-			return gradleLibraryPaths;
-		}
-	}
-
-	return [];
-};
-
 function getLibraryTableXML(library) {
 	var libraryTableXML = [];
 
 	libraryTableXML.push('<library name="' + library['libraryName'] + '" type="repository">');
 	libraryTableXML.push('<properties maven-id="' + library['libraryName'] + '" />');
 
-	var binaryPaths = getLibraryPaths(library);
+	var binaryPaths = getLibraryJarPaths(library);
 
 	if (binaryPaths.length > 0) {
 		libraryTableXML.push('<CLASSES>');
@@ -491,40 +425,6 @@ function getMavenDependencyElement(library) {
 	}
 
 	return dependencyElement;
-};
-
-function getMavenLibraryPaths(library) {
-	if (!('group' in library)) {
-		return [];
-	}
-
-	var jarFileName = library.name + '-' + library.version + '.jar';
-
-	var userHome = process.env.HOME || process.env.HOMEPATH || process.env.USERPROFILE;
-
-	var jarRelativePath = library.group.split('.').concat([library.name, library.version, jarFileName]).join('/');
-	var jarAbsolutePath = ['.m2', 'repository', jarRelativePath].reduce(getFilePath, userHome);
-
-	var jarPaths = [];
-
-	if (isFile(jarAbsolutePath)) {
-		jarPaths = [getFilePath('$MAVEN_REPOSITORY$', jarRelativePath)];
-	}
-
-	if ((library.group == 'com.liferay') && library.hasInitJsp) {
-		return jarPaths;
-	}
-
-	var pomFileName = library.name + '-' + library.version + '.pom';
-
-	var pomRelativePath = library.group.split('.').concat([library.name, library.version, pomFileName]).join('/');
-	var pomAbsolutePath = ['.m2', 'repository', pomRelativePath].reduce(getFilePath, userHome);
-
-	if (!isFile(pomAbsolutePath)) {
-		return jarPaths;
-	}
-
-	return jarPaths.concat(getPomDependencyPaths(pomAbsolutePath, library)).filter(isFirstOccurrence);
 };
 
 function getMavenProject(module) {
@@ -764,16 +664,16 @@ function sortModuleAttributes(module) {
 };
 
 exports.checkExportDependencies = checkExportDependencies;
-exports.checkForGradleCache = checkForGradleCache;
 exports.createProjectObjectModels = createProjectObjectModels;
 exports.createProjectWorkspace = createProjectWorkspace;
 exports.fixLibraryDependencies = fixLibraryDependencies;
 exports.fixProjectDependencies = fixProjectDependencies;
+
 exports.gradleCaches = gradleCaches;
-exports.getLibraryPaths = getLibraryPaths;
 exports.getJarLibraryXML = getJarLibraryXML;
 exports.getLibraryXML = getLibraryXML;
 exports.getModuleXML = getModuleXML;
+exports.mavenCaches = mavenCaches;
 exports.getProjectRepositories = getProjectRepositories;
 exports.setCoreBundleVersions = setCoreBundleVersions;
 exports.setModuleBundleVersions = setModuleBundleVersions;

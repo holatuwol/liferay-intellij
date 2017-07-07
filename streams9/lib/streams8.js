@@ -1,11 +1,14 @@
+var cheerio = require('cheerio');
 var fs = require('fs');
 var highland = require('highland');
+var os = require('os');
 var streams2 = require('./streams2');
 var streams4 = require('./streams4');
 var streams5 = require('./streams5');
 var streams6 = require('./streams6');
 var streams7 = require('./streams7');
 
+var getAncestorFiles = streams7.getAncestorFiles;
 var getComponentXML = streams6.getComponentXML;
 var getDependenciesWithWhileLoop = streams4.getDependenciesWithWhileLoop;
 var getExcludeFolderElement = streams6.getExcludeFolderElement;
@@ -24,7 +27,18 @@ var isFile = streams2.isFile;
 var isTestDependency = streams7.isTestDependency;
 var saveContent = streams6.saveContent;
 
+var gradleCaches = new Set();
+var mavenCaches = new Set();
+
+var libraryCache = {};
+
 function createProjectWorkspace(coreDetails, moduleDetails) {
+	moduleDetails.forEach(checkForGradleCache);
+	checkForGradleCache(os.homedir());
+
+	moduleDetails.forEach(checkForMavenCache);
+	checkForMavenCache(os.homedir());
+
 	var moduleStream = highland(moduleDetails);
 	var coreStream = highland(coreDetails);
 
@@ -61,6 +75,30 @@ function createProjectWorkspace(coreDetails, moduleDetails) {
 	detailsStream.done(function() {});
 };
 
+function checkForGradleCache(obj) {
+	var modulePath = typeof obj == "string" ? obj : obj.modulePath;
+
+	if (!modulePath) {
+		return;
+	}
+
+	var candidates = getAncestorFiles(modulePath, '.gradle/caches/modules-2/files-2.1');
+
+	candidates.forEach(Set.prototype.add.bind(gradleCaches));
+};
+
+function checkForMavenCache(obj) {
+	var modulePath = typeof obj == "string" ? obj : obj.modulePath;
+
+	if (!modulePath) {
+		return;
+	}
+
+	var candidates = getAncestorFiles(modulePath, '.m2/repository');
+
+	candidates.forEach(Set.prototype.add.bind(mavenCaches));
+};
+
 function flatten(accumulator, next) {
 	if (!accumulator) {
 		return next;
@@ -71,40 +109,6 @@ function flatten(accumulator, next) {
 	}
 
 	return accumulator.concat(next);
-};
-
-function getGradleLibraryPaths(library) {
-	if (!('group' in library)) {
-		return [];
-	}
-
-	var gradleBasePath = '.gradle/caches/modules-2/files-2.1';
-
-	var folderPath = [library.group, library.name, library.version].reduce(getFilePath, gradleBasePath);
-
-	if (!isDirectory(folderPath)) {
-		return [];
-	}
-
-	var jarName = library.name + '-' + library.version + '.jar';
-
-	var jarPaths = fs.readdirSync(folderPath)
-		.map(getFilePath(folderPath))
-		.map(highland.flip(getFilePath, jarName))
-		.filter(isFile);
-
-	var pomName = library.name + '-' + library.version + '.pom';
-
-	var pomPaths = fs.readdirSync(folderPath)
-		.map(getFilePath(folderPath))
-		.map(highland.flip(getFilePath, pomName))
-		.filter(isFile);
-
-	if (pomPaths.length > 0) {
-		return jarPaths.concat(getPomDependencyPaths(pomPaths[0], library)).filter(isFirstOccurrence);
-	}
-
-	return jarPaths;
 };
 
 function getLibraryOrderEntryElement(module, dependency) {
@@ -118,16 +122,6 @@ function getLibraryOrderEntryElement(module, dependency) {
 	}
 
 	return '<orderEntry type="library" name="' + dependency.libraryName + '" level="project" ' + extraAttributes + '/>';
-};
-
-function getLibraryPaths(library) {
-	var gradleLibraryPaths = getGradleLibraryPaths(library);
-
-	if (gradleLibraryPaths.length != 0) {
-		return gradleLibraryPaths;
-	}
-
-	return [];
 };
 
 function getLibraryRootElement(libraryPath) {
@@ -145,7 +139,7 @@ function getLibraryTableXML(library) {
 	libraryTableXML.push('<library name="' + library['libraryName'] + '" type="repository">');
 	libraryTableXML.push('<properties maven-id="' + library['libraryName'] + '" />');
 
-	var binaryPaths = getLibraryPaths(library);
+	var binaryPaths = getLibraryJarPaths(library);
 
 	if (binaryPaths.length > 0) {
 		libraryTableXML.push('<CLASSES>');
@@ -224,31 +218,96 @@ function getNewModuleRootManagerXML(module) {
 	return newModuleRootManagerXML.join('\n');
 };
 
-function getPomDependencyPaths(pomAbsolutePath, library) {
-	var pomContents = fs.readFileSync(pomAbsolutePath);
-
-	var parentRegex = /<parent>[^<]*<groupId>([^>]*)<\/groupId>[^<]*<artifactId>([^>]*)<\/artifactId>[^<]*<version>([^>]*)<\/version>/g;
-
-	if ((matchResult = parentRegex.exec(pomContents)) !== null) {
-	}
-
-	var dependencyTextRegex = /<dependencies>([\s\S]*?)<\/dependencies>/g;
-	var dependencyTextResult = dependencyTextRegex.exec(pomContents);
-
-	if (!dependencyTextResult) {
+function getLibraryJarPaths(library) {
+	if (library.group == null) {
 		return [];
 	}
 
-	var dependencyText = dependencyTextResult[1];
+	var jarPaths = library['jarPaths'];
 
-	var libraryDependencyRegex = /<groupId>([^>]*)<\/groupId>[^<]*<artifactId>([^>]*)<\/artifactId>[^<]*<version>([^>]*)<\/version>/g;
-	var libraryDependencies = getDependenciesWithWhileLoop(dependencyText, getLibraryDependency, libraryDependencyRegex);
+	if (jarPaths != null) {
+		return jarPaths;
+	}
 
-	return libraryDependencies
-		.map(highland.partial(replaceProjectVersion, library.version))
-		.map(getLibraryPaths)
-		.reduce(flatten, [])
+	var folderPath = library['folderPath'];
+
+	if (folderPath == null) {
+		folderPath = getLibraryFolderPath(library);
+
+		library['folderPath'] = folderPath;
+	}
+
+	if (folderPath == null) {
+		return [];
+	}
+
+	var jarName = library.name + '-' + library.version + '.jar';
+
+	var jarPaths = fs.readdirSync(folderPath)
+		.map(getFilePath(folderPath))
+		.map(highland.flip(getFilePath, jarName))
+		.filter(isFile);
+
+	if (jarPaths.length == 0) {
+		jarPaths = [getFilePath(folderPath, jarName)].filter(isFile);
+	}
+
+	library['jarPaths'] = jarPaths;
+
+	if ((library.group != 'com.liferay') || library.hasInitJsp) {
+		processPomDependencies(library);
+	}
+
+	return library['jarPaths'];
 };
+
+function getLibraryFolderPath(library) {
+	if (library.group == null) {
+		return null;
+	}
+
+	var mavenRelativePath = library.group.split('.').concat([library.name, library.version]).join('/');
+
+	for (mavenCache of mavenCaches) {
+		var mavenAbsolutePath = getFilePath(mavenCache, mavenRelativePath);
+
+		if (isDirectory(mavenAbsolutePath) && (fs.readdirSync(mavenAbsolutePath).length != 0)) {
+			return mavenAbsolutePath;
+		}
+	}
+
+	var gradleRelativePath = [library.group, library.name, library.version].join('/');
+
+	for (gradleCache of gradleCaches) {
+		var gradleAbsolutePath = getFilePath(gradleCache, gradleRelativePath);
+
+		if (isDirectory(gradleAbsolutePath) && (fs.readdirSync(gradleAbsolutePath).length != 0)) {
+			return gradleAbsolutePath;
+		}
+	}
+
+	return null;
+};
+
+function initializeLibrary(groupId, artifactId, version) {
+	var libraryName = [groupId, artifactId, version].join(':');
+	var newLibrary = libraryCache[libraryName];
+
+	if (newLibrary == null) {
+		newLibrary = {
+			'group': groupId,
+			'name': artifactId,
+			'version': version,
+			'libraryName' : libraryName
+		}
+
+		libraryCache[libraryName] = newLibrary;
+	}
+
+	getLibraryJarPaths(newLibrary);
+
+	return newLibrary;
+}
 
 function isFirstOccurrence(value, index, array) {
 	return array.indexOf(value) == index;
@@ -264,35 +323,198 @@ function keyExistsInObject(key, object) {
 	return object && key in object;
 };
 
-function replaceProjectVersion(version, library) {
-	if (library.version == '${project.version}') {
-		library.version = version;
+function processPomDependencies(library) {
+	var folderPath = library['folderPath'];
+
+	if (folderPath == null) {
+		folderPath = getLibraryFolderPath(library);
+
+		library['folderPath'] = folderPath;
 	}
 
-	return library;
+	if (folderPath == null) {
+		return;
+	}
+
+	// First, read the pom.xml
+
+	var pomName = library.name + '-' + library.version + '.pom';
+	var pomPaths = [];
+
+	var pomPaths = fs.readdirSync(folderPath)
+		.map(getFilePath(folderPath))
+		.map(highland.flip(getFilePath, pomName))
+		.filter(isFile);
+
+	if (pomPaths.length == 0) {
+		pomPaths = [getFilePath(folderPath, pomName)].filter(isFile);
+	}
+
+	if (pomPaths.length == 0) {
+		return;
+	}
+
+	var pomAbsolutePath = pomPaths[0];
+
+	var pomText = fs.readFileSync(pomAbsolutePath);
+	var pom = cheerio.load(pomText);
+
+	// Next, parse all the variables
+
+	var variables = library['variables'];
+
+	if (variables == null) {
+		variables = {};
+
+		library['variables'] = variables;
+
+		// If there is a parent pom.xml, parse it first
+
+		var parent = pom('project > parent');
+
+		if (parent.length > 0) {
+			var parentGroupId = parent.children('groupId').text();
+			var parentArtifactId = parent.children('artifactId').text();
+			var parentVersion = parent.children('version').text();
+
+			var parentLibrary = initializeLibrary(parentGroupId, parentArtifactId, parentVersion);
+			var parentVariables = parentLibrary['variables'];
+
+			for (variableName in parentVariables) {
+				variables[variableName] = parentVariables[variableName];
+			}
+
+			variables['project.parent.groupId'] = parentLibrary.group;
+			variables['project.parent.artifactId'] = parentLibrary.name;
+			variables['project.parent.version'] = parentLibrary.version;
+		}
+		else {
+			variables['project.parent.groupId'] = library.group;
+			variables['project.parent.name'] = library.name;
+			variables['project.parent.version'] = library.version;
+		}
+
+		// Now process our own variables
+
+		pom('properties').children()
+			.each(highland.partial(setPropertiesAsVariables, variables, library));
+	}
+
+	// Next, parse all the dependencies
+
+	if (library['jarPaths'] == null) {
+		library['jarPaths'] = [];
+	}
+
+	variables['project.groupId'] = library.group;
+	variables['project.name'] = library.name;
+	variables['project.version'] = library.version;
+
+	pom('project > dependencies').children()
+		.each(highland.partial(setDependenciesAsJars, variables, library));
+
+	pom('project > dependencyManagement > dependencies').children()
+		.each(highland.partial(setDependencyVariables, variables, library));
+
+	return library['jarPaths'];
+};
+
+function replaceVariables(variables, attributeValue) {
+	if (attributeValue == null) {
+		return attributeValue;
+	}
+
+	var x = attributeValue.indexOf('${');
+
+	while (x != -1) {
+		y = attributeValue.indexOf('}', x + 2);
+
+		var variableName = attributeValue.substring(x + 2, y);
+
+		var variableValue = variables[variableName];
+
+		if (variableValue == null) {
+			variableValue = variables[variableName.toLowerCase()];
+		}
+
+		if (variableValue == null) {
+			variableValue = '';
+		}
+
+		attributeValue = attributeValue.substring(0, x) + variableValue + attributeValue.substring(y + 1);
+
+		x = attributeValue.indexOf('${');
+	}
+
+	return attributeValue;
+};
+
+function setDependenciesAsJars(variables, library, index, node) {
+	var artifactInfo = setDependencyVariables(variables, library, index, node);
+
+	var groupId = artifactInfo[0];
+	var artifactId = artifactInfo[1];
+	var version = artifactInfo[2];
+
+	var dependencyLibrary = initializeLibrary(groupId, artifactId, version);
+
+	Array.prototype.push.apply(library['jarPaths'], dependencyLibrary['jarPaths']);
+};
+
+function setDependencyVariables(variables, library, index, node) {
+	var dependency = cheerio(node);
+
+	var groupId = replaceVariables(variables, dependency.children('groupId').text());
+	var artifactId = replaceVariables(variables, dependency.children('artifactId').text());
+	var version = dependency.children('version').text();
+
+	var versionVariableName = [groupId, artifactId].join(':');
+
+	if (!version) {
+		version = variables[versionVariableName];
+	}
+
+	version = replaceVariables(variables, version);
+
+	if (version) {
+		variables[versionVariableName] = version;
+	}
+
+	return [groupId, artifactId, version];
 };
 
 function setLibraryName(library) {
-	if ('group' in library) {
-		library['libraryName'] = library.group + ':' + library.name + ':' + library.version;
+	var libraryName = library.name;
+
+	if (library['group'] != null) {
+		libraryName = [library.group, library.name, library.version].join(':');
 	}
-	else {
-		library['libraryName'] = library.name;
-	}
+
+	libraryCache[libraryName] = library;
+	library['libraryName'] = libraryName;
 
 	return library;
 };
 
+function setPropertiesAsVariables(variables, library, index, node) {
+	var variableName = node.tagName;
+
+	variables[variableName] = cheerio(node).text();
+};
+
+exports.checkForGradleCache = checkForGradleCache;
+exports.checkForMavenCache = checkForMavenCache;
 exports.createProjectWorkspace = createProjectWorkspace;
 exports.flatten = flatten;
-exports.getGradleLibraryPaths = getGradleLibraryPaths;
+exports.getLibraryJarPaths = getLibraryJarPaths;
 exports.getLibraryOrderEntryElement = getLibraryOrderEntryElement;
 exports.getLibraryRootElement = getLibraryRootElement;
 exports.getLibraryXML = getLibraryXML;
 exports.getModuleLibraryOrderEntryElements = getModuleLibraryOrderEntryElements;
 exports.getModuleXML = getModuleXML;
-exports.getPomDependencyPaths = getPomDependencyPaths;
+exports.gradleCaches = gradleCaches;
 exports.isFirstOccurrence = isFirstOccurrence;
 exports.isSameLibraryDependency = isSameLibraryDependency;
 exports.keyExistsInObject = keyExistsInObject;
+exports.mavenCaches = mavenCaches;
 exports.setLibraryName = setLibraryName;
