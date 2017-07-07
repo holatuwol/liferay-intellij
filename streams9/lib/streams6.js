@@ -1,1 +1,0 @@
-../../streams8/lib/streams6.js

@@ -27,17 +27,11 @@ pushd "$(dirname "${BASH_SOURCE[0]}")" > /dev/null
 
 echo 'Running npm/yarn to update script dependencies'
 
-for folder in $(ls -1 | grep streams); do
-	pushd $folder > /dev/null
-
-	if [ "" != "$(which yarn 2> /dev/null)" ]; then
-		yarn
-	else
-		npm install
-	fi
-
-	popd > /dev/null
-done
+if [ "" != "$(which yarn 2> /dev/null)" ]; then
+	yarn
+else
+	npm install
+fi
 
 popd > /dev/null
 
@@ -65,34 +59,11 @@ if [ -f "lib/portal/dependencies.properties" ]; then
 	fi
 fi
 
-if [[ -n "$WINDIR" ]]; then
-	pushd "$(dirname "${BASH_SOURCE[0]}")" > /dev/null
-
-	for target_file in $(git ls-files -s | grep '^120000' | awk '{ print $4 }'); do
-		rm $target_file
-		source_file=$(git ls-files -s | grep -F $(basename $target_file) | grep -v '^120000' | awk '{ print $4 }' | sort -u | tail -1)
-		cp $source_file $(dirname $target_file)
-	done
-
-	popd > /dev/null
-fi
-
 "$NODEJS" $(dirname $0)/streams0/bin/pom.js $PWD $@
 mvn dependency:sources
 grep '<module>.*</module>' pom.xml | awk -F'[<>]' '{ print $3 "/pom.xml" }' | xargs rm
 rm pom.xml
 
 "$NODEJS" $(dirname $0)/streams0/bin/run.js $PWD $@
-
-if [[ -n "$WINDIR" ]]; then
-	pushd "$(dirname "${BASH_SOURCE[0]}")" > /dev/null
-
-	for target_file in $(git ls-files -s | grep '^120000' | awk '{ print $4 }'); do
-		rm $target_file
-		git checkout $target_file
-	done
-
-	popd > /dev/null
-fi
 
 git ls-files | grep '\(\.idea\|\.iml\)' | xargs git update-index --assume-unchanged

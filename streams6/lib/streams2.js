@@ -1,1 +1,0 @@
-../../streams5/lib/streams2.js
