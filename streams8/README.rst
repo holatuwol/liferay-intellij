@@ -216,7 +216,7 @@ Leveraging this function, we can declare a function which generates the XML cont
 		var libraryTableXML = [];
 
 		libraryTableXML.push('<library name="' + library['libraryName'] + '" type="repository">');
-		libraryTableXML.push('<properties maven-id="' + library['libraryName'] + '" />');
+		libraryTableXML.push('<properties />');
 
 		var binaryPaths = getLibraryJarPaths(library);
 

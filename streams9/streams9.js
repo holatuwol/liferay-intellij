@@ -291,7 +291,7 @@ function getLibraryTableXML(library) {
 	var libraryTableXML = [];
 
 	libraryTableXML.push('<library name="' + library['libraryName'] + '" type="repository">');
-	libraryTableXML.push('<properties maven-id="' + library['libraryName'] + '" />');
+	libraryTableXML.push('<properties />');
 
 	var binaryPaths = getLibraryJarPaths(library);
 

@@ -185,6 +185,7 @@ function completeGradleCache(coreDetails, moduleDetails, pluginDetails) {
 		.filter(keyExistsInObject('group'))
 		.doto(setLibraryName)
 		.filter(highland.compose(highland.not, hasLibraryPath))
+		.filter(highland.compose(highland.not, isLiferayModule))
 		.map(getGradleEntry)
 		.collect()
 		.each(executeGradleFile);
@@ -381,6 +382,10 @@ function hasLibraryPath(library) {
 
 	return libraryPaths.length != 0;
 };
+
+function isLiferayModule(library) {
+	return library.group != null && library.group.indexOf('com.liferay') == 0 && library.name.indexOf('com.liferay') == 0;
+}
 
 function isTagLibraryFile(fileName) {
 	return fileName.indexOf('.tld') == fileName.length - 4;
