@@ -8,6 +8,7 @@ var util = require('util');
 var getModuleExcludeFolders = streams3.getModuleExcludeFolders;
 var getModuleIncludeFolders = streams3.getModuleIncludeFolders;
 var getModuleOverview = streams3.getModuleOverview;
+var getModuleVersion = streams3.getModuleVersion;
 
 var isDirectory = streams2.isDirectory;
 var isFile = streams2.isFile;
@@ -110,6 +111,7 @@ function getModuleDependencies(folder, moduleDependencies) {
 
 function getModuleDetails(folder) {
 	var moduleOverview = getModuleOverview(folder);
+	var moduleVersion = getModuleVersion(folder);
 	var moduleIncludeFolders = getModuleIncludeFolders(folder);
 	var moduleExcludeFolders = getModuleExcludeFolders(folder, moduleIncludeFolders);
 	var moduleDependencies = getModuleDependencies(folder);
@@ -117,7 +119,7 @@ function getModuleDetails(folder) {
 	var archetypeResourcesFolder = path.join(folder, 'src/main/resources/archetype-resources');
 	moduleDependencies = getModuleDependencies(archetypeResourcesFolder, moduleDependencies);
 
-	var moduleDetailsArray = [moduleOverview, moduleIncludeFolders, moduleExcludeFolders, moduleDependencies];
+	var moduleDetailsArray = [moduleOverview, moduleVersion, moduleIncludeFolders, moduleExcludeFolders, moduleDependencies];
 
 	return moduleDetailsArray.reduce(util._extend, {});
 };

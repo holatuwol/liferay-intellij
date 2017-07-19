@@ -51,6 +51,41 @@ function getModuleFolders(portalSourceFolder, moduleSourceFolder, includeSubRepo
 	return moduleFolders;
 };
 
+function getModuleVersion(folder) {
+	var bndPath = getFilePath(folder, 'bnd.bnd');
+	var packageJsonPath = getFilePath(folder, 'package.json');
+
+	var bundleName, bundleVersion;
+
+	if (isFile(bndPath)) {
+		var bndContent = fs.readFileSync(bndPath);
+
+		var bundleNameRegex = /Bundle-SymbolicName: ([^\r\n]+)/g;
+		var bundleVersionRegex = /Bundle-Version: ([^\r\n]+)/g;
+
+		var bundleNameMatcher = bundleNameRegex.exec(bndContent);
+		var bundleVersionMatcher = bundleVersionRegex.exec(bndContent);
+
+		return {
+			bundleSymbolicName: bundleNameMatcher ? bundleNameMatcher[1] : null,
+			bundleVersion: bundleVersionMatcher ? bundleVersionMatcher[1] : null
+		};
+	}
+
+	if (isFile(packageJsonPath)) {
+		var packageJsonContent = fs.readFileSync(packageJsonPath);
+
+		var packageJson = JSON.parse(packageJsonContent);
+
+		return {
+			bundleSymbolicName: packageJson.name,
+			bundleVersion: packageJson.version
+		};
+	}
+
+	return {};
+};
+
 function isModuleFolder(includeSubRepos, folder) {
 	if ((folder.indexOf('/archetype-resources') != -1) || (folder.indexOf('/gradleTest') != -1)) {
 		return false;

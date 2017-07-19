@@ -310,7 +310,7 @@ Let's create a dummy function which returns our module dependencies.
 		};
 	};
 
-At this point, we have ``getModuleOverview``, ``getModuleIncludeFolders``, and ``getModuleDependencies``. We want to pass ``folder`` to all of these functions and aggregate the return values.
+At this point, we have ``getModuleOverview``, ``getModuleIncludeFolders``, and ``getModuleDependencies``. We also have a provided ``getModuleVersion``, which looks up information like bundle symbolic names and bundle versions. We want to pass ``folder`` to all of these functions and aggregate the return values.
 
 How can we aggregate a bunch of separate objects into a single object? It turns out that the (undocumented) ``_extend`` function from the ``util`` module does exactly that, but it does it with two objects at a time. A naive way of doing this is to simply nest the function calls to ``util._extend``.
 
@@ -319,6 +319,11 @@ How can we aggregate a bunch of separate objects into a single object? It turns 
 	function getModuleDetails(folder) {
 		var result = util._extend(
 			getModuleOverview(folder),
+			getModuleVersion(folder)
+		);
+
+		var result = util._extend(
+			result,
 			getModuleIncludeFolders(folder)
 		);
 
@@ -349,10 +354,11 @@ Knowing that, a slightly less naive way to do this would be to use ``reduce``.
 
 	function getModuleDetails(folder) {
 		var moduleOverview = getModuleOverview(folder);
+		var moduleVersion = getModuleVersion(folder);
 		var moduleIncludeFolders = getModuleIncludeFolders(folder);
 		var moduleDependencies = getModuleDependencies(folder);
 
-		var moduleDetailsArray = [moduleOverview, moduleIncludeFolders, moduleDependencies];
+		var moduleDetailsArray = [moduleOverview, moduleVersion, moduleIncludeFolders, moduleDependencies];
 
 		return moduleDetailsArray.reduce(util._extend, {type: 'module'});
 	};

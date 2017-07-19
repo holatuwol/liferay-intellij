@@ -447,9 +447,9 @@ function getMavenProject(module) {
 			'@xmlns:xsi': 'http://www.w3.org/2001/XMLSchema-instance',
 			'@xsi:schemaLocation': 'http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd',
 			modelVersion: '4.0.0',
-			groupId: 'com.liferay.dependencies',
-			artifactId: module.moduleName,
-			version: '1.0.0-SNAPSHOT',
+			groupId: 'com.liferay',
+			artifactId: module.bundleSymbolicName,
+			version: module.bundleVersion,
 			packaging: 'pom',
 			dependencies: dependencyObjects,
 			repositories: {
@@ -614,44 +614,15 @@ function setCoreBundleVersions(accumulator, module) {
 };
 
 function setModuleBundleVersions(accumulator, module) {
-	var bndPath = getFilePath(module.modulePath, 'bnd.bnd');
-	var packageJsonPath = getFilePath(module.modulePath, 'package.json');
-
-	var bundleName, bundleVersion;
-
-	if (isFile(bndPath)) {
-		var bndContent = fs.readFileSync(bndPath);
-
-		var bundleNameRegex = /Bundle-SymbolicName: ([^\r\n]+)/g;
-		var bundleVersionRegex = /Bundle-Version: ([^\r\n]+)/g;
-
-		var bundleNameMatcher = bundleNameRegex.exec(bndContent);
-
-		bundleName = bundleNameMatcher ? bundleNameMatcher[1] : module.moduleName;
-		bundleVersion = bundleVersionRegex.exec(bndContent)[1];
-	}
-	else if (isFile(packageJsonPath)) {
-		var packageJsonContent = fs.readFileSync(packageJsonPath);
-
-		var packageJson = JSON.parse(packageJsonContent);
-
-		bundleName = packageJson.name;
-		bundleVersion = packageJson.version;
-	}
-	else {
-		console.warn('Unable to find project name for ' + module.modulePath);
-		return accumulator;
-	}
-
-	accumulator[bundleName] = {
+	accumulator[module.bundleSymbolicName] = {
 		projectName: module.moduleName,
-		version: bundleVersion,
+		version: module.bundleVersion,
 		hasWebroot: module.webrootFolders.length > 0
 	};
 
 	accumulator[module.moduleName] = {
-		bundleName: bundleName,
-		version: bundleVersion,
+		bundleName: module.bundleSymbolicName,
+		version: module.bundleVersion,
 		hasWebroot: module.webrootFolders.length > 0
 	};
 

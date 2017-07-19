@@ -63,11 +63,12 @@ function getModuleDependencies(folder) {
 
 function getModuleDetails(folder) {
 	var moduleOverview = getModuleOverview(folder);
+	var moduleVersion = getModuleVersion(folder);
 	var moduleIncludeFolders = getModuleIncludeFolders(folder);
 	var moduleExcludeFolders = getModuleExcludeFolders(folder, moduleIncludeFolders);
 	var moduleDependencies = getModuleDependencies(folder);
 
-	var moduleDetailsArray = [moduleOverview, moduleIncludeFolders, moduleExcludeFolders, moduleDependencies];
+	var moduleDetailsArray = [moduleOverview, moduleVersion, moduleIncludeFolders, moduleExcludeFolders, moduleDependencies];
 
 	return moduleDetailsArray.reduce(util._extend, {type: 'module'});
 };
@@ -120,6 +121,41 @@ function getModuleOverview(folder) {
 		moduleName: path.basename(folder),
 		modulePath: folder
 	};
+};
+
+function getModuleVersion(folder) {
+	var bndPath = getFilePath(folder, 'bnd.bnd');
+	var packageJsonPath = getFilePath(folder, 'package.json');
+
+	var bundleName, bundleVersion;
+
+	if (isFile(bndPath)) {
+		var bndContent = fs.readFileSync(bndPath);
+
+		var bundleNameRegex = /Bundle-SymbolicName: ([^\r\n]+)/g;
+		var bundleVersionRegex = /Bundle-Version: ([^\r\n]+)/g;
+
+		var bundleNameMatcher = bundleNameRegex.exec(bndContent);
+		var bundleVersionMatcher = bundleVersionRegex.exec(bndContent);
+
+		return {
+			bundleSymbolicName: bundleNameMatcher ? bundleNameMatcher[1] : null,
+			bundleVersion: bundleVersionMatcher ? bundleVersionMatcher[1] : null
+		};
+	}
+
+	if (isFile(packageJsonPath)) {
+		var packageJsonContent = fs.readFileSync(packageJsonPath);
+
+		var packageJson = JSON.parse(packageJsonContent);
+
+		return {
+			bundleSymbolicName: packageJson.name,
+			bundleVersion: packageJson.version
+		};
+	}
+
+	return {};
 };
 
 function isModuleFolder(includeSubRepos, folder) {
@@ -196,4 +232,5 @@ exports.getModuleExcludeFolders = getModuleExcludeFolders;
 exports.getModuleFolders = getModuleFolders;
 exports.getModuleIncludeFolders = getModuleIncludeFolders;
 exports.getModuleOverview = getModuleOverview;
+exports.getModuleVersion = getModuleVersion;
 exports.isValidSourcePath = isValidSourcePath;
