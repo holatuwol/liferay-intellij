@@ -398,6 +398,10 @@ function isPluginFolder(folder) {
 		return false;
 	}
 
+	if (!isFile(getFilePath(folder, 'build.xml'))) {
+		return false;
+	}
+
 	var pluginName = path.basename(folder);
 
 	return (pluginName.indexOf('test-') != 0) && (pluginName.indexOf('sample-') != 0);
