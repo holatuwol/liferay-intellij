@@ -124,7 +124,7 @@ function getLibraryRootElement(libraryPath) {
 function getLibraryTableXML(library) {
 	var libraryTableXML = [];
 
-	libraryTableXML.push('<library name="' + library['libraryName'] + '" type="repository">');
+	libraryTableXML.push('<library name="' + library['libraryName'] + '">');
 	libraryTableXML.push('<properties />');
 
 	var binaryPaths = getLibraryJarPaths(library);

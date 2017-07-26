@@ -36,7 +36,7 @@ Library files exist in the ``.idea/libraries`` folder and have the file name ``g
 .. code-block:: xml
 
 	<component name="libraryTable">
-		<library name="LIBRARY_NAME" type="repository">
+		<library name="LIBRARY_NAME">
 			<CLASSES>
 				<root url="jar://$PROJECT_DIR$/JAR_PATH!/" />
 			</CLASSES>
