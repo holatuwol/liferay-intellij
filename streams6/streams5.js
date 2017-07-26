@@ -384,11 +384,9 @@ function getSharedDependencies(folder) {
 function isCoreFolder(folder) {
 	var getPath = getFilePath(folder);
 
-	var subfiles = ['build.xml'];
 	var subfolders = ['docroot', 'src'];
 
-	return subfiles.every(highland.compose(isFile, getPath)) &&
-		subfolders.some(highland.compose(isDirectory, getPath));
+	return subfolders.some(highland.compose(isDirectory, getPath));
 };
 
 function isModuleDependencyAvailable(dependencyName) {

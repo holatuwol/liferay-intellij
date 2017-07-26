@@ -557,18 +557,24 @@ function setCoreBundleVersions(accumulator, module) {
 	}
 
 	var bndContent = fs.readFileSync(bndPath);
-	var buildXmlContent = fs.readFileSync(buildXmlPath);
 
 	var bundleNameRegex = /property name="manifest.bundle.symbolic.name" value="([^"\;]*)/g;
 	var bundleVersionRegex = /Bundle-Version: ([^\r\n]+)/g;
 
-	var matchResult = bundleNameRegex.exec(buildXmlContent);
+	var bundleName = 'com.liferay.' + module.moduleName.replace(/-/g, '.');
+	var matchResult = null;
 
-	if (!matchResult) {
-		return accumulator;
+	if (isFile(buildXmlPath)) {
+		var buildXmlContent = fs.readFileSync(buildXmlPath);
+
+		matchResult = bundleNameRegex.exec(buildXmlContent);
+
+		if (!matchResult) {
+			return accumulator;
+		}
+
+		bundleName = matchResult[1];
 	}
-
-	var bundleName = matchResult[1];
 
 	matchResult = bundleVersionRegex.exec(bndContent);
 

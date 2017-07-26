@@ -11,7 +11,7 @@ if [ ! -d modules ]; then
 	exit 1
 fi
 
-if [ ! -d tools/sdk ]; then
+if [ -f build.xml ] && [ ! -d tools/sdk ]; then
 	JAVA_VERSION=$(java -version 2>&1 | head -1 | cut -d'"' -f 2 | cut -d'.' -f 2)
 
 	ANT_OPTS='-Xms2g -Xmx2g'
@@ -29,24 +29,26 @@ if [ ! -d tools/sdk ]; then
 	fi
 fi
 
-pushd modules > /dev/null
+if [ -d .git ] || [ -f .git ]; then
+	pushd modules > /dev/null
 
-cat /dev/null > ../.idea/projects.txt
+	cat /dev/null > ../.idea/projects.txt
 
-for folder in $(git ls-files | grep build.gradle | grep -v gradleTest | grep -v archetype-resources | xargs -I {} dirname {}); do
-	if [ -d $folder/src/main/java ]; then
-		echo $folder >> ../.idea/projects.txt
+	for folder in $(git ls-files | grep build.gradle | grep -v gradleTest | grep -v archetype-resources | xargs -I {} dirname {}); do
+		if [ -d $folder/src/main/java ]; then
+			echo $folder >> ../.idea/projects.txt
+		fi
+	done
+
+	GRADLE_OPTS='-Xms3g -Xmx3g -Dorg.gradle.workers.max=1'
+
+	if [[ 8 -gt $JAVA_VERSION ]]; then
+		GRADLE_OPTS="$GRADLE_OPTS -XX:MaxPermSize=512m"
 	fi
-done
 
-GRADLE_OPTS='-Xms3g -Xmx3g -Dorg.gradle.workers.max=1'
+	export GRADLE_OPTS
 
-if [[ 8 -gt $JAVA_VERSION ]]; then
-	GRADLE_OPTS="$GRADLE_OPTS -XX:MaxPermSize=512m"
+	cat ../.idea/projects.txt | tr '/' ':' | awk '{ print ":" $1 ":idea" }' | xargs ../gradlew --continue
+
+	popd > /dev/null
 fi
-
-export GRADLE_OPTS
-
-cat ../.idea/projects.txt | tr '/' ':' | awk '{ print ":" $1 ":idea" }' | xargs ../gradlew --continue
-
-popd > /dev/null

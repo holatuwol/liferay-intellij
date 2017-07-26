@@ -119,6 +119,7 @@ Change Log
 
 This is a change log for when I started keeping track of the changes that were made.
 
+* **2017-07-25**: Fix handling of downloadable portal source bundles that are missing build.xml files
 * **2017-07-07**: Process parent pom.xml files when generating library classpaths
 * **2017-07-03**: Attempt to download anything missing from .gradle cache
 * **2017-06-06**: Re-enable using global gradle cache in user home

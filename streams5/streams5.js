@@ -389,11 +389,9 @@ function getSharedDependencies(folder) {
 function isCoreFolder(folder) {
 	var getPath = getFilePath.bind(null, folder);
 
-	var subfiles = ['build.xml'];
 	var subfolders = ['docroot', 'src'];
 
-	return subfiles.map(getPath).every(isFile) &&
-		subfolders.map(getPath).some(isDirectory);
+	return subfolders.map(getPath).some(isDirectory);
 };
 
 function isModuleDependencyAvailable(dependencyName) {

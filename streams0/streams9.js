@@ -519,25 +519,27 @@ function getProjectRepositories() {
 		layout: 'default'
 	});
 
-	var passwordBranch = child_process.execSync('git for-each-ref --format="%(refname)" refs/remotes/ | grep "/upstream[^/]*/ee-7.0.x$" | cut -d"/" -f 3,4').toString().trim();
+	if (isDirectory('.git') || isFile('.git')) {
+		var passwordBranch = child_process.execSync('git for-each-ref --format="%(refname)" refs/remotes/ | grep "/upstream[^/]*/ee-7.0.x$" | cut -d"/" -f 3,4').toString().trim();
 
-	if (passwordBranch) {
-		var buildPropertiesContent = child_process.execSync('git show ' + passwordBranch + ':build.properties');
+		if (passwordBranch) {
+			var buildPropertiesContent = child_process.execSync('git show ' + passwordBranch + ':build.properties');
 
-		var privateRepositoryRegex = /build.repository.private.password=(\S*)\s*build.repository.private.url=https:\/\/(\S*)\s*build.repository.private.username=(\S*)/g;
+			var privateRepositoryRegex = /build.repository.private.password=(\S*)\s*build.repository.private.url=https:\/\/(\S*)\s*build.repository.private.username=(\S*)/g;
 
-		var matchResult = privateRepositoryRegex.exec(buildPropertiesContent);
+			var matchResult = privateRepositoryRegex.exec(buildPropertiesContent);
 
-		if (matchResult) {
-			tempProjectRepositories.push({
-				id: 'liferay-private',
-				name: 'Liferay Private',
-				scheme: 'https',
-				username: matchResult[3],
-				password: matchResult[1],
-				path: matchResult[2],
-				layout: 'default'
-			});
+			if (matchResult) {
+				tempProjectRepositories.push({
+					id: 'liferay-private',
+					name: 'Liferay Private',
+					scheme: 'https',
+					username: matchResult[3],
+					password: matchResult[1],
+					path: matchResult[2],
+					layout: 'default'
+				});
+			}
 		}
 	}
 
@@ -576,18 +578,24 @@ function setCoreBundleVersions(accumulator, module) {
 	}
 
 	var bndContent = fs.readFileSync(bndPath);
-	var buildXmlContent = fs.readFileSync(buildXmlPath);
 
 	var bundleNameRegex = /property name="manifest.bundle.symbolic.name" value="([^"\;]*)/g;
 	var bundleVersionRegex = /Bundle-Version: ([^\r\n]+)/g;
 
-	var matchResult = bundleNameRegex.exec(buildXmlContent);
+	var bundleName = 'com.liferay.' + module.moduleName.replace(/-/g, '.');
+	var matchResult = null;
 
-	if (!matchResult) {
-		return accumulator;
+	if (isFile(buildXmlPath)) {
+		var buildXmlContent = fs.readFileSync(buildXmlPath);
+
+		matchResult = bundleNameRegex.exec(buildXmlContent);
+
+		if (!matchResult) {
+			return accumulator;
+		}
+
+		bundleName = matchResult[1];
 	}
-
-	var bundleName = matchResult[1];
 
 	matchResult = bundleVersionRegex.exec(bndContent);
 

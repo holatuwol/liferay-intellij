@@ -41,7 +41,7 @@ if [ ! -f release.properties ]; then
 	exit 1
 fi
 
-if [ -d modules ] && [ ! -d tools/sdk ]; then
+if [ -f build.xml ] && [ -d modules ] && [ ! -d tools/sdk ]; then
 	setantopts
 
 	echo 'Running ant setup-sdk to initialize gradle configuration'
@@ -49,7 +49,7 @@ if [ -d modules ] && [ ! -d tools/sdk ]; then
 	ant setup-sdk
 fi
 
-if [ -f "lib/portal/dependencies.properties" ]; then
+if [ -f build.xml ] && [ -f "lib/portal/dependencies.properties" ]; then
 	if [[ $(ls -1 "lib/portal" | wc -l) -lt $(cat "lib/portal/dependencies.properties" | wc -l) ]]; then
 		setantopts
 
@@ -61,4 +61,6 @@ fi
 
 "$NODEJS" $(dirname $0)/bin/run.js $PWD $@
 
-git ls-files | grep '\(\.idea\|\.iml\)' | xargs git update-index --assume-unchanged
+if [ -d .git ] || [ -f .git ]; then
+	git ls-files | grep '\(\.idea\|\.iml\)' | xargs git update-index --assume-unchanged
+fi
