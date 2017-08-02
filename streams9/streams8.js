@@ -1,4 +1,5 @@
 var cheerio = require('cheerio');
+var comparators = require('comparators').default;
 var fs = require('fs');
 var highland = require('highland');
 var os = require('os');
@@ -242,9 +243,7 @@ function getLibraryJarPaths(library) {
 
 	library['jarPaths'] = jarPaths;
 
-	if ((library.group != 'com.liferay') || library.hasInitJsp) {
-		processPomDependencies(library);
-	}
+	processPomDependencies(library);
 
 	return library['jarPaths'];
 };
@@ -459,6 +458,10 @@ function setDependenciesAsJars(variables, library, index, node) {
 	var groupId = artifactInfo[0];
 	var artifactId = artifactInfo[1];
 	var version = artifactInfo[2];
+
+	if (groupId.indexOf('com.liferay') == 0) {
+		return;
+	}
 
 	var dependencyLibrary = initializeLibrary(groupId, artifactId, version);
 
