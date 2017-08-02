@@ -373,40 +373,6 @@ function getMavenDependencyElement(library) {
 	return dependencyElement;
 };
 
-function getMavenLibraryPaths(library) {
-	if (!('group' in library)) {
-		return [];
-	}
-
-	var jarFileName = library.name + '-' + library.version + '.jar';
-
-	var userHome = process.env.HOME || process.env.HOMEPATH || process.env.USERPROFILE;
-
-	var jarRelativePath = library.group.split('.').concat([library.name, library.version, jarFileName]).join('/');
-	var jarAbsolutePath = ['.m2', 'repository', jarRelativePath].reduce(getFilePath, userHome);
-
-	var jarPaths = [];
-
-	if (isFile(jarAbsolutePath)) {
-		jarPaths = [getFilePath('$MAVEN_REPOSITORY$', jarRelativePath)];
-	}
-
-	if ((library.group == 'com.liferay') && library.hasWebroot) {
-		return jarPaths;
-	}
-
-	var pomFileName = library.name + '-' + library.version + '.pom';
-
-	var pomRelativePath = library.group.split('.').concat([library.name, library.version, pomFileName]).join('/');
-	var pomAbsolutePath = ['.m2', 'repository', pomRelativePath].reduce(getFilePath, userHome);
-
-	if (!isFile(pomAbsolutePath)) {
-		return jarPaths;
-	}
-
-	return jarPaths.concat(getPomDependencyPaths(pomAbsolutePath, library)).filter(isFirstOccurrence);
-};
-
 function getMavenProject(module) {
 	var dependencyObjects = {};
 
