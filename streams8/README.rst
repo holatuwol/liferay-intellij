@@ -162,7 +162,7 @@ The XML file for the library component will be stored in the ``.idea/libraries``
 
 .. code-block:: xml
 
-	<library name="LIBRARY_NAME" type="repository">
+	<library name="LIBRARY_NAME">
 		<CLASSES>
 			<root url="jar://$PROJECT_DIR$/JAR_PATH!/" />
 		</CLASSES>
@@ -215,7 +215,7 @@ Leveraging this function, we can declare a function which generates the XML cont
 	function getLibraryTableXML(library) {
 		var libraryTableXML = [];
 
-		libraryTableXML.push('<library name="' + library['libraryName'] + '" type="repository">');
+		libraryTableXML.push('<library name="' + library['libraryName'] + '">');
 		libraryTableXML.push('<properties />');
 
 		var binaryPaths = getLibraryJarPaths(library);
