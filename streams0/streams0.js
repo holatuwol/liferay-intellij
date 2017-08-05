@@ -346,6 +346,10 @@ function getTagLibraryURIs(accumulator, tagLibraryPath) {
 		(tagLibraryPath.indexOf('portal-web') == 0)) {
 
 		accumulator[tagLibraryURI] = tagLibraryPath;
+
+		if (tagLibraryURI == 'http://java.sun.com/portlet') {
+			accumulator['http://java.sun.com/portlet_2_0'] = tagLibraryPath;
+		}
 	}
 
 	return accumulator;
