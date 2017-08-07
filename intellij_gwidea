@@ -1,40 +1,16 @@
 #!/bin/bash
 
-if [ ! -f release.properties ]; then
-	echo 'Please run this script from a Liferay source folder'
-	echo 'Arguments are additional source roots (blade workspaces, subrepositories, plugins SDK, etc.)'
-	exit 1
-fi
-
-if [ ! -d modules ]; then
-	echo 'gradlew is not available in this Liferay source folder'
-	exit 1
-fi
-
-if [ -f build.xml ] && [ ! -d tools/sdk ]; then
-	JAVA_VERSION=$(java -version 2>&1 | head -1 | cut -d'"' -f 2 | cut -d'.' -f 2)
-
-	ANT_OPTS='-Xms2g -Xmx2g'
-
-	if [[ 8 -gt $JAVA_VERSION ]]; then
-		ANT_OPTS="$ANT_OPTS -XX:MaxPermSize=1g"
+gradlewidea() {
+	if [ ! -e .git ]; then
+		echo "Unable to run gradlew idea outside of portal source"
+		return 1
 	fi
 
-	export ANT_OPTS
-
-	if [ -f "lib/portal/dependencies.properties" ]; then
-		ant setup-sdk setup-libs
-	else
-		ant setup-sdk
-	fi
-fi
-
-if [ -d .git ] || [ -f .git ]; then
 	pushd modules > /dev/null
 
 	cat /dev/null > ../.idea/projects.txt
 
-	for folder in $(git ls-files | grep build.gradle | grep -v gradleTest | grep -v archetype-resources | xargs -I {} dirname {}); do
+	for folder in $(git ls-files modules | grep build.gradle | grep -v gradleTest | grep -v archetype-resources | xargs -I {} dirname {}); do
 		if [ -d $folder/src/main/java ]; then
 			echo $folder >> ../.idea/projects.txt
 		fi
@@ -51,4 +27,16 @@ if [ -d .git ] || [ -f .git ]; then
 	cat ../.idea/projects.txt | tr '/' ':' | awk '{ print ":" $1 ":idea" }' | xargs ../gradlew --continue
 
 	popd > /dev/null
+}
+
+. $(dirname ${BASH_SOURCE[0]})/intellij_common
+
+if [ ! -d modules ]; then
+	echo 'gradlew is not available in this Liferay source folder'
+	exit 1
 fi
+
+setupsdk
+setuplibs
+
+gradlewidea

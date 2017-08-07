@@ -1,0 +1,86 @@
+#!/bin/bash
+
+checknode() {
+	NODEJS=$(which nodejs 2> /dev/null)
+
+	if [ "" == "$NODEJS" ]; then
+		NODEJS=$(which node 2> /dev/null)
+	fi
+
+	if [ "" == "$NODEJS" ]; then
+		echo "Please install node.js"
+		exit 1
+	fi
+
+	pushd "$(dirname "${BASH_SOURCE[0]}")" > /dev/null
+
+	echo 'Running npm/yarn to update script dependencies'
+
+	if [ "" != "$(which yarn 2> /dev/null)" ]; then
+		yarn
+	else
+		npm install
+	fi
+
+	popd > /dev/null
+}
+
+ignoreiml() {
+	if [ -d .git ] || [ -f .git ]; then
+		git ls-files | grep '\(\.idea\|\.iml\)' | xargs git update-index --assume-unchanged
+	fi
+}
+
+setantopts() {
+	JAVA_VERSION=$(java -version 2>&1 | head -1 | cut -d'"' -f 2 | cut -d'.' -f 2)
+
+	ANT_OPTS='-Xms2g -Xmx2g'
+
+	if [[ 8 -gt $JAVA_VERSION ]]; then
+		ANT_OPTS="$ANT_OPTS -XX:MaxPermSize=1g"
+	fi
+
+	export ANT_OPTS
+}
+
+setuplibs() {
+	if [ ! -f build.xml ] || [ ! -f "lib/portal/dependencies.properties" ]; then
+		return 0
+	fi
+
+	local NEEDS_SETUP_LIBS=
+
+	for folder in development global portal; do
+		if [[ $(find lib/$folder -name '*.jar' | wc -l) -lt $(cat "lib/$folder/dependencies.properties" | wc -l) ]]; then
+			NEEDS_SETUP_LIBS=true
+		fi
+	done
+
+	if [ "" == "$NEEDS_SETUP_LIBS" ]; then
+		return 0
+	fi
+
+	setantopts
+
+	echo 'Running ant setup-libs to initialize portal libraries'
+
+	ant setup-libs
+}
+
+setupsdk() {
+	if [ ! -f build.xml ] || [ ! -d modules ] || [ -d tools/sdk ]; then
+		return 0
+	fi
+
+	setantopts
+
+	echo 'Running ant setup-sdk to initialize gradle configuration'
+
+	ant setup-sdk
+}
+
+if [ ! -f release.properties ]; then
+	echo 'Please run this script from a Liferay source folder'
+	echo 'Arguments are additional source roots (blade workspaces, subrepositories, plugins SDK, etc.)'
+	exit 1
+fi
