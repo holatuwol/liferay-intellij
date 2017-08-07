@@ -114,7 +114,7 @@ function getLibraryOrderEntryElement(module, dependency) {
 };
 
 function getLibraryRootElement(libraryPath) {
-	if ((libraryPath.indexOf('/') == 0) || (libraryPath.indexOf('$') == 0)) {
+	if ((libraryPath.indexOf('/') == 0) || (libraryPath.indexOf('$') == 0) || (libraryPath.indexOf(':') != -1)) {
 		return '<root url="jar://' + libraryPath + '!/" />';
 	}
 	else {

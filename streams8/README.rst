@@ -200,7 +200,7 @@ We also have a function which converts a path to a library (similar to one which
 .. code-block:: javascript
 
 	function getLibraryRootElement(libraryPath) {
-		if ((libraryPath.indexOf('/') == 0) || (libraryPath.indexOf('$') == 0)) {
+		if ((libraryPath.indexOf('/') == 0) || (libraryPath.indexOf('$') == 0) || (libraryPath.indexOf(':') != -1)) {
 			return '<root url="jar://' + libraryPath + '!/" />';
 		}
 		else {
