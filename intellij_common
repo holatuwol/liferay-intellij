@@ -79,7 +79,7 @@ setupsdk() {
 	ant setup-sdk
 }
 
-if [ ! -f release.properties ]; then
+if [ ! -d portal-impl ]; then
 	echo 'Please run this script from a Liferay source folder'
 	echo 'Arguments are additional source roots (blade workspaces, subrepositories, plugins SDK, etc.)'
 	exit 1
