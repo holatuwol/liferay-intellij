@@ -95,9 +95,6 @@ function getModuleGroupName(module) {
 				modulesRoot = '';
 			}
 		}
-		else {
-			console.error('Unable to find gradlew for', module.modulePath);
-		}
 	}
 
 	var relativeGroupName = path.dirname(module.modulePath);

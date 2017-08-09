@@ -309,7 +309,11 @@ function getMiscXML(resourceElements) {
 
 	miscXMLContent.push('</component>');
 
-	var buildPropertiesContent = fs.readFileSync('build.properties');
+	var buildPropertiesContent = '';
+
+	if (fs.existsSync('build.properties')) {
+		buildPropertiesContent = fs.readFileSync('build.properties');
+	}
 
 	var languageLevel = '1.8';
 	var languageLevelRegex = /javac.source=([0-9\.]*)/g;
