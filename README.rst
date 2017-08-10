@@ -46,10 +46,10 @@ To setup the script, please use the following steps.
 	IJ_CLONE_PATH=/path/to/clone/location
 
 	ij() {
-		${IJ_CLONE_PATH}/intellij $@
+		${IJ_CLONE_PATH}/intellij "$@"
 	}
 
-5. Navigate to the portal source.
+5. Navigate to where you've cloned the [liferay-portal](https://github.com/liferay/liferay-portal) or [liferay-portal-ee](https://github.com/liferay/liferay-portal-ee) repository.
 
 .. code-block:: bash
 
@@ -104,7 +104,7 @@ The zip also contains a ``bin/pom.js`` script generates pom.xml files that list 
 	IJ_CLONE_PATH=/path/to/clone/location
 
 	ij() {
-		${IJ_CLONE_PATH}/intellij_libsources $@
+		${IJ_CLONE_PATH}/intellij_libsources "$@"
 	}
 
 Additional Notes

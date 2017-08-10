@@ -80,7 +80,8 @@ setupsdk() {
 }
 
 if [ ! -d portal-impl ]; then
-	echo 'Please run this script from a Liferay source folder'
-	echo 'Arguments are additional source roots (blade workspaces, subrepositories, plugins SDK, etc.)'
+	echo 'Unable to find portal-impl folder, the current working directory does not appear to be the portal source'
+	echo 'Please navigate to the portal source folder and then re-run your command'
+	echo 'Note: additional arguments are additional source roots (blade workspaces, subrepositories, plugins SDK, etc.)'
 	exit 1
 fi

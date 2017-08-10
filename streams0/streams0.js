@@ -268,9 +268,10 @@ function executeGradleFile(entries) {
 	fs.writeFileSync(path.join(buildGradleFolder, 'build.gradle'), buildGradleContent.join('\n'));
 
 	var executable = path.join(process.cwd(), 'gradlew');
+
 	var args = ['completeGradleCache'];
 	var options = {
-		'cwd': buildGradleFolder,
+		'cwd': '"' + buildGradleFolder + '"',
 		'stdio': [0,1,2]
 	};
 

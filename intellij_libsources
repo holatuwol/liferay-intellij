@@ -1,17 +1,19 @@
 #!/bin/bash
 
-. $(dirname ${BASH_SOURCE[0]})/intellij_common
+SCRIPT_FOLDER=$(dirname "$0")
+
+. "${SCRIPT_FOLDER}/intellij_common"
 
 checknode
 setupsdk
 setuplibs
 
-"$NODEJS" $(dirname $0)/bin/pom.js $PWD $@
+"$NODEJS" "${SCRIPT_FOLDER}/bin/pom.js" "$PWD" "$@"
 
 mvn dependency:sources
 grep '<module>.*</module>' pom.xml | awk -F'[<>]' '{ print $3 "/pom.xml" }' | xargs rm
 rm pom.xml
 
-"$NODEJS" $(dirname $0)/bin/run.js $PWD $@
+"$NODEJS" "${SCRIPT_FOLDER}/bin/run.js" "$PWD" "$@"
 
 ignoreiml
