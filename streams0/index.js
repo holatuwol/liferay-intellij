@@ -44,6 +44,8 @@ function createProject(portalSourceFolder, otherSourceFolders) {
 	for (var i = 0; i < otherSourceFolders.length; i++) {
 		var otherSourceFolder = otherSourceFolders[i];
 
+		console.log('Scanning ' + otherSourceFolder);
+
 		if (isPluginsSDK(otherSourceFolder)) {
 			var newFolders = getPluginFolders(portalSourceFolder, otherSourceFolder);
 
@@ -57,6 +59,8 @@ function createProject(portalSourceFolder, otherSourceFolders) {
 			moduleFolders = moduleFolders.concat(newFolders);
 		}
 	}
+
+	console.log('Scanning ' + portalSourceFolder);
 
 	var portalSourceModulesRootPath = getFilePath(portalSourceFolder, 'modules');
 
