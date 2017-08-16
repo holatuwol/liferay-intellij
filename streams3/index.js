@@ -12,7 +12,7 @@ function createProject(portalSourceFolder, otherSourceFolders) {
 
 	var portalSourceModulesRootPath = getFilePath(portalSourceFolder, 'modules');
 
-	var moduleFolders = getModuleFolders(portalSourceFolder, portalSourceModulesRootPath, true);
+	var moduleFolders = getModuleFolders(portalSourceFolder, portalSourceModulesRootPath);
 
 	console.dir(moduleFolders, {depth: null});
 

@@ -95,10 +95,10 @@ function getModuleExcludeFolders(folder, moduleIncludeFolders) {
 	};
 };
 
-function getModuleFolders(portalSourceFolder, moduleSourceFolder, includeSubRepos) {
+function getModuleFolders(portalSourceFolder, moduleSourceFolder) {
 	var moduleRootPath = path.relative(portalSourceFolder, moduleSourceFolder);
 	var findResultFolders = getFolders(moduleRootPath, 5);
-	var moduleFolders = findResultFolders.filter(isModuleFolder.bind(null, includeSubRepos));
+	var moduleFolders = findResultFolders.filter(isModuleFolder);
 	return moduleFolders;
 };
 
@@ -158,7 +158,7 @@ function getModuleVersion(folder) {
 	return {};
 };
 
-function isModuleFolder(includeSubRepos, folder) {
+function isModuleFolder(folder) {
 	if ((folder.indexOf('/archetype-resources') != -1) || (folder.indexOf('/gradleTest') != -1)) {
 		return false;
 	}
@@ -177,24 +177,7 @@ function isModuleFolder(includeSubRepos, folder) {
 		return false;
 	}
 
-	if (!includeSubRepos && isSubRepo(folder)) {
-		return false;
-	}
-
 	return true;
-};
-
-function isSubRepo(folder) {
-	var getPath = getFilePath.bind(null, folder);
-	var possibleGitRepoFileLocations = ['.gitrepo', '../.gitrepo', '../../.gitrepo'];
-
-	var isAnyGitRepoModePull = possibleGitRepoFileLocations
-		.map(getPath)
-		.filter(isFile)
-		.map(readFileSync)
-		.some(isRepoModePull);
-
-	return isAnyGitRepoModePull;
 };
 
 function isValidSourcePath(moduleRoot, sourceFolder) {

@@ -1,4 +1,5 @@
 var fs = require('fs');
+var highland = require('highland');
 var streams2 = require('../streams2/streams2');
 var streams3 = require('../streams4/streams3');
 var streams4 = require('../streams5/streams4');
@@ -28,7 +29,6 @@ function createProject(portalSourceFolder, otherSourceFolders) {
 
 	var coreFolders = getCoreFolders();
 
-	var includeSubRepos = true;
 	var moduleFolders = [];
 	var pluginFolders = [];
 
@@ -41,31 +41,32 @@ function createProject(portalSourceFolder, otherSourceFolders) {
 			pluginFolders = pluginFolders.concat(newFolders);
 		}
 		else {
-			includeSubRepos &= isBladeWorkspace(otherSourceFolder);
-
-			var newFolders = getModuleFolders(portalSourceFolder, otherSourceFolder, true);
+			var newFolders = getModuleFolders(portalSourceFolder, otherSourceFolder);
 
 			moduleFolders = moduleFolders.concat(newFolders);
 		}
 	}
 
 	var portalSourceModulesRootPath = getFilePath(portalSourceFolder, 'modules');
-
-	var newFolders = getModuleFolders(portalSourceFolder, portalSourceModulesRootPath, includeSubRepos);
-
-	moduleFolders = moduleFolders.concat(newFolders);
+	var coreModuleFolders = getModuleFolders(portalSourceFolder, portalSourceModulesRootPath);
 
 	var coreDetails = coreFolders.map(getCoreDetails);
 	var moduleDetails = moduleFolders.map(getModuleDetails);
 	var pluginDetails = pluginFolders.map(getPluginDetails);
 
-	createProjectWorkspace(coreDetails, moduleDetails);
+	var moduleNames = new Set(moduleDetails.map(getModuleName));
+
+	var coreModuleDetails = coreModuleFolders
+		.map(getModuleDetails)
+		.filter(highland.compose(highland.not, Set.prototype.has.bind(moduleNames), getModuleName));
+
+	createProjectWorkspace(coreDetails, moduleDetails.concat(coreModuleDetails), pluginDetails);
 
 	process.chdir(initialCWD);
 };
 
-function isBladeWorkspace(otherSourceFolder) {
-	return isFile(getFilePath(otherSourceFolder, 'gradle.properties'));
+function getModuleName(module) {
+	return module.moduleName;
 };
 
 function isPluginsSDK(otherSourceFolder) {

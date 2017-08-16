@@ -104,7 +104,7 @@ Checkpoint 1
 
 .. code-block:: javascript
 
-	function isModuleFolder(includeSubRepos, folder) {
+	function isModuleFolder(folder) {
 		if ((folder.indexOf('/sdk/') != -1) && (folder.indexOf('-templates') != -1)) {
 			return false;
 		}
@@ -121,10 +121,6 @@ Checkpoint 1
 			return false;
 		}
 
-		if (!includeSubRepos && isSubRepo(folder)) {
-			return false;
-		}
-
 		return true;
 	};
 
@@ -138,7 +134,7 @@ Update our ``isModuleFolder`` function to use ``map`` in order to convert the na
 
 .. code-block:: javascript
 
-	function isModuleFolder(includeSubRepos, folder) {
+	function isModuleFolder(folder) {
 		if ((folder.indexOf('/archetype-resources') != -1) || (folder.indexOf('/gradleTest') != -1)) {
 			return false;
 		}
@@ -153,10 +149,6 @@ Update our ``isModuleFolder`` function to use ``map`` in order to convert the na
 		var isPotentialModuleFolder = ...;
 
 		if (!isPotentialModuleFolder) {
-			return false;
-		}
-
-		if (!includeSubRepos && isSubRepo(folder)) {
 			return false;
 		}
 
