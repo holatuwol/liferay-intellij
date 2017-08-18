@@ -402,3 +402,4 @@ function isTagLibraryFile(fileName) {
 
 exports.createProjectObjectModels = streams9.createProjectObjectModels;
 exports.createProjectWorkspace = createProjectWorkspace;
+exports.flatten = flatten;

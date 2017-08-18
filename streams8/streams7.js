@@ -60,8 +60,10 @@ function getAncestorFiles(folder, filename) {
 	}
 	while ((basename != '') && (basename != '.') && (basename != '..'));
 
-	if ((basename != '..') && (isFile(filename) || isDirectory(filename))) {
-		ancestorFiles.push(filename);
+	var filePath = getFilePath(folder, filename);
+
+	if ((basename != '..') && (isFile(filePath) || isDirectory(filePath))) {
+		ancestorFiles.push(filePath);
 	}
 
 	return ancestorFiles;

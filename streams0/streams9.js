@@ -10,7 +10,6 @@ var streams7 = require('../streams8/streams7');
 var streams8 = require('../streams9/streams8');
 var xmlbuilder = require('xmlbuilder');
 
-var flatten = streams8.flatten;
 var checkForGradleCache = streams8.checkForGradleCache;
 var checkForMavenCache = streams8.checkForMavenCache;
 var getAncestorFiles = streams7.getAncestorFiles;
