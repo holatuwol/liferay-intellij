@@ -519,26 +519,22 @@ function getProjectRepositories() {
 	});
 
 	if (isDirectory('.git') || isFile('.git')) {
-		var passwordBranch = child_process.execSync('git for-each-ref --format="%(refname)" refs/remotes/ | grep "/upstream[^/]*/ee-7.0.x$" | cut -d"/" -f 3,4').toString().trim();
+		var passwordBranch = child_process.execSync('git for-each-ref --format="%(refname)" refs/remotes/ | grep "/upstream[^/]*/7.0.x-private$" | cut -d"/" -f 3,4').toString().trim();
 
 		if (passwordBranch) {
-			var buildPropertiesContent = child_process.execSync('git show ' + passwordBranch + ':build.properties');
+			var propertiesContent = child_process.execSync('git show ' + passwordBranch + ':working.dir.properties');
 
-			var privateRepositoryRegex = /build.repository.private.password=(\S*)\s*build.repository.private.url=https:\/\/(\S*)\s*build.repository.private.username=(\S*)/g;
+			var repositoryMetadata = getRepositoryMetadata(propertiesContent);
 
-			var matchResult = privateRepositoryRegex.exec(buildPropertiesContent);
-
-			if (matchResult) {
-				tempProjectRepositories.push({
-					id: 'liferay-private',
-					name: 'Liferay Private',
-					scheme: 'https',
-					username: matchResult[3],
-					password: matchResult[1],
-					path: matchResult[2],
-					layout: 'default'
-				});
-			}
+			tempProjectRepositories.push({
+				id: 'liferay-private',
+				name: 'Liferay Private',
+				scheme: 'https',
+				username: repositoryMetadata['username'],
+				password: repositoryMetadata['password'],
+				path: repositoryMetadata['url'],
+				layout: 'default'
+			});
 		}
 	}
 
@@ -563,6 +559,27 @@ function getProjectRepositoriesXMLEntry(repository) {
 		layout: repository.layout
 	};
 };
+
+function getRepositoryMetadata(propertiesContent) {
+	var keyPrefix = 'build.repository.private.';
+	var keySuffix = '[7.0.x-private]';
+
+	return propertiesContent.toString()
+		.split('\n')
+		.filter(function(x) {
+			return x.trim().indexOf(keyPrefix) == 0 &&
+				x.trim().indexOf(keySuffix) != -1;
+		})
+		.reduce(function(accumulator, next) {
+			var entry = next.split('=');
+			var key = entry[0].trim();
+
+			key = key.substring(keyPrefix.length, key.indexOf(keySuffix));
+
+			accumulator[key] = entry[1].trim();
+			return accumulator;
+		}, {});
+}
 
 function isDevelopmentLibrary(libraryName) {
 	return libraryName.indexOf('.jar') == libraryName.length - 4;
