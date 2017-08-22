@@ -566,9 +566,11 @@ function getRepositoryMetadata(propertiesContent) {
 
 	return propertiesContent.toString()
 		.split('\n')
+		.map(function(x) {
+			return x.trim();
+		})
 		.filter(function(x) {
-			return x.trim().indexOf(keyPrefix) == 0 &&
-				x.trim().indexOf(keySuffix) != -1;
+			return (x.indexOf(keyPrefix) == 0) && (x.indexOf(keySuffix) != -1);
 		})
 		.reduce(function(accumulator, next) {
 			var entry = next.split('=');
