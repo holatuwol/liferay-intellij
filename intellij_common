@@ -79,6 +79,34 @@ setupsdk() {
 	ant setup-sdk
 }
 
+setupwork() {
+	if [ -d portal-impl ] || [ ! -f build-working-dir.xml ]; then
+		return 0
+	fi
+
+	local LOCAL_BRANCH=$(grep -o '`[^`]*`' "README.markdown" | cut -d'`' -f 2 | uniq)
+
+	if [ "" == "$LOCAL_BRANCH" ]; then
+		LOCAL_BRANCH=7.0.x
+	fi
+
+	local UPSTREAM_BRANCH=$(git for-each-ref --format='%(refname)' refs/remotes/ | grep "/upstream[^/]*/$LOCAL_BRANCH$" | cut -d'/' -f 3,4)
+
+	local WORKING_DIR_HASH=$(cat git-commit-portal)
+
+	git merge-base $UPSTREAM_BRANCH $WORKING_DIR_HASH > /dev/null
+
+	if [[ 0 -ne $? ]]; then
+		echo "Specified $LOCAL_BRANCH hash not available, fetching latest $UPSTREAM_BRANCH"
+
+		git fetch --no-tags $(echo $UPSTREAM_BRANCH | tr '/' ' ')
+	fi
+
+	ant -f build-working-dir.xml
+}
+
+setupwork
+
 if [ ! -d portal-impl ]; then
 	echo 'Unable to find portal-impl folder, the current working directory does not appear to be the portal source'
 	echo 'Please navigate to the portal source folder and then re-run your command'
