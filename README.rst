@@ -50,8 +50,8 @@ To load a project containing only the portal source for a public repository, fol
 	cd /path/to/portal/public/source
 	ij
 
-Private Source With History
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Private Source With Public History
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If you'd like to work with ``master-private`` or ``7.0.x-private`` and you need the history on the ``master`` and ``7.0.x`` branches, follow these instructions.
 
@@ -63,8 +63,8 @@ If you'd like to work with ``master-private`` or ``7.0.x-private`` and you need 
 	cd /path/to/portal/public/source
 	ij /path/to/portal/private/source
 
-Private Source Without History
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Private Source Without Public History
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If you'd like to work with ``master-private`` or ``7.0.x-private`` and you don't need the history on the ``master`` and ``7.0.x`` branches, follow these instructions.
 
@@ -93,6 +93,24 @@ To load a project containing only the portal source for a public repository and 
 
 	cd /path/to/portal/public/source
 	ij /path/to/subrepos
+
+Private Source With Public History and Subrepositories
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+To load a project containing only the portal source for a public repository and the code for all public/private subrepositories that you've checked out, follow these instructions.
+
+1. Navigate to where you've cloned the `liferay-portal <https://github.com/liferay/liferay-portal>`__ repository
+2. Run the ``ij`` command, and specify as an argument the path to where you cloned the `liferay-portal-ee <https://github.com/liferay/liferay-portal-ee>`__ repository and checked out the corresponding private branch, and specify the various subrepositories. If you have them all cloned inside of one parent folder, just specify the one parent folder and it will locate them all!
+
+.. code-block:: bash
+
+	cd /path/to/portal/public/source
+	ij /path/to/portal/private/source /path/to/subrepo1 /path/to/subrepo2 /path/to/subrepo3
+
+.. code-block:: bash
+
+	cd /path/to/portal/public/source
+	ij /path/to/portal/private/source /path/to/subrepos/parent
 
 More Complex Usage
 ~~~~~~~~~~~~~~~~~~
