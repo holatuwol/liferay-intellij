@@ -81,7 +81,7 @@ Public Source With Subrepositories
 
 To load a project containing only the portal source for a public repository and the code for all public/private subrepositories that you've checked out, follow these instructions.
 
-1. Navigate to where you've cloned the `liferay-portal-ee <https://github.com/liferay/liferay-portal-ee>`__ repository
+1. Navigate to where you've cloned the `liferay-portal <https://github.com/liferay/liferay-portal>`__ repository
 2. Run the ``ij`` command, and specify as an argument the path to where you cloned the various subrepositories. If you have them all cloned inside of one parent folder, just specify the one parent folder and it will locate them all!
 
 .. code-block:: bash
