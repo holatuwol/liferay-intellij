@@ -10,7 +10,7 @@ setuplibs
 
 "$NODEJS" "${SCRIPT_FOLDER}/bin/pom.js" "$PWD" "$@"
 
-mvn dependency:sources
+mvn --fail-at-end dependency:sources
 grep '<module>.*</module>' pom.xml | awk -F'[<>]' '{ print $3 "/pom.xml" }' | xargs rm
 rm pom.xml
 
