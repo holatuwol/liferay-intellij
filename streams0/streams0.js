@@ -24,11 +24,14 @@ var getIntellijXML = streams6.getIntellijXML;
 var getJarLibraryXML = streams9.getJarLibraryXML;
 var getLibraryJarPaths = streams8.getLibraryJarPaths;
 var getLibraryXML = streams9.getLibraryXML;
+var getMavenAggregator = streams9.getMavenAggregator;
+var getMavenProject = streams9.getMavenProject;
 var getModuleElement = streams7.getModuleElement;
 var getModulesElement = streams7.getModulesElement;
 var getModuleXML = streams9.getModuleXML;
 var getProjectRepositories = streams9.getProjectRepositories;
 var getWorkspaceModulesXML = streams7.getWorkspaceModulesXML;
+var isFile = streams2.isFile;
 var isDirectory = streams2.isDirectory;
 var isSameLibraryDependency = streams8.isSameLibraryDependency;
 var keyExistsInObject = highland.ncurry(2, streams8.keyExistsInObject);
@@ -42,6 +45,31 @@ var gitRoots = new Set();
 
 var gradleCaches = streams9.gradleCaches;
 var mavenCaches = streams9.mavenCaches;
+
+function createProjectObjectModels(coreDetails, moduleDetails) {
+	var moduleVersions = coreDetails.reduce(setCoreBundleVersions, {});
+	moduleVersions = moduleDetails.reduce(setModuleBundleVersions, moduleVersions);
+
+	moduleDetails.forEach(highland.partial(fixLibraryDependencies, moduleVersions));
+	moduleDetails.forEach(highland.partial(fixProjectDependencies, moduleVersions, false));
+
+	var moduleStream = highland(moduleDetails.concat(getLibraryModules()));
+
+	var mavenProjectStream = moduleStream.observe();
+	var mavenAggregatorStream = moduleStream.observe();
+
+	mavenProjectStream
+		.map(getMavenProject)
+		.each(saveContent);
+
+	mavenAggregatorStream
+		.pluck('modulePath')
+		.collect()
+		.map(getMavenAggregator)
+		.each(saveContent);
+
+	moduleStream.done(function() {});
+};
 
 function createProjectWorkspace(coreDetails, moduleDetails, pluginDetails) {
 	if (pluginDetails) {
@@ -191,48 +219,6 @@ function completeGradleCache(coreDetails, moduleDetails, pluginDetails) {
 		.each(executeGradleFile);
 };
 
-function flatten(accumulator, next) {
-	if (!accumulator) {
-		return next;
-	}
-
-	if (!next) {
-		return accumulator;
-	}
-
-	return accumulator.concat(next);
-};
-
-function getGradleRepositoriesBlock(currentValue, repository) {
-	if (currentValue.length == 0) {
-		currentValue = [
-			'repositories {',
-			'\tmavenLocal()',
-			'}'
-		];
-	}
-
-	var newGradleContent = [
-		'\tmaven {',
-		'\t\turl "' + repository.scheme + '://' + repository.path + '"'
-	];
-
-	if (repository.username) {
-		newGradleContent.push('\t\tcredentials {');
-		newGradleContent.push('\t\t\tusername ' + JSON.stringify(repository.username));
-		newGradleContent.push('\t\t\tpassword ' + JSON.stringify(repository.password));
-		newGradleContent.push('\t\t}');
-	}
-
-	newGradleContent.push('\t}');
-
-	currentValue.splice(currentValue.length - 1, 1);
-	currentValue = currentValue.concat(newGradleContent);
-	currentValue.push('}');
-
-	return currentValue;
-}
-
 function executeGradleFile(entries) {
 	if (entries.length == 0) {
 		return;
@@ -282,7 +268,49 @@ function executeGradleFile(entries) {
 	}
 
 	//shelljs.rm('-rf', buildGradleFolder);
-}
+};
+
+function flatten(accumulator, next) {
+	if (!accumulator) {
+		return next;
+	}
+
+	if (!next) {
+		return accumulator;
+	}
+
+	return accumulator.concat(next);
+};
+
+function getGradleRepositoriesBlock(currentValue, repository) {
+	if (currentValue.length == 0) {
+		currentValue = [
+			'repositories {',
+			'\tmavenLocal()',
+			'}'
+		];
+	}
+
+	var newGradleContent = [
+		'\tmaven {',
+		'\t\turl "' + repository.scheme + '://' + repository.path + '"'
+	];
+
+	if (repository.username) {
+		newGradleContent.push('\t\tcredentials {');
+		newGradleContent.push('\t\t\tusername ' + JSON.stringify(repository.username));
+		newGradleContent.push('\t\t\tpassword ' + JSON.stringify(repository.password));
+		newGradleContent.push('\t\t}');
+	}
+
+	newGradleContent.push('\t}');
+
+	currentValue.splice(currentValue.length - 1, 1);
+	currentValue = currentValue.concat(newGradleContent);
+	currentValue.push('}');
+
+	return currentValue;
+};
 
 function getFilePaths(folder) {
 	return fs.readdirSync(folder).map(getFilePath(folder));
@@ -297,7 +325,46 @@ function getGradleFile(entries) {
 		name: path.join(process.cwd(), 'tmp/ijbuild/build.gradle'),
 		content: buildGradleContent.join('\n')
 	};
-}
+};
+
+function getLibraryModule(libraryName) {
+	var libraryModule = {
+		moduleName: libraryName,
+		modulePath: getFilePath('lib', libraryName),
+		bundleSymbolicName: libraryName,
+		bundleVersion: '0.1-SNAPSHOT'
+	};
+
+	var libraryMetadataPath = getFilePath(libraryModule.modulePath, 'dependencies.properties');
+
+	if (!isFile(libraryMetadataPath)) {
+		return libraryModule;
+	}
+
+	var dependencyPropertiesContent = fs.readFileSync(libraryMetadataPath, { encoding: 'UTF-8' });
+
+	libraryModule['libraryDependencies'] = dependencyPropertiesContent.toString()
+		.split('\n')
+		.map(function(x) {
+			var dependencyData = x.split('=')[1].split(':');
+
+			return {
+				type: 'library',
+				group: dependencyData[0],
+				name: dependencyData[1],
+				version: dependencyData[2],
+				testScope: false
+			}
+		})
+
+	return libraryModule;
+};
+
+function getLibraryModules() {
+	var libraryNames = ['development', 'global', 'portal'];
+
+	return libraryNames.map(getLibraryModule);
+};
 
 function getMiscXML(resourceElements) {
 	var miscXMLContent = [
@@ -394,12 +461,12 @@ function hasLibraryPath(library) {
 
 function isLiferayModule(library) {
 	return library.group != null && library.group.indexOf('com.liferay') == 0 && library.name.indexOf('com.liferay') == 0;
-}
+};
 
 function isTagLibraryFile(fileName) {
 	return fileName.indexOf('.tld') == fileName.length - 4;
 };
 
-exports.createProjectObjectModels = streams9.createProjectObjectModels;
+exports.createProjectObjectModels = createProjectObjectModels;
 exports.createProjectWorkspace = createProjectWorkspace;
 exports.flatten = flatten;
