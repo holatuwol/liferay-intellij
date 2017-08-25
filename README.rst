@@ -42,7 +42,7 @@ Public Source
 
 To load a project containing only the portal source for a public repository, follow these instructions.
 
-1. Navigate to where you've cloned the [liferay-portal](https://github.com/liferay/liferay-portal) repository
+1. Navigate to where you've cloned the `liferay-portal <https://github.com/liferay/liferay-portal>`__ repository
 2. Run the ``ij`` command (no parameters) to generate the IntelliJ project
 
 .. code-block:: bash
@@ -55,8 +55,8 @@ Private Source With History
 
 If you'd like to work with ``master-private`` or ``7.0.x-private`` and you need the history on the ``master`` and ``7.0.x`` branches, follow these instructions.
 
-1. Navigate to where you've cloned the [liferay-portal](https://github.com/liferay/liferay-portal) repository
-2. Run the ``ij`` command, and specify the path to where you cloned the [liferay-portal-ee](https://github.com/liferay/liferay-portal-ee) repository and checked out the corresponding private branch
+1. Navigate to where you've cloned the `liferay-portal <https://github.com/liferay/liferay-portal>`__ repository
+2. Run the ``ij`` command, and specify the path to where you cloned the `liferay-portal-ee <https://github.com/liferay/liferay-portal-ee>`__ repository and checked out the corresponding private branch
 
 .. code-block:: bash
 
@@ -68,7 +68,7 @@ Private Source Without History
 
 If you'd like to work with ``master-private`` or ``7.0.x-private`` and you don't need the history on the ``master`` and ``7.0.x`` branches, follow these instructions.
 
-1. Navigate to where you've cloned the [liferay-portal-ee](https://github.com/liferay/liferay-portal-ee) repository
+1. Navigate to where you've cloned the `liferay-portal-ee <https://github.com/liferay/liferay-portal-ee>`__ repository
 2. Run the ``ij`` command (no parameters) to generate the IntelliJ project
 
 .. code-block:: bash
@@ -81,7 +81,7 @@ Public Source With Subrepositories
 
 To load a project containing only the portal source for a public repository and the code for all public/private subrepositories that you've checked out, follow these instructions.
 
-1. Navigate to where you've cloned the [liferay-portal-ee](https://github.com/liferay/liferay-portal-ee) repository
+1. Navigate to where you've cloned the `liferay-portal-ee <https://github.com/liferay/liferay-portal-ee>`__ repository
 2. Run the ``ij`` command, and specify as an argument the path to where you cloned the various subrepositories. If you have them all cloned inside of one parent folder, just specify the one parent folder and it will locate them all!
 
 .. code-block:: bash
