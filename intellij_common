@@ -26,6 +26,20 @@ checknode() {
 }
 
 copylibs() {
+	if [ ! -d modules ] || [ ! -d .gradle ] || [ -f build.xml ]; then
+		return 0
+	fi
+
+	if [ ! -d ../liferay-binaries-cache-2017 ]; then
+		"$NODEJS" "${SCRIPT_FOLDER}/bin/pom.js" "$PWD" "$@"
+
+		mvn  --fail-at-end dependency:go-offline
+		grep '<module>.*</module>' pom.xml | awk -F'[<>]' '{ print $3 "/pom.xml" }' | xargs rm
+		rm pom.xml
+
+		mkdir -p .gradle
+	fi
+
 	for folder in development global portal; do
 		if [ ! -f lib/$folder/dependencies.properties ]; then
 			continue
@@ -38,14 +52,25 @@ copylibs() {
 				continue
 			fi
 
-			local group=$(echo $dependency | cut -d'=' -f 2 | cut -d':' -f 1 | tr '.' '/')
+			local group_gradle=$(echo $dependency | cut -d'=' -f 2 | cut -d':' -f 1)
+			local group_maven=$(echo $group_gradle | tr '.' '/')
 			local name=$(echo $dependency | cut -d'=' -f 2 | cut -d':' -f 2)
 			local version=$(echo $dependency | cut -d'=' -f 2 | cut -d':' -f 3)
 
-			local maven_path=$HOME/.m2/repository/${group}/${name}/${version}/${name}-${version}.jar
+			local maven_path=$HOME/.m2/repository/${group_maven}/${name}/${version}/${name}-${version}.jar
 
 			if [ -f $maven_path ]; then
 				cp $maven_path $lib_jar
+			fi
+
+			local gradle_path=../liferay-binaries-cache-2017/.gradle/caches/modules-2/files-2.1/${group_gradle}/${name}/${version}
+
+			if [ -d $gradle_path ]; then
+				local gradle_jar=$(find $gradle_path -name ${name}-${version}.jar)
+
+				if [ "" != "$gradle_jar" ]; then
+					cp $gradle_jar $lib_jar
+				fi
 			fi
 		done
 	done

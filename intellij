@@ -7,17 +7,6 @@ SCRIPT_FOLDER=$(dirname "$0")
 checknode
 setupsdk
 setuplibs
-
-if [ -d modules ] && [ ! -d .gradle ]; then
-	"$NODEJS" "${SCRIPT_FOLDER}/bin/pom.js" "$PWD" "$@"
-
-	mvn  --fail-at-end dependency:go-offline
-	grep '<module>.*</module>' pom.xml | awk -F'[<>]' '{ print $3 "/pom.xml" }' | xargs rm
-	rm pom.xml
-
-	mkdir -p .gradle
-fi
-
 copylibs
 
 "$NODEJS" "${SCRIPT_FOLDER}/bin/run.js" "$PWD" "$@"

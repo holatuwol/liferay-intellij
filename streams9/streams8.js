@@ -36,6 +36,7 @@ var libraryCache = {};
 function createProjectWorkspace(coreDetails, moduleDetails) {
 	moduleDetails.forEach(checkForGradleCache);
 	checkForGradleCache(os.homedir());
+	checkForGradleCache('../liferay-binaries-cache-2017');
 
 	moduleDetails.forEach(checkForMavenCache);
 	checkForMavenCache(os.homedir());

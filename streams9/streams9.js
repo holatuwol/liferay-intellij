@@ -72,12 +72,8 @@ function createProjectWorkspace(coreDetails, moduleDetails) {
 	moduleDetails.forEach(sortModuleAttributes);
 
 	moduleDetails.forEach(checkForGradleCache);
-
-	var homeGradleCache = getFilePath(os.homedir(), '.gradle/caches/modules-2/files-2.1');
-
-	if (isDirectory(homeGradleCache)) {
-		gradleCaches.add(homeGradleCache);
-	}
+	checkForGradleCache(os.homedir());
+	checkForGradleCache('../liferay-binaries-cache-2017');
 
 	var moduleStream = highland(moduleDetails);
 	var coreStream = highland(coreDetails);
