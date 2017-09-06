@@ -259,7 +259,7 @@ function getLibraryFolderPath(library) {
 	for (mavenCache of mavenCaches) {
 		var mavenAbsolutePath = getFilePath(mavenCache, mavenRelativePath);
 
-		if (isDirectory(mavenAbsolutePath) && (fs.readdirSync(mavenAbsolutePath).length != 0)) {
+		if (isDirectory(mavenAbsolutePath) && (getLibraryJarCount(mavenAbsolutePath) > 0)) {
 			return mavenAbsolutePath;
 		}
 	}
@@ -274,7 +274,30 @@ function getLibraryFolderPath(library) {
 		}
 	}
 
+	for (mavenCache of mavenCaches) {
+		var mavenAbsolutePath = getFilePath(mavenCache, mavenRelativePath);
+
+		if (isDirectory(mavenAbsolutePath) && (fs.readdirSync(mavenAbsolutePath).length != 0)) {
+			return mavenAbsolutePath;
+		}
+	}
+
 	return null;
+};
+
+function getLibraryJarCount(path) {
+	var fileList = fs.readdirSync(path);
+	var jarCount = fileList.filter(isJar).length;
+
+	return fileList.filter(isDirectory).map(getLibraryJarCount).reduce(sum, jarCount);
+};
+
+function isJar(path) {
+	return isFile(path) && path.endsWith('.jar');
+};
+
+function sum(accumulator, next) {
+	return accumulator + next;
 };
 
 function initializeLibrary(groupId, artifactId, version) {
