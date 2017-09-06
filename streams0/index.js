@@ -140,8 +140,8 @@ function prepareProject(portalSourceFolder, otherSourceFolders) {
 
 			console.log('Scanning ' + sourceRoot);
 
-			if (!isPluginsSDK(otherSourceFolder)) {
-				var newFolders = getModuleFolders(portalSourceFolder, otherSourceFolder);
+			if (!isPluginsSDK(sourceRoot)) {
+				var newFolders = getModuleFolders(portalSourceFolder, sourceRoot);
 
 				moduleFolders = moduleFolders.concat(newFolders);
 			}
