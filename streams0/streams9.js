@@ -349,6 +349,8 @@ function getLibraryTableXML(library) {
 
 	var binaryPaths = getLibraryJarPaths(library);
 
+	binaryPaths = Array.from(new Set(binaryPaths));
+
 	if (binaryPaths.length > 0) {
 		libraryTableXML.push('<CLASSES>');
 		Array.prototype.push.apply(libraryTableXML, binaryPaths.map(getLibraryRootElement));
