@@ -89,8 +89,21 @@ function getModuleGroupName(module) {
 		return module.modulePath.substring(pluginSDKRoot.length + 1);
 	}
 
+	var pos = module.modulePath.indexOf('modules/') == 0 ? 0 : module.modulePath.indexOf('/modules/');
+
+	if (pos != -1) {
+		var modulesRoot = module.modulePath.substring(0, pos);
+
+		if (modulesRoot == '') {
+			return path.dirname(module.modulePath);
+		}
+
+		var modulesRootParent = path.dirname(modulesRoot);
+		var moduleRelativePath = module.modulePath.substring(modulesRootParent.length + 1);
+		return path.dirname(moduleRelativePath);
+	}
+
 	var groupPrefix = '';
-	var modulesRoot = '';
 
 	var gradlePropertiesPaths = getAncestorFiles(module.modulePath, 'gradle.properties');
 
@@ -101,48 +114,27 @@ function getModuleGroupName(module) {
 		var matchResult = projectPrefixRegex.exec(gradlePropertiesContent);
 
 		if (matchResult) {
-			groupPrefix = 'modules/' + matchResult[1].split(':').join('/');
-			modulesRoot = path.dirname(gradlePropertiesPaths[0]);
-
-			break;
+			return 'subrepo/' + matchResult[1].split(':').join('/');
 		}
 	}
 
-	if (groupPrefix == '') {
-		var gradlePaths = getAncestorFiles(module.modulePath, 'gradlew');
+	var gradlePaths = getAncestorFiles(module.modulePath, 'gradlew');
 
-		if (gradlePaths.length > 0) {
-			var pos = gradlePaths[gradlePaths.length - 1].lastIndexOf('/');
+	if (gradlePaths.length > 0) {
+		var pos = gradlePaths[gradlePaths.length - 1].lastIndexOf('/');
 
-			if (pos != -1) {
-				modulesRoot = module.modulePath.substring(0, pos);
-			}
-			else {
-				modulesRoot = '';
-			}
+		if (pos != -1) {
+			var modulesRoot = module.modulePath.substring(0, pos);
+
+			var modulesRootParent = path.dirname(modulesRoot);
+			var moduleRelativePath = module.modulePath.substring(modulesRootParent.length + 1);
+			return path.dirname(moduleRelativePath);
 		}
 	}
 
-	var relativeGroupName = path.dirname(module.modulePath);
+	console.warn('Unable to detect group for ' + module.modulePath);
 
-	if ((modulesRoot != '') && (modulesRoot != '.')) {
-		if (modulesRoot.indexOf('../') != -1) {
-			relativeGroupName = path.dirname(module.modulePath.substring(path.dirname(modulesRoot).length + 1));
-		}
-		else {
-			relativeGroupName = path.dirname(module.modulePath.substring(modulesRoot.length + 1));
-		}
-	}
-
-	if (groupPrefix == '') {
-		return relativeGroupName;
-	}
-	else if (relativeGroupName == '.') {
-		return groupPrefix;
-	}
-	else {
-		return groupPrefix + '/' + relativeGroupName;
-	}
+	return '';
 };
 
 function getModuleOrderEntryElement(module, dependency) {
