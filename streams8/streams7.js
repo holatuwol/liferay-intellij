@@ -103,8 +103,6 @@ function getModuleGroupName(module) {
 		return path.dirname(moduleRelativePath);
 	}
 
-	var groupPrefix = '';
-
 	var gradlePropertiesPaths = getAncestorFiles(module.modulePath, 'gradle.properties');
 
 	for (var i = 0; i < gradlePropertiesPaths.length; i++) {
