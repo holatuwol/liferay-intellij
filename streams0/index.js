@@ -63,6 +63,12 @@ function createProject(portalSourceFolder, otherSourceFolders) {
 				pluginFolders = pluginFolders.concat(newFolders);
 			}
 			else {
+				var modulesPrivatePath = getFilePath(sourceRoot, 'modules/private');
+
+				if (isDirectory(modulesPrivatePath)) {
+					sourceRoot = modulesPrivatePath;
+				}
+
 				var newFolders = getModuleFolders(portalSourceFolder, sourceRoot);
 
 				moduleFolders = moduleFolders.concat(newFolders);
