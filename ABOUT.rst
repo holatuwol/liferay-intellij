@@ -61,6 +61,7 @@ Change Log
 
 This is a change log for when I started keeping track of the changes that were made.
 
+* **2017-09-06**: Better handling for libraries (remove duplicates, only prefer Maven folder over Gradle folder if it has .jars)
 * **2017-09-05**: Only scan folders inside of modules/private when checking a folder holding a *-private branch, move subrepos to their own module group
 * **2017-08-25**: Auto sync with upstream and checkout portal commit if running from master-private or 7.0.x-private worktree
 * **2017-08-15**: Exclude portal modules if there is a module of the same name from a subrepo
