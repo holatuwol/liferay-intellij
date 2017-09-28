@@ -235,22 +235,28 @@ function getPluginIncludeFolders(folder) {
 		if (isDirectory(getFilePath(folder, 'src'))) {
 			moduleIncludeFolders.sourceFolders.push('src');
 		}
-	}
 
-	var projectType = path.basename(path.dirname(folder));
-
-	if (projectType == 'portlets') {
-		moduleIncludeFolders.webrootFolders.push('docroot');
+		if (isDirectory(getFilePath(folder, 'service'))) {
+			moduleIncludeFolders.sourceFolders.push('service');
+		}
 	}
 
 	var portletXmlPath = getFilePath(folder, 'docroot/WEB-INF/portlet.xml');
 
 	if (isFile(portletXmlPath)) {
+		moduleIncludeFolders.webrootFolders.push('docroot');
+
 		var portletXmlContent = fs.readFileSync(portletXmlPath);
 
 		if (portletXmlContent.indexOf('com.liferay.alloy.mvc.AlloyPortlet')) {
 			moduleIncludeFolders.sourceFolders.push('docroot/WEB-INF/jsp');
 		}
+	}
+
+	var hookJspPath = getFilePath(folder, 'docroot/META-INF/custom_jsps');
+
+	if (isDirectory(hookJspPath)) {
+		moduleIncludeFolders.webrootFolders.push('docroot/META-INF/custom_jsps');
 	}
 
 	return moduleIncludeFolders;
@@ -294,6 +300,12 @@ function getPluginPackageLibraryDependencies(folder) {
 function getPluginPackageProjectDependencies(folder) {
 	var dependencyNames = ['portal-kernel', 'portal-service', 'util-bridges', 'util-java', 'util-taglib']
 		.filter(isModuleDependencyAvailable);
+
+	var hookJspPath = getFilePath(folder, 'docroot/META-INF/custom_jsps');
+
+	if (isDirectory(hookJspPath)) {
+		dependencyNames.push('portal-web');
+	}
 
 	return dependencyNames.concat(getPluginPackageRequiredDeploymentContexts(folder));
 };
