@@ -45,6 +45,8 @@ function createProject(portalSourceFolder, otherSourceFolders) {
 	var moduleFolders = [];
 	var pluginFolders = [];
 
+	var getNewPluginFolders = getPluginFolders.bind(null, portalSourceFolder);
+
 	for (var i = 0; i < otherSourceFolders.length; i++) {
 		var sourceRoots = getSourceRoots(otherSourceFolders[i]);
 
@@ -58,25 +60,29 @@ function createProject(portalSourceFolder, otherSourceFolders) {
 			console.log('Scanning ' + sourceRoot);
 
 			if (isPluginsSDK(sourceRoot)) {
-				var newFolders = getPluginFolders(portalSourceFolder, sourceRoot);
+				var newFolders = getNewPluginFolders(sourceRoot);
 
 				pluginFolders = pluginFolders.concat(newFolders);
 			}
 			else {
-				var modulesPrivatePath = getFilePath(sourceRoot, 'modules/private');
-
-				if (isDirectory(modulesPrivatePath)) {
-					sourceRoot = modulesPrivatePath;
-				}
-
-				var newFolders = getModuleFolders(portalSourceFolder, sourceRoot);
-
-				moduleFolders = moduleFolders.concat(newFolders);
+				pluginFolders = getModulePluginsFolders(sourceRoot, pluginFolders, getNewPluginFolders);
 			}
+
+			var modulesPrivatePath = getFilePath(sourceRoot, 'modules/private');
+
+			if (isDirectory(modulesPrivatePath)) {
+				sourceRoot = modulesPrivatePath;
+			}
+
+			var newFolders = getModuleFolders(portalSourceFolder, sourceRoot);
+
+			moduleFolders = moduleFolders.concat(newFolders);
 		}
 	}
 
 	console.log('Scanning ' + portalSourceFolder);
+
+	pluginFolders = getModulePluginsFolders(portalSourceFolder, pluginFolders, getNewPluginFolders);
 
 	var portalSourceModulesRootPath = getFilePath(portalSourceFolder, 'modules');
 	var coreModuleFolders = getModuleFolders(portalSourceFolder, portalSourceModulesRootPath);
@@ -99,6 +105,30 @@ function createProject(portalSourceFolder, otherSourceFolders) {
 
 function getModuleName(module) {
 	return module.moduleName;
+};
+
+function getModulePluginsFolders(sourceRoot, pluginFolders, getNewPluginFolders) {
+	var appsPath = getFilePath(sourceRoot, 'modules/apps');
+
+	if (isDirectory(appsPath)) {
+		pluginFolders = fs.readdirSync(appsPath)
+			.map(getFilePath.bind(null, appsPath))
+			.filter(isDirectory)
+			.map(getNewPluginFolders)
+			.reduce(flatten, pluginFolders);
+	}
+
+	var privateAppsPath = getFilePath(sourceRoot, 'modules/private/apps');
+
+	if (isDirectory(privateAppsPath)) {
+		pluginFolders = fs.readdirSync(privateAppsPath)
+			.map(getFilePath.bind(null, privateAppsPath))
+			.filter(isDirectory)
+			.map(getNewPluginFolders)
+			.reduce(flatten, pluginFolders);
+	}
+
+	return pluginFolders;
 };
 
 function getSourceRoots(folderPath) {

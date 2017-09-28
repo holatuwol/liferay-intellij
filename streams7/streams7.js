@@ -57,12 +57,6 @@ function getModuleGroupName(module) {
 		return 'portal';
 	}
 
-	if (module.type == 'plugins-sdk') {
-		var pluginSDKRoot = path.normalize(getFilePath(module.modulePath, '../../..'));
-
-		return module.modulePath.substring(pluginSDKRoot.length + 1);
-	}
-
 	var pos = module.modulePath.indexOf('modules/') == 0 ? 0 : module.modulePath.indexOf('/modules/');
 
 	if (pos != -1) {
