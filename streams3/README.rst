@@ -204,7 +204,7 @@ Our next step is to take our list of module folders and end up with a list of mo
 	function getModuleOverview(folder) {
 		return {
 			moduleName: path.basename(folder),
-			modulePath: folder
+			modulePath: folder.replace(/\\/g, '/')
 		};
 	};
 

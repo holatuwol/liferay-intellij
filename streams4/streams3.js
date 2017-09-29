@@ -119,7 +119,7 @@ function getModuleIncludeFolders(folder) {
 function getModuleOverview(folder) {
 	return {
 		moduleName: path.basename(folder),
-		modulePath: folder
+		modulePath: folder.replace(/\\/g, '/')
 	};
 };
 
