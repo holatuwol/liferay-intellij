@@ -35,7 +35,7 @@ var getProjectDependency = highland.partial(getCoreDependency, 'project');
 
 var defaultDependencyNames = {
 	libraryNames: ['development', 'global'],
-	projectNames: ['portal-kernel', 'portal-service', 'registry-api']
+	projectNames: ['portal-kernel', 'portal-service']
 };
 
 var customDependencyNames = {
@@ -57,7 +57,7 @@ var customDependencyNames = {
 	},
 	'portal-test': {
 		libraryNames: ['development', 'global', 'portal'],
-		projectNames: ['portal-kernel', 'portal-service', 'registry-api']
+		projectNames: ['portal-kernel', 'portal-service']
 	},
 	'portal-test-integration': {
 		libraryNames: ['development', 'global', 'portal'],
@@ -65,15 +65,15 @@ var customDependencyNames = {
 	},
 	'util-bridges': {
 		libraryNames: ['development', 'global', 'portal'],
-		projectNames: ['portal-kernel', 'portal-service', 'registry-api']
+		projectNames: ['portal-kernel', 'portal-service']
 	},
 	'util-java': {
 		libraryNames: ['development', 'global', 'portal'],
-		projectNames: ['portal-kernel', 'portal-service', 'portal-test', 'registry-api']
+		projectNames: ['portal-kernel', 'portal-service', 'portal-test']
 	},
 	'util-taglib': {
 		libraryNames: ['development', 'global', 'portal'],
-		projectNames: ['portal-kernel', 'portal-service', 'registry-api', 'util-java']
+		projectNames: ['portal-kernel', 'portal-service', 'util-java']
 	}
 };
 
@@ -88,7 +88,7 @@ function getCoreDependency(dependencyType, dependencyName) {
 	};
 };
 
-function getCoreDependencies(folder) {
+function getCoreDependencies(portalPreModules, folder) {
 	var dependencyNames = defaultDependencyNames;
 
 	if (folder in customDependencyNames) {
@@ -97,15 +97,15 @@ function getCoreDependencies(folder) {
 
 	return {
 		libraryDependencies: dependencyNames.libraryNames.map(getLibraryDependency),
-		projectDependencies: dependencyNames.projectNames.filter(isModuleDependencyAvailable).map(getProjectDependency)
+		projectDependencies: dependencyNames.projectNames.concat(portalPreModules).map(getProjectDependency)
 	};
 };
 
-function getCoreDetails(folder) {
+function getCoreDetails(portalPreModules, folder) {
 	var moduleOverview = getModuleOverview(folder);
 	var moduleIncludeFolders = getCoreIncludeFolders(folder);
 	var moduleExcludeFolders = getModuleExcludeFolders(folder, moduleIncludeFolders);
-	var moduleDependencies = getCoreDependencies(folder);
+	var moduleDependencies = getCoreDependencies(portalPreModules, folder);
 
 	var moduleDetailsArray = [moduleOverview, moduleIncludeFolders, moduleExcludeFolders, moduleDependencies];
 
@@ -299,7 +299,7 @@ function getPluginPackageLibraryDependencies(folder) {
 
 function getPluginPackageProjectDependencies(folder) {
 	var dependencyNames = ['portal-kernel', 'portal-service', 'util-bridges', 'util-java', 'util-taglib']
-		.filter(isModuleDependencyAvailable);
+		.filter(isDirectory);
 
 	var hookJspPath = getFilePath(folder, 'docroot/META-INF/custom_jsps');
 
@@ -404,10 +404,6 @@ function isCoreFolder(folder) {
 	var subfolders = ['docroot', 'src'];
 
 	return subfolders.map(getPath).some(isDirectory);
-};
-
-function isModuleDependencyAvailable(dependencyName) {
-	return isDirectory(dependencyName) || isDirectory(getFilePath('modules/core', dependencyName));
 };
 
 function isPluginFolder(folder) {

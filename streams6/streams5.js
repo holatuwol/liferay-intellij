@@ -83,7 +83,7 @@ function getCoreDependency(dependencyType, dependencyName) {
 	};
 };
 
-function getCoreDependencies(folder) {
+function getCoreDependencies(portalPreModules, folder) {
 	var dependencyNames = defaultDependencyNames;
 
 	if (folder in customDependencyNames) {
@@ -92,15 +92,15 @@ function getCoreDependencies(folder) {
 
 	return {
 		libraryDependencies: dependencyNames.libraryNames.map(getLibraryDependency),
-		projectDependencies: dependencyNames.projectNames.filter(isModuleDependencyAvailable).map(getProjectDependency)
+		projectDependencies: dependencyNames.projectNames.filter(isDirectory).concat(portalPreModules).map(getProjectDependency)
 	};
 };
 
-function getCoreDetails(folder) {
+function getCoreDetails(portalPreModules, folder) {
 	var moduleOverview = getModuleOverview(folder);
 	var moduleIncludeFolders = getCoreIncludeFolders(folder);
 	var moduleExcludeFolders = getModuleExcludeFolders(folder, moduleIncludeFolders);
-	var moduleDependencies = getCoreDependencies(folder);
+	var moduleDependencies = getCoreDependencies(portalPreModules, folder);
 
 	var moduleDetailsArray = [moduleOverview, moduleIncludeFolders, moduleExcludeFolders, moduleDependencies];
 
@@ -294,7 +294,7 @@ function getPluginPackageLibraryDependencies(folder) {
 
 function getPluginPackageProjectDependencies(folder) {
 	var dependencyNames = ['portal-kernel', 'portal-service', 'util-bridges', 'util-java', 'util-taglib']
-		.filter(isModuleDependencyAvailable);
+		.filter(isDirectory);
 
 	var hookJspPath = getFilePath(folder, 'docroot/META-INF/custom_jsps');
 
@@ -399,10 +399,6 @@ function isCoreFolder(folder) {
 	var subfolders = ['docroot', 'src'];
 
 	return subfolders.some(highland.compose(isDirectory, getPath));
-};
-
-function isModuleDependencyAvailable(dependencyName) {
-	return isDirectory(dependencyName) || isDirectory(getFilePath('modules/core', dependencyName));
 };
 
 function isPluginFolder(folder) {

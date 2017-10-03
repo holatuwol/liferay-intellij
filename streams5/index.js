@@ -43,7 +43,7 @@ function createProject(portalSourceFolder, otherSourceFolders) {
 	var portalSourceModulesRootPath = getFilePath(portalSourceFolder, 'modules/apps/marketplace');
 	var coreModuleFolders = getModuleFolders(portalSourceFolder, portalSourceModulesRootPath);
 
-	var coreDetails = coreFolders.map(getCoreDetails);
+	var coreDetails = coreFolders.map(getCoreDetails.bind(null, []));
 	var moduleDetails = moduleFolders.map(getModuleDetails);
 	var pluginDetails = pluginFolders.map(getPluginDetails);
 
