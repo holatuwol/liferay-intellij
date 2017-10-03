@@ -635,16 +635,23 @@ function setCoreBundleVersions(accumulator, module) {
 };
 
 function setModuleBundleVersions(accumulator, module) {
+	var hasInitJsp = module.webrootFolders
+		.map(getFilePath.bind(null, module.modulePath))
+		.map(highland.flip(getFilePath, 'init.jsp'))
+		.filter(isFile).length > 0;
+
+	module.hasInitJsp = hasInitJsp;
+
 	accumulator[module.bundleSymbolicName] = {
 		projectName: module.moduleName,
 		version: module.bundleVersion,
-		hasWebroot: module.webrootFolders.length > 0
+		hasInitJsp: hasInitJsp
 	};
 
 	accumulator[module.moduleName] = {
 		bundleName: module.bundleSymbolicName,
 		version: module.bundleVersion,
-		hasWebroot: module.webrootFolders.length > 0
+		hasInitJsp: hasInitJsp
 	};
 
 	return accumulator;
