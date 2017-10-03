@@ -1,4 +1,5 @@
 var fs = require('fs');
+var path = require('path');
 var highland = require('highland');
 var streams2 = require('../streams2/streams2');
 var streams3 = require('../streams4/streams3');
@@ -87,7 +88,9 @@ function createProject(portalSourceFolder, otherSourceFolders) {
 	var portalSourceModulesRootPath = getFilePath(portalSourceFolder, 'modules');
 	var coreModuleFolders = getModuleFolders(portalSourceFolder, portalSourceModulesRootPath);
 
-	var coreDetails = coreFolders.map(getCoreDetails.bind(null, []));
+	var portalPreModules = coreModuleFolders.filter(isPortalPreModule).map(highland.ncurry(1, path.basename));
+
+	var coreDetails = coreFolders.map(getCoreDetails.bind(null, portalPreModules));
 	var moduleDetails = moduleFolders.map(getModuleDetails);
 
 	var moduleNames = new Set(moduleDetails.map(getModuleName));
@@ -147,6 +150,10 @@ function getSourceRoots(folderPath) {
 
 function isPluginsSDK(otherSourceFolder) {
 	return getPluginSDKRoot(otherSourceFolder) != null;
+};
+
+function isPortalPreModule(folder) {
+	return isFile(getFilePath(folder, '.lfrbuild-portal-pre'));
 };
 
 function prepareProject(portalSourceFolder, otherSourceFolders) {
