@@ -6,13 +6,11 @@ gradlewidea() {
 		return 1
 	fi
 
-	pushd modules > /dev/null
-
-	cat /dev/null > ../.idea/projects.txt
+	cat /dev/null > .idea/projects.txt
 
 	for folder in $(git ls-files modules | grep build.gradle | grep -v gradleTest | grep -v archetype-resources | xargs -I {} dirname {}); do
 		if [ -d $folder/src/main/java ]; then
-			echo $folder >> ../.idea/projects.txt
+			echo $folder | cut -d'/' -f 2- >> .idea/projects.txt
 		fi
 	done
 
@@ -24,7 +22,13 @@ gradlewidea() {
 
 	export GRADLE_OPTS
 
-	cat ../.idea/projects.txt | tr '/' ':' | awk '{ print ":" $1 ":idea" }' | xargs ../gradlew --continue
+	pushd modules > /dev/null
+
+	if [ "eclipse" == "$1" ]; then
+		cat ../.idea/projects.txt | tr '/' ':' | awk '{ print ":" $1 ":eclipse" }' | xargs ../gradlew --continue
+	else
+		cat ../.idea/projects.txt | tr '/' ':' | awk '{ print ":" $1 ":idea" }' | xargs ../gradlew --continue
+	fi
 
 	popd > /dev/null
 }
@@ -39,4 +43,4 @@ fi
 setupsdk
 setuplibs
 
-gradlewidea
+gradlewidea $@
