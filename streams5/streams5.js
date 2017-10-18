@@ -417,7 +417,7 @@ function isPluginFolder(folder) {
 
 	var pluginName = path.basename(folder);
 
-	return (pluginName.indexOf('test-') != 0) && (pluginName.indexOf('sample-') != 0);
+	return (pluginName.indexOf('test-') != 0);
 };
 
 function isUniqueAssumeSorted(element, index, array) {
