@@ -95,14 +95,14 @@ setantopts() {
 }
 
 setuplibs() {
-	if [ ! -f build.xml ] || [ ! -f "lib/portal/dependencies.properties" ]; then
+	if [ ! -f build.xml ]; then
 		return 0
 	fi
 
 	local NEEDS_SETUP_LIBS=
 
 	for folder in development global portal; do
-		if [[ $(find lib/$folder -name '*.jar' | wc -l) -lt $(cat "lib/$folder/dependencies.properties" | wc -l) ]]; then
+		if [ -f "lib/$folder/dependencies.properties" ] && [[ $(find lib/$folder -name '*.jar' | wc -l) -lt $(cat "lib/$folder/dependencies.properties" | wc -l) ]]; then
 			NEEDS_SETUP_LIBS=true
 		fi
 	done
