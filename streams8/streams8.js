@@ -54,47 +54,6 @@ function createProjectWorkspace(coreDetails, moduleDetails) {
 	detailsStream.done(function() {});
 };
 
-function getLibraryJarPaths(library) {
-	if (library.group == null) {
-		return [];
-	}
-
-	var jarPaths = library['jarPaths'];
-
-	if (jarPaths != null) {
-		return jarPaths;
-	}
-
-	var folderPath = library['folderPath'];
-
-	if (folderPath == null) {
-		folderPath = getLibraryFolderPath(library);
-
-		library['folderPath'] = folderPath;
-	}
-
-	if (folderPath == null) {
-		return [];
-	}
-
-	var jarName = library.name + '-' + library.version + '.jar';
-
-	var jarPaths = fs.readdirSync(folderPath)
-		.map(getFilePath(folderPath))
-		.map(highland.flip(getFilePath, jarName))
-		.filter(isFile);
-
-	if (jarPaths.length == 0) {
-		jarPaths = [getFilePath(folderPath, jarName)].filter(isFile);
-	}
-
-	library['jarPaths'] = jarPaths;
-
-	processPomDependencies(library);
-
-	return library['jarPaths'];
-};
-
 function getLibraryFolderPath(library) {
 	if (library.group == null) {
 		return null;
@@ -136,6 +95,47 @@ function getLibraryJarCount(path) {
 	var jarCount = fileList.filter(isJar).length;
 
 	return fileList.filter(isDirectory).map(getLibraryJarCount).reduce(sum, jarCount);
+};
+
+function getLibraryJarPaths(library) {
+	if (library.group == null) {
+		return [];
+	}
+
+	var jarPaths = library['jarPaths'];
+
+	if (jarPaths != null) {
+		return jarPaths;
+	}
+
+	var folderPath = library['folderPath'];
+
+	if (folderPath == null) {
+		folderPath = getLibraryFolderPath(library);
+
+		library['folderPath'] = folderPath;
+	}
+
+	if (folderPath == null) {
+		return [];
+	}
+
+	var jarName = library.name + '-' + library.version + '.jar';
+
+	var jarPaths = fs.readdirSync(folderPath)
+		.map(getFilePath(folderPath))
+		.map(highland.flip(getFilePath, jarName))
+		.filter(isFile);
+
+	if (jarPaths.length == 0) {
+		jarPaths = [getFilePath(folderPath, jarName)].filter(isFile);
+	}
+
+	library['jarPaths'] = jarPaths;
+
+	processPomDependencies(library);
+
+	return library['jarPaths'];
 };
 
 function isJar(path) {

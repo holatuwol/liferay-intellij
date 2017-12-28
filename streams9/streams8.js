@@ -101,6 +101,90 @@ function checkForMavenCache(obj) {
 	candidates.forEach(Set.prototype.add.bind(mavenCaches));
 };
 
+function getLibraryFolderPath(library) {
+	if (library.group == null) {
+		return null;
+	}
+
+	var mavenRelativePath = library.group.split('.').concat([library.name, library.version]).join('/');
+
+	for (mavenCache of mavenCaches) {
+		var mavenAbsolutePath = getFilePath(mavenCache, mavenRelativePath);
+
+		if (isDirectory(mavenAbsolutePath) && (getLibraryJarCount(mavenAbsolutePath) > 0)) {
+			return mavenAbsolutePath;
+		}
+	}
+
+	var gradleRelativePath = [library.group, library.name, library.version].join('/');
+
+	for (gradleCache of gradleCaches) {
+		var gradleAbsolutePath = getFilePath(gradleCache, gradleRelativePath);
+
+		if (isDirectory(gradleAbsolutePath) && (fs.readdirSync(gradleAbsolutePath).length != 0)) {
+			return gradleAbsolutePath;
+		}
+	}
+
+	for (mavenCache of mavenCaches) {
+		var mavenAbsolutePath = getFilePath(mavenCache, mavenRelativePath);
+
+		if (isDirectory(mavenAbsolutePath) && (fs.readdirSync(mavenAbsolutePath).length != 0)) {
+			return mavenAbsolutePath;
+		}
+	}
+
+	return null;
+};
+
+function getLibraryJarCount(path) {
+	var fileList = fs.readdirSync(path);
+	var jarCount = fileList.filter(isJar).length;
+
+	return fileList.filter(isDirectory).map(getLibraryJarCount).reduce(sum, jarCount);
+};
+
+function getLibraryJarPaths(library) {
+	if (library.group == null) {
+		return [];
+	}
+
+	var jarPaths = library['jarPaths'];
+
+	if (jarPaths != null) {
+		return jarPaths;
+	}
+
+	var folderPath = library['folderPath'];
+
+	if (folderPath == null) {
+		folderPath = getLibraryFolderPath(library);
+
+		library['folderPath'] = folderPath;
+	}
+
+	if (folderPath == null) {
+		return [];
+	}
+
+	var jarName = library.name + '-' + library.version + '.jar';
+
+	var jarPaths = fs.readdirSync(folderPath)
+		.map(getFilePath(folderPath))
+		.map(highland.flip(getFilePath, jarName))
+		.filter(isFile);
+
+	if (jarPaths.length == 0) {
+		jarPaths = [getFilePath(folderPath, jarName)].filter(isFile);
+	}
+
+	library['jarPaths'] = jarPaths;
+
+	processPomDependencies(library);
+
+	return library['jarPaths'];
+};
+
 function getLibraryOrderEntryElement(module, dependency) {
 	var extraAttributes = '';
 
@@ -208,89 +292,6 @@ function getNewModuleRootManagerXML(module) {
 	return newModuleRootManagerXML.join('\n');
 };
 
-function getLibraryJarPaths(library) {
-	if (library.group == null) {
-		return [];
-	}
-
-	var jarPaths = library['jarPaths'];
-
-	if (jarPaths != null) {
-		return jarPaths;
-	}
-
-	var folderPath = library['folderPath'];
-
-	if (folderPath == null) {
-		folderPath = getLibraryFolderPath(library);
-
-		library['folderPath'] = folderPath;
-	}
-
-	if (folderPath == null) {
-		return [];
-	}
-
-	var jarName = library.name + '-' + library.version + '.jar';
-
-	var jarPaths = fs.readdirSync(folderPath)
-		.map(getFilePath(folderPath))
-		.map(highland.flip(getFilePath, jarName))
-		.filter(isFile);
-
-	if (jarPaths.length == 0) {
-		jarPaths = [getFilePath(folderPath, jarName)].filter(isFile);
-	}
-
-	library['jarPaths'] = jarPaths;
-
-	processPomDependencies(library);
-
-	return library['jarPaths'];
-};
-
-function getLibraryFolderPath(library) {
-	if (library.group == null) {
-		return null;
-	}
-
-	var mavenRelativePath = library.group.split('.').concat([library.name, library.version]).join('/');
-
-	for (mavenCache of mavenCaches) {
-		var mavenAbsolutePath = getFilePath(mavenCache, mavenRelativePath);
-
-		if (isDirectory(mavenAbsolutePath) && (getLibraryJarCount(mavenAbsolutePath) > 0)) {
-			return mavenAbsolutePath;
-		}
-	}
-
-	var gradleRelativePath = [library.group, library.name, library.version].join('/');
-
-	for (gradleCache of gradleCaches) {
-		var gradleAbsolutePath = getFilePath(gradleCache, gradleRelativePath);
-
-		if (isDirectory(gradleAbsolutePath) && (fs.readdirSync(gradleAbsolutePath).length != 0)) {
-			return gradleAbsolutePath;
-		}
-	}
-
-	for (mavenCache of mavenCaches) {
-		var mavenAbsolutePath = getFilePath(mavenCache, mavenRelativePath);
-
-		if (isDirectory(mavenAbsolutePath) && (fs.readdirSync(mavenAbsolutePath).length != 0)) {
-			return mavenAbsolutePath;
-		}
-	}
-
-	return null;
-};
-
-function getLibraryJarCount(path) {
-	var fileList = fs.readdirSync(path);
-	var jarCount = fileList.filter(isJar).length;
-
-	return fileList.filter(isDirectory).map(getLibraryJarCount).reduce(sum, jarCount);
-};
 
 function isJar(path) {
 	return isFile(path) && path.endsWith('.jar');
