@@ -3,7 +3,7 @@ IntelliJ Modules Setup Script
 
 .. contents:: :local:
 
-This script generates all the IML files, library descriptors, and the modules.xml file needed to have a complete Liferay project that successfully resolves imports in JSPs and Java files across the 900+ modules in Liferay.
+This script generates all the IML files, library descriptors, and the modules.xml file needed to have a complete Liferay project that successfully resolves imports in JSPs and Java files across the 1000+ modules in Liferay.
 
 If you're more of a visual person and would like screenshots to better understand what that actually means, check the `ABOUT <ABOUT.rst>`__ file.
 
