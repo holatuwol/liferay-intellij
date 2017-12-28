@@ -2,7 +2,6 @@ var cheerio = require('cheerio');
 var comparators = require('comparators').default;
 var fs = require('fs');
 var highland = require('highland');
-var os = require('os');
 var streams2 = require('../streams2/streams2');
 var streams4 = require('../streams5/streams4');
 var streams5 = require('../streams6/streams5');

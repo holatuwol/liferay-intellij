@@ -2,7 +2,6 @@ var child_process = require('child_process');
 var comparators = require('comparators').default;
 var fs = require('fs');
 var highland = require('highland');
-var os = require('os');
 var path = require('path');
 var shelljs = require('shelljs');
 var streams2 = require('../streams2/streams2');
@@ -30,6 +29,7 @@ var getModuleElement = streams7.getModuleElement;
 var getModulesElement = streams7.getModulesElement;
 var getModuleXML = streams9.getModuleXML;
 var getProjectRepositories = streams9.getProjectRepositories;
+var getUserHome = streams8.getUserHome;
 var getWorkspaceModulesXML = streams7.getWorkspaceModulesXML;
 var isFile = streams2.isFile;
 var isDirectory = streams2.isDirectory;
@@ -92,11 +92,11 @@ function createProjectWorkspace(coreDetails, moduleDetails, pluginDetails) {
 	moduleDetails.forEach(checkForGitRoot);
 
 	moduleDetails.forEach(checkForGradleCache);
-	checkForGradleCache(os.homedir());
+	checkForGradleCache(getUserHome());
 	checkForGradleCache('../liferay-binaries-cache-2017');
 
 	moduleDetails.forEach(checkForMavenCache);
-	checkForMavenCache(os.homedir());
+	checkForMavenCache(getUserHome());
 
 	console.log('Processing dependency artifacts');
 

@@ -61,6 +61,7 @@ Change Log
 
 This is a change log for when I started keeping track of the changes that were made.
 
+* **2017-12-28**: Restore Node.js 0.12.x compatibility in case you build `alloy-ui <https://github.com/liferay/alloy-ui>`__ from source and forget to switch back to a newer version of Node.js
 * **2017-10-02**: Handle newly introduced portal-pre module folders
 * **2017-09-27**: Handle content targeting repository cloned inside the plugins SDK
 * **2017-09-06**: Better handling for libraries (remove duplicates, only prefer Maven folder over Gradle folder if it has .jars)

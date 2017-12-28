@@ -2,7 +2,6 @@ var child_process = require('child_process');
 var comparators = require('comparators').default;
 var fs = require('fs');
 var highland = require('highland');
-var os = require('os');
 var streams2 = require('../streams2/streams2');
 var streams5 = require('../streams6/streams5');
 var streams6 = require('../streams7/streams6');
@@ -25,6 +24,7 @@ var getModuleElement = streams7.getModuleElement;
 var getModulesElement = streams7.getModulesElement;
 var getModuleIMLPath = streams6.getModuleIMLPath;
 var getSourceFolderElement = streams6.getSourceFolderElement;
+var getUserHome = streams8.getUserHome;
 var getWorkspaceModulesXML = streams7.getWorkspaceModulesXML;
 var isDirectory = streams2.isDirectory;
 var isFile = streams2.isFile;
@@ -80,11 +80,11 @@ function createProjectWorkspace(coreDetails, moduleDetails, pluginDetails) {
 	moduleDetails.forEach(sortModuleAttributes);
 
 	moduleDetails.forEach(checkForGradleCache);
-	checkForGradleCache(os.homedir());
+	checkForGradleCache(getUserHome());
 	checkForGradleCache('../liferay-binaries-cache-2017');
 
 	moduleDetails.forEach(checkForMavenCache);
-	checkForMavenCache(os.homedir());
+	checkForMavenCache(getUserHome());
 
 	var moduleStream = highland(moduleDetails);
 	var coreStream = highland(coreDetails);
@@ -348,8 +348,10 @@ function getLibraryTableXML(library) {
 	libraryTableXML.push('<properties />');
 
 	var binaryPaths = getLibraryJarPaths(library);
+	var binaryPathsSet = new Set(binaryPaths);
 
-	binaryPaths = Array.from(new Set(binaryPaths));
+	binaryPaths = [];
+	binaryPathsSet.forEach(highland.ncurry(1, Array.prototype.push.bind(binaryPaths)));
 
 	if (binaryPaths.length > 0) {
 		libraryTableXML.push('<CLASSES>');

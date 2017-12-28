@@ -2,7 +2,6 @@ var child_process = require('child_process');
 var comparators = require('comparators').default;
 var fs = require('fs');
 var highland = require('highland');
-var os = require('os');
 var streams2 = require('../streams2/streams2');
 var streams5 = require('../streams6/streams5');
 var streams6 = require('../streams7/streams6');
@@ -25,6 +24,7 @@ var getModuleIMLPath = streams6.getModuleIMLPath;
 var getPomDependencyPaths = streams8.getPomDependencyPaths;
 var getSourceFolderElement = streams6.getSourceFolderElement;
 var getWorkspaceModulesXML = streams7.getWorkspaceModulesXML;
+var getUserHome = streams8.getUserHome;
 var isDirectory = streams2.isDirectory;
 var isFile = streams2.isFile;
 var isFirstOccurrence = streams8.isFirstOccurrence;
@@ -72,7 +72,7 @@ function createProjectWorkspace(coreDetails, moduleDetails) {
 	moduleDetails.forEach(sortModuleAttributes);
 
 	moduleDetails.forEach(checkForGradleCache);
-	checkForGradleCache(os.homedir());
+	checkForGradleCache(getUserHome());
 	checkForGradleCache('../liferay-binaries-cache-2017');
 
 	var moduleStream = highland(moduleDetails);

@@ -241,7 +241,7 @@ function getPluginIncludeFolders(folder) {
 	if (isFile(portletXmlPath)) {
 		moduleIncludeFolders.webrootFolders.push('docroot');
 
-		var portletXmlContent = fs.readFileSync(portletXmlPath);
+		var portletXmlContent = fs.readFileSync(portletXmlPath).toString();
 
 		if (portletXmlContent.indexOf('com.liferay.alloy.mvc.AlloyPortlet')) {
 			moduleIncludeFolders.sourceFolders.push('docroot/WEB-INF/jsp');

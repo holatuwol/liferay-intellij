@@ -35,11 +35,11 @@ var libraryCache = {};
 
 function createProjectWorkspace(coreDetails, moduleDetails) {
 	moduleDetails.forEach(checkForGradleCache);
-	checkForGradleCache(os.homedir());
+	checkForGradleCache(getUserHome());
 	checkForGradleCache('../liferay-binaries-cache-2017');
 
 	moduleDetails.forEach(checkForMavenCache);
-	checkForMavenCache(os.homedir());
+	checkForMavenCache(getUserHome());
 
 	var moduleStream = highland(moduleDetails);
 	var coreStream = highland(coreDetails);
@@ -292,6 +292,9 @@ function getNewModuleRootManagerXML(module) {
 	return newModuleRootManagerXML.join('\n');
 };
 
+function getUserHome() {
+	return os.homedir ? os.homedir() : process.env[(process.platform === 'win32') ? 'USERPROFILE' : 'HOME'];
+}
 
 function isJar(path) {
 	return isFile(path) && path.endsWith('.jar');
@@ -544,6 +547,7 @@ exports.getLibraryXML = getLibraryXML;
 exports.getModuleLibraryOrderEntryElements = getModuleLibraryOrderEntryElements;
 exports.getModuleXML = getModuleXML;
 exports.gradleCaches = gradleCaches;
+exports.getUserHome = getUserHome;
 exports.isFirstOccurrence = isFirstOccurrence;
 exports.isSameLibraryDependency = isSameLibraryDependency;
 exports.keyExistsInObject = keyExistsInObject;
