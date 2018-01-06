@@ -381,12 +381,12 @@ In addition to having include folders, we will want to be able to gather exclude
 		'src': 'classes',
 		'src/main/java': 'classes',
 		'src/main/resources': 'classes',
-		'src/test/java': 'test-classes',
-		'src/test/resources': 'test-classes',
-		'src/testIntegration/java': 'test-classes',
-		'src/testIntegration/resources': 'test-classes',
-		'test/integration': 'test-classes',
-		'test/unit': 'test-classes'
+		'src/test/java': 'test-classes/unit',
+		'src/test/resources': 'test-classes/unit',
+		'src/testIntegration/java': 'test-classes/integration',
+		'src/testIntegration/resources': 'test-classes/integration',
+		'test/integration': 'test-classes/integration',
+		'test/unit': 'test-classes/unit'
 	};
 
 Assume we have the following function which takes in a list of exclusion folders ``excludeFolders`` and a folder that is in the include list ``includeFolder``. After receiving this, it adds the corresponding exclude to the list if it is not already present.

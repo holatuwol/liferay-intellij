@@ -1,7 +1,9 @@
 var fs = require('fs');
 var highland = require('highland');
+var streams3 = require('../streams4/streams3');
 var streams5 = require('./streams5');
 
+var excludeFolderMap = streams3.excludeFolderMap;
 var getFilePath = streams5.getFilePath;
 
 function createProjectWorkspace(coreDetails, moduleDetails) {

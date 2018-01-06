@@ -1,7 +1,9 @@
 var fs = require('fs');
 var highland = require('highland');
+var streams3 = require('../streams4/streams3');
 var streams5 = require('../streams6/streams5');
 
+var excludeFolderMap = streams3.excludeFolderMap;
 var getFilePath = streams5.getFilePath;
 
 function createProjectWorkspace(coreDetails, moduleDetails) {
@@ -109,9 +111,17 @@ function getOutputURLElements(module) {
 	}
 
 	var outputURLElements = ['<output url="file://$MODULE_DIR$/' + outputFolder + '" />'];
+	var testOutputFolder = null;
 
-	if (module.testSourceFolders.length > 0) {
-		outputURLElements.push('<output-test url="file://$MODULE_DIR$/test-classes" />');
+	if (module.testSourceFolders.length == 1) {
+		testOutputFolder = excludeFolderMap[module.testSourceFolders[0]];
+	}
+	else if (module.testSourceFolders.length > 1) {
+		testOutputFolder = "test-classes/unit";
+	}
+
+	if (testOutputFolder != null) {
+		outputURLElements.push('<output-test url="file://$MODULE_DIR$/' + testOutputFolder + '" />');
 	}
 
 	return outputURLElements;

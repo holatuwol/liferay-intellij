@@ -21,12 +21,12 @@ var excludeFolderMap = {
 	'src': 'classes',
 	'src/main/java': 'classes',
 	'src/main/resources': 'classes',
-	'src/test/java': 'test-classes',
-	'src/test/resources': 'test-classes',
-	'src/testIntegration/java': 'test-classes',
-	'src/testIntegration/resources': 'test-classes',
-	'test/integration': 'test-classes',
-	'test/unit': 'test-classes'
+	'src/test/java': 'test-classes/unit',
+	'src/test/resources': 'test-classes/unit',
+	'src/testIntegration/java': 'test-classes/integration',
+	'src/testIntegration/resources': 'test-classes/integration',
+	'test/integration': 'test-classes/integration',
+	'test/unit': 'test-classes/unit'
 };
 
 function getFolders(folderPath, maxDepth) {
@@ -208,6 +208,7 @@ function updateExcludeFolders(excludeFolders, includeFolder) {
 	return excludeFolders;
 };
 
+exports.excludeFolderMap = excludeFolderMap;
 exports.getFolders = getFolders;
 exports.getModuleDetails = getModuleDetails;
 exports.getModuleDependencies = getModuleDependencies;
