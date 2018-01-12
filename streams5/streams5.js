@@ -325,23 +325,35 @@ function getPluginPackageRequiredDeploymentContexts(folder) {
 	var foundRequiredDeploymentContext = false;
 
 	for (var i = 0; i < pluginPackageLines.length; i++) {
-		var line = pluginPackageLines[i];
+		var line = pluginPackageLines[i].trim();
 
-		if (line.indexOf('required-deployment-contexts') != -1) {
-			foundRequiredDeploymentContext = true;
+		var contextLine = null;
+
+		if (line.indexOf('required-deployment-contexts=') == 0) {
+			contextLine = line.substring(line.indexOf('=') + 1);
 		}
 		else if (foundRequiredDeploymentContext) {
-			var deploymentContext = line.replace(/^\s*/g, '');
-			var pos = deploymentContext.indexOf(',');
+			contextLine = line;
+		}
+		else {
+			continue;
+		}
 
-			if (pos == -1) {
-				foundRequiredDeploymentContext = false;
-			}
-			else {
-				deploymentContext = deploymentContext.substring(0, pos);
-			}
+		var pos = line.indexOf('\\') != -1;
+		foundRequiredDeploymentContext = pos != -1;
 
-			deploymentContexts.push(deploymentContext);
+		if (foundRequiredDeploymentContext) {
+			line = line.substring(0, pos);
+		}
+
+		var contexts = line.trim().split(',');
+
+		for (var j = 0; j < contexts.length; j++) {
+			var context = contexts[j].trim();
+
+			if (context) {
+				deploymentContexts.push(context);
+			}
 		}
 	}
 
