@@ -35,6 +35,7 @@ var isFile = streams2.isFile;
 var isDirectory = streams2.isDirectory;
 var isSameLibraryDependency = streams8.isSameLibraryDependency;
 var keyExistsInObject = highland.ncurry(2, streams8.keyExistsInObject);
+var libraryCache = streams8.libraryCache;
 var setCoreBundleVersions = streams9.setCoreBundleVersions;
 var setModuleBundleVersions = streams9.setModuleBundleVersions;
 var saveContent = streams6.saveContent;
@@ -83,6 +84,7 @@ function createProjectWorkspace(coreDetails, moduleDetails, pluginDetails) {
 
 	moduleDetails.forEach(highland.partial(fixLibraryDependencies, moduleVersions));
 	moduleDetails.forEach(highland.partial(fixProjectDependencies, moduleVersions, true));
+
 	moduleDetails.forEach(checkExportDependencies);
 
 	coreDetails.forEach(sortModuleAttributes);
@@ -98,7 +100,12 @@ function createProjectWorkspace(coreDetails, moduleDetails, pluginDetails) {
 	moduleDetails.forEach(checkForMavenCache);
 	checkForMavenCache(getUserHome());
 
-	console.log('Processing dependency artifacts');
+	console.log('Processing BOM dependencies');
+
+	completeBomCache(moduleDetails);
+	moduleDetails.forEach(fixMavenBomDependencies);
+
+	console.log('Processing missing dependencies');
 
 	completeGradleCache(coreDetails, moduleDetails, pluginDetails);
 
@@ -199,6 +206,24 @@ function checkForGitRoot(module) {
 	candidates.forEach(Set.prototype.add.bind(gitRoots));
 };
 
+function completeBomCache(moduleDetails) {
+	var moduleStream = highland(moduleDetails);
+
+	moduleStream
+		.tap(gatherMavenBomDependencies)
+		.filter(keyExistsInObject('bomDependencies'))
+		.pluck('bomDependencies')
+		.compact()
+		.flatten()
+		.uniqBy(isSameLibraryDependency)
+		.filter(keyExistsInObject('group'))
+		.doto(setLibraryName)
+		.filter(highland.compose(highland.not, hasLibraryPath))
+		.map(getGradleEntry)
+		.collect()
+		.each(highland.partial(executeGradleFile, 'BOM dependencies have been downloaded'));
+};
+
 function completeGradleCache(coreDetails, moduleDetails, pluginDetails) {
 	var moduleStream = highland(moduleDetails);
 	var coreStream = highland(coreDetails);
@@ -217,10 +242,10 @@ function completeGradleCache(coreDetails, moduleDetails, pluginDetails) {
 		.filter(highland.compose(highland.not, isLiferayModule))
 		.map(getGradleEntry)
 		.collect()
-		.each(executeGradleFile);
+		.each(highland.partial(executeGradleFile, 'Missing dependencies have been downloaded'));
 };
 
-function executeGradleFile(entries) {
+function executeGradleFile(completionMessage, entries) {
 	if (entries.length == 0) {
 		return;
 	}
@@ -244,7 +269,7 @@ function executeGradleFile(entries) {
 	buildGradleContent = buildGradleContent.concat([
 		'task completeGradleCache(type: Exec) {',
 		'\tconfigurations.compile.files',
-		'\tcommandLine "echo", "Missing items from Gradle cache have been downloaded"',
+		'\tcommandLine "echo", "' + completionMessage + '"',
 		'}'
 	]);
 
@@ -268,8 +293,59 @@ function executeGradleFile(entries) {
 	}
 	catch (e) {
 	}
+};
 
-	//shelljs.rm('-rf', buildGradleFolder);
+function fixMavenBomDependencies(module) {
+	if (!module.bomDependencies) {
+		return;
+	}
+
+	for (var i = 0; i < module.bomDependencies.length; i++) {
+		var dependency = module.bomDependencies[i];
+
+		var groupId = dependency.group;
+		var artifactId = dependency.name;
+		var version = dependency.version;
+
+		module.libraryDependencies.splice(0, 0, dependency);
+
+		if (dependency.overriddenByDependencies) {
+			continue;
+		}
+
+		var cacheKey = [groupId, artifactId, version].join(':');
+		var library = libraryCache[cacheKey];
+
+		if (!library) {
+			console.log('Failed to resolve bom for ' + cacheKey);
+			continue;
+		}
+
+		for (key in library.variables) {
+			var colonIndex = key.indexOf(':');
+
+			if (colonIndex == -1) {
+				continue;
+			}
+
+			var replacementDependency = {
+				type: 'library',
+				group: key.substring(0, colonIndex),
+				name: key.substring(colonIndex + 1),
+				version: library.variables[key],
+				testScope: false
+			};
+
+			for (var j = 0; j < module.libraryDependencies.length; j++) {
+				var libraryDependency = module.libraryDependencies[j];
+
+				if ((libraryDependency.group == replacementDependency.group) && (libraryDependency.name == replacementDependency.name)) {
+					module.libraryDependencies[j] = replacementDependency;
+					break;
+				}
+			}
+		}
+	}
 };
 
 function flatten(accumulator, next) {
@@ -282,6 +358,42 @@ function flatten(accumulator, next) {
 	}
 
 	return accumulator.concat(next);
+};
+
+function gatherMavenBomDependencies(module) {
+	var folder = module.modulePath;
+
+	var buildGradlePath = path.join(folder, 'build.gradle');
+
+	if (!isFile(buildGradlePath)) {
+		return;
+	}
+
+	var buildGradleContents = fs.readFileSync(buildGradlePath);
+
+	var dependencyTextRegex = /dependencyManagement \{([\s\S]*?)\n\}/g;
+	var mavenBomRegex = /mavenBom\s*['"]([^:]*):([^:]*):([^'"]*)['"]/g;
+
+	while ((dependencyTextResult = dependencyTextRegex.exec(buildGradleContents)) !== null) {
+		if (!module.bomDependencies) {
+			module.bomDependencies = [];
+		}
+
+		var dependencyText = dependencyTextResult[1];
+
+		while (mavenBomResult = mavenBomRegex.exec(dependencyText)) {
+			var dependency = {
+				type: 'library',
+				group: mavenBomResult[1],
+				name: mavenBomResult[2],
+				version: mavenBomResult[3],
+				testScope: false,
+				overriddenByDependencies: dependencyText.indexOf('overriddenByDependencies = false') == -1
+			};
+
+			module.bomDependencies.push(dependency);
+		}
+	}
 };
 
 function getGradleRepositoriesBlock(currentValue, repository) {

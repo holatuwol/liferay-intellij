@@ -513,6 +513,14 @@ function setDependencyVariables(variables, library, index, node) {
 
 	if (version) {
 		variables[versionVariableName] = version;
+
+		var dependencyLibrary = initializeLibrary(groupId, artifactId, version);
+
+		for (key in dependencyLibrary.variables) {
+			if (key.indexOf(':') != -1) {
+				variables[key] = dependencyLibrary.variables[key];
+			}
+		}
 	}
 
 	return [groupId, artifactId, version];
@@ -551,5 +559,6 @@ exports.getUserHome = getUserHome;
 exports.isFirstOccurrence = isFirstOccurrence;
 exports.isSameLibraryDependency = isSameLibraryDependency;
 exports.keyExistsInObject = keyExistsInObject;
+exports.libraryCache = libraryCache;
 exports.mavenCaches = mavenCaches;
 exports.setLibraryName = setLibraryName;

@@ -61,6 +61,7 @@ Change Log
 
 This is a change log for when I started keeping track of the changes that were made.
 
+* **2018-01-11**: Process BOM dependencies so if invalid versions are specified in build.gradle, we use the ones from the BOM
 * **2018-01-05**: Update test output folders to allow running unit tests from inside of IntelliJ
 * **2017-12-28**: Restore Node.js 0.12.x compatibility in case you build `alloy-ui <https://github.com/liferay/alloy-ui>`__ from source and forget to switch back to a newer version of Node.js
 * **2017-10-02**: Handle newly introduced portal-pre module folders
