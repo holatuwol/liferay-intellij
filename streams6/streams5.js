@@ -359,7 +359,7 @@ function getPluginProjectFolders(folder) {
 	var pluginSDKRoot = getPluginSDKRoot(folder);
 	var getPluginRootFolder = highland.partial(getPluginFolder, pluginSDKRoot);
 
-	var sharedDependencies = getSharedDependencies(folder);
+	var sharedDependencies = getSharedDependencies(folder, pluginSDKRoot);
 	var sharedDependenciesFolders = sharedDependencies.map(getPluginRootFolder);
 	var pluginFolders = [folder].concat(sharedDependenciesFolders);
 
@@ -389,8 +389,12 @@ function getPluginSDKRoot(folder) {
 	return pluginSDKRoots[0];
 };
 
-function getSharedDependencies(folder) {
-	var dependencyNames = ['portal-compat-shared'];
+function getSharedDependencies(folder, pluginSDKRoot) {
+	var dependencyNames = [];
+
+	if (pluginSDKRoot) {
+		dependencyNames.push('portal-compat-shared');
+	}
 
 	var buildXmlPath = getFilePath(folder, 'build.xml');
 	var buildXmlContents = fs.readFileSync(buildXmlPath);
