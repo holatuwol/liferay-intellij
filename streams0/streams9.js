@@ -166,7 +166,8 @@ function checkExportDependencies(module) {
 
 	var isThirdPartyModule = (module.modulePath.indexOf('sdk') != -1) ||
 		((module.modulePath.indexOf('core') != -1) && (module.moduleName.indexOf('osgi') != -1)) ||
-		(module.modulePath.indexOf('third-party') != -1);
+		(module.modulePath.indexOf('third-party') != -1) ||
+		((module.sourceFolders.length == 0) && (module.testSourceFolders.length == 0));
 
 	var checkExportDependency = function(dependency) {
 		if (isTestModule || isThirdPartyModule) {

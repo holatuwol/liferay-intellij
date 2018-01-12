@@ -117,10 +117,6 @@ Checkpoint 1
 			return false;
 		}
 
-		if (!isDirectory(getFilePath(folder, 'docroot')) && !isDirectory(getFilePath(folder, 'src'))) {
-			return false;
-		}
-
 		return true;
 	};
 
@@ -143,7 +139,6 @@ Update our ``isModuleFolder`` function to use ``map`` in order to convert the na
 
 		var requiredFiles = ['build.gradle'];
 		var descriptors = ['bnd.bnd', 'package.json'];
-		var sourceRoots = ['docroot', 'src'];
 
 		// Determine whether it is potentially a module folder
 		var isPotentialModuleFolder = ...;
