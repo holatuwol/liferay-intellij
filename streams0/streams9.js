@@ -530,6 +530,11 @@ function getProjectRepositories() {
 			var propertiesContent = child_process.execSync('git show ' + passwordBranch + ':working.dir.properties');
 
 			var repositoryMetadata = getRepositoryMetadata(propertiesContent);
+			var repositoryPath = repositoryMetadata['url'];
+
+			if (repositoryPath.indexOf('https://') == 0) {
+				repositoryPath = repositoryPath.substring(8);
+			}
 
 			tempProjectRepositories.push({
 				id: 'liferay-private',
@@ -537,7 +542,7 @@ function getProjectRepositories() {
 				scheme: 'https',
 				username: repositoryMetadata['username'],
 				password: repositoryMetadata['password'],
-				path: repositoryMetadata['url'],
+				path: repositoryPath,
 				layout: 'default'
 			});
 		}
