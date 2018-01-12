@@ -257,8 +257,9 @@ function executeGradleFile(entries) {
 	var executable = path.join(process.cwd(), 'gradlew');
 
 	var args = ['completeGradleCache'];
+
 	var options = {
-		'cwd': '"' + buildGradleFolder + '"',
+		'cwd': buildGradleFolder,
 		'stdio': [0,1,2]
 	};
 
