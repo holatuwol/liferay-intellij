@@ -111,6 +111,8 @@ function createProjectWorkspace(coreDetails, moduleDetails, pluginDetails) {
 
 	console.log('Generating IntelliJ workspace');
 
+	moduleDetails.forEach(getFileTreeDependencies);
+
 	var moduleStream = highland(moduleDetails);
 	var coreStream = highland(coreDetails);
 	var pluginStream = highland(pluginDetails);
@@ -388,6 +390,59 @@ function gatherMavenBomDependencies(module) {
 			};
 
 			module.bomDependencies.push(dependency);
+		}
+	}
+};
+
+function getFileTreeDependencies(module) {
+	var buildGradleContents = module.buildGradleContents;
+
+	if (!buildGradleContents) {
+		return;
+	}
+
+	var dependencyTextRegex = /dependencies \{([\s\S]*?)\n\s*\}/g;
+	var dependencyTextResult = null;
+
+	while ((dependencyTextResult = dependencyTextRegex.exec(buildGradleContents)) !== null) {
+		var dependencyText = dependencyTextResult[1];
+
+		var y = 0;
+
+		for (var x = 0; x < dependencyText.length; x += 8) {
+			x = dependencyText.indexOf('fileTree(dir: "', x) + 15;
+
+			if (x < 15) {
+				break;
+			}
+
+			y = dependencyText.indexOf('"', x);
+
+			var moduleLibFolder = dependencyText.substring(x, y);
+
+			if (moduleLibFolder.indexOf('..') != -1) {
+				continue;
+			}
+
+			var moduleLibPath = getFilePath(module.modulePath, moduleLibFolder);
+
+			if (!isDirectory(moduleLibPath)) {
+				continue;
+			}
+
+			var jarPaths = fs.readdirSync(moduleLibPath)
+				.filter(function(x) { return x.endsWith('.jar') && !x.endsWith('-sources.jar') })
+				.map(getFilePath(moduleLibPath));
+
+			var dependency = {
+				group: 'com.liferay',
+				name: module.moduleName,
+				version: moduleLibFolder,
+				testScope: false,
+				jarPaths: jarPaths
+			};
+
+			module.libraryDependencies.push(dependency);
 		}
 	}
 };
