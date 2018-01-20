@@ -100,6 +100,8 @@ function getModuleDependencies(folder, moduleDependencies) {
 
 	var buildGradleContents = fs.readFileSync(buildGradlePath).toString();
 
+	moduleDependencies.buildGradleContents = buildGradleContents;
+
 	var dependencyTextRegex = /dependencies \{([\s\S]*?)\n\s*\}/g;
 	var dependencyTextResult = null;
 

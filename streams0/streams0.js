@@ -361,15 +361,11 @@ function flatten(accumulator, next) {
 };
 
 function gatherMavenBomDependencies(module) {
-	var folder = module.modulePath;
+	var buildGradleContents = module.buildGradleContents;
 
-	var buildGradlePath = path.join(folder, 'build.gradle');
-
-	if (!isFile(buildGradlePath)) {
+	if (!buildGradleContents) {
 		return;
 	}
-
-	var buildGradleContents = fs.readFileSync(buildGradlePath);
 
 	var dependencyTextRegex = /dependencyManagement \{([\s\S]*?)\n\}/g;
 	var mavenBomRegex = /mavenBom\s*['"]([^:]*):([^:]*):([^'"]*)['"]/g;
