@@ -99,6 +99,7 @@ In our case, though, we will want to keep tracking of multiple matches within th
 
 	var libraryDependencyRegex1 = /(?:test|compile|provided)[^\n]*\sgroup *: *['"]([^'"]*)['"], name *: *['"]([^'"]*)['"], [^\n]*version *: *['"]([^'"]*)['"]/;
 	var libraryDependencyRegex2 = /(?:test|compile|provided)[^\n]*\s['"]([^'"]*):([^'"]*):([^'"]*)['"]/;
+	var libraryDependencyRegex3 = /(?:test|compile|provided)[^\n]*\sgroup *: *['"]([^'"]*)['"],[\s*]name *: *['"]([^'"]*)['"], [^\n]*version *: ([^'"]+)/;
 
 Now that we have a regular expression, we know that we can create an object representing a match from any match result provided it has three items and they are always in ``group``, ``name``, and ``version`` order. This allows us to create the following extraction function.
 
@@ -114,6 +115,35 @@ Now that we have a regular expression, we know that we can create an object repr
 			group: matchResult[1],
 			name: matchResult[2],
 			version: matchResult[3],
+			testScope: matchResult[0].indexOf('test') == 0
+		};
+
+		return dependency;
+	};
+
+	function getLibraryVariableDependency(buildGradleContents, matchResult) {
+		if (matchResult == null) {
+			return null;
+		}
+
+		var variableName = matchResult[3];
+		var variableDeclaration = 'String ' + variableName + ' = "';
+
+		var x = buildGradleContents.indexOf(variableDeclaration) + variableDeclaration.length;
+
+		if (x < variableDeclaration.length) {
+			return null;
+		}
+
+		var y = buildGradleContents.indexOf('"', x);
+
+		var variableValue = buildGradleContents.substring(x, y);
+
+		var dependency = {
+			type: 'library',
+			group: matchResult[1],
+			name: matchResult[2],
+			version: variableValue,
 			testScope: matchResult[0].indexOf('test') == 0
 		};
 
@@ -158,6 +188,7 @@ Update our ``getModuleDependencies`` function so that it uses this function in o
 
 	var libraryDependencyRegex1 = /(?:test|compile|provided)[^\n]*\sgroup: ['"]([^'"]*)['"], name: ['"]([^'"]*)['"], [^\n]*version: ['"]([^'"]*)['"]/;
 	var libraryDependencyRegex2 = /(?:test|compile|provided)[^\n]*\s['"]([^'"]*):([^'"]*):([^'"]*)['"]/;
+	var libraryDependencyRegex3 = /(?:test|compile|provided)[^\n]*\sgroup *: *['"]([^'"]*)['"],[\s*]name *: *['"]([^'"]*)['"], [^\n]*version *: ([^'"]+)/;
 
 	while ((dependencyTextResult = dependencyTextRegex.exec(buildGradleContents)) !== null) {
 		var dependencyText = dependencyTextResult[1];
@@ -169,6 +200,10 @@ Update our ``getModuleDependencies`` function so that it uses this function in o
 		Array.prototype.push.apply(
 			moduleDependencies.libraryDependencies,
 			getDependenciesWithWhileLoop(dependencyText, getLibraryDependency, libraryDependencyRegex2));
+
+		Array.prototype.push.apply(
+			moduleDependencies.libraryDependencies,
+			getDependenciesWithWhileLoop(dependencyText, getLibraryVariableDependency.bind(null, buildGradleContents), libraryDependencyRegex3));
 	}
 
 	return moduleDependencies;
@@ -214,6 +249,7 @@ We can then call it from ``getModuleDependencies`` and have the appropriate retu
 
 	Array.prototype.push.apply(moduleDependencies.libraryDependencies, getLibraryDependencies(libraryDependencyRegex1));
 	Array.prototype.push.apply(moduleDependencies.libraryDependencies, getLibraryDependencies(libraryDependencyRegex2));
+	Array.prototype.push.apply(moduleDependencies.libraryDependencies, getLibraryVariableDependencies(libraryDependencyRegex3));
 
 Partial Function Application 2
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

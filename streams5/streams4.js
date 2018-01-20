@@ -52,6 +52,35 @@ function getLibraryDependency(matchResult) {
 	return dependency;
 };
 
+function getLibraryVariableDependency(buildGradleContents, matchResult) {
+	if (matchResult == null) {
+		return null;
+	}
+
+	var variableName = matchResult[3];
+	var variableDeclaration = 'String ' + variableName + ' = "';
+
+	var x = buildGradleContents.indexOf(variableDeclaration) + variableDeclaration.length;
+
+	if (x < variableDeclaration.length) {
+		return null;
+	}
+
+	var y = buildGradleContents.indexOf('"', x);
+
+	var variableValue = buildGradleContents.substring(x, y);
+
+	var dependency = {
+		type: 'library',
+		group: matchResult[1],
+		name: matchResult[2],
+		version: variableValue,
+		testScope: matchResult[0].indexOf('test') == 0
+	};
+
+	return dependency;
+};
+
 function getModuleDependencies(folder, moduleDependencies) {
 	moduleDependencies = moduleDependencies || {};
 
@@ -69,23 +98,26 @@ function getModuleDependencies(folder, moduleDependencies) {
 		moduleDependencies.projectDependencies = [];
 	}
 
-	var buildGradleContents = fs.readFileSync(buildGradlePath);
+	var buildGradleContents = fs.readFileSync(buildGradlePath).toString();
 
 	var dependencyTextRegex = /dependencies \{([\s\S]*?)\n\s*\}/g;
 	var dependencyTextResult = null;
 
 	var libraryDependencyRegex1 = /(?:test|compile|provided)[^\n]*\sgroup *: *['"]([^'"]*)['"],[\s*]name *: *['"]([^'"]*)['"], [^\n]*version *: *['"]([^'"]*)['"]/;
 	var libraryDependencyRegex2 = /(?:test|compile|provided)[^\n]*\s['"]([^'"]*):([^'"]*):([^'"]*)['"]/;
+	var libraryDependencyRegex3 = /(?:test|compile|provided)[^\n]*\sgroup *: *['"]([^'"]*)['"],[\s*]name *: *['"]([^'"]*)['"], [^\n]*version *: ([^'"]+)/;
 	var projectDependencyRegex = /(?:test|compile|provided)[^\n]*\sproject\(['"]:(?:[^'"]*:)?([^'"]*)['"]/;
 
 	while ((dependencyTextResult = dependencyTextRegex.exec(buildGradleContents)) !== null) {
 		var dependencyText = dependencyTextResult[1];
 
 		var getLibraryDependencies = highland.partial(getDependenciesWithStreams, dependencyText, getLibraryDependency);
+		var getLibraryVariableDependencies = highland.partial(getDependenciesWithStreams, dependencyText, highland.partial(getLibraryVariableDependency, buildGradleContents));
 		var getProjectDependencies = highland.partial(getDependenciesWithStreams, dependencyText, getProjectDependency);
 
 		Array.prototype.push.apply(moduleDependencies.libraryDependencies, getLibraryDependencies(libraryDependencyRegex1));
 		Array.prototype.push.apply(moduleDependencies.libraryDependencies, getLibraryDependencies(libraryDependencyRegex2));
+		Array.prototype.push.apply(moduleDependencies.libraryDependencies, getLibraryVariableDependencies(libraryDependencyRegex3));
 
 		Array.prototype.push.apply(moduleDependencies.projectDependencies, getProjectDependencies(projectDependencyRegex));
 	}
