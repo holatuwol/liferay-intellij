@@ -498,7 +498,7 @@ function getFileTreeDependencies(module) {
 			}
 
 			var jarPaths = fs.readdirSync(moduleLibPath)
-				.filter(function(x) { return x.endsWith('.jar') && !x.endsWith('-sources.jar') })
+				.filter(function(x) { return x.indexOf('.jar') != -1 && x.indexOf('-sources.jar') == -1 })
 				.map(getFilePath(moduleLibPath));
 
 			var dependency = {
