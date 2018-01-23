@@ -16,7 +16,6 @@ var checkForGradleCache = streams8.checkForGradleCache;
 var checkForMavenCache = streams8.checkForMavenCache;
 var execFileSync = child_process.execFileSync;
 var fixLibraryDependencies = streams9.fixLibraryDependencies;
-var fixProjectDependencies = streams9.fixProjectDependencies;
 var getAncestorFiles = streams7.getAncestorFiles;
 var getFilePath = streams5.getFilePath;
 var getIntellijXML = streams6.getIntellijXML;
@@ -348,6 +347,42 @@ function fixMavenBomDependencies(module) {
 			}
 		}
 	}
+};
+
+function fixProjectDependencies(moduleVersions, addAsLibrary, module) {
+	var module = streams9.fixProjectDependencies(moduleVersions, addAsLibrary, module);
+
+	var bndPath = getFilePath(module.modulePath, 'bnd.bnd');
+
+	if (!isFile(bndPath)) {
+		return module;
+	}
+
+	module.bndContent = fs.readFileSync(bndPath).toString();
+
+	var fragmentHostRegex = /Fragment-Host: ([^\r\n;]+)/g;
+	matchResult = fragmentHostRegex.exec(module.bndContent);
+
+	if (!matchResult) {
+		return module;
+	}
+
+	var dependencyName = matchResult[1];
+	var moduleVersion = moduleVersions[dependencyName];
+
+	if (!moduleVersion) {
+		return module;
+	}
+
+	var projectDependency = {
+		type: 'project',
+		name: moduleVersion.projectName,
+		testScope: false
+	};
+
+	module.projectDependencies.push(projectDependency);
+
+	return module;
 };
 
 function flatten(accumulator, next) {
