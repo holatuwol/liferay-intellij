@@ -667,6 +667,27 @@ function isTagLibraryFile(fileName) {
 	return fileName.indexOf('.tld') == fileName.length - 4;
 };
 
+function setWebContextPath(module) {
+	if (isDirectory(getFilePath(module.modulePath, 'docroot'))) {
+		module.webContextPath = '/' + module.moduleName;
+		return module;
+	}
+
+	if (!module.bndContent) {
+		return module;
+	}
+
+	var webContextPathRegex = /Web-ContextPath: ([^\r\n]+)/g;
+	matchResult = webContextPathRegex.exec(module.bndContent);
+
+	if (!matchResult) {
+		return module;
+	}
+
+	module.webContextPath = '/o' + matchResult[1];
+	return module;
+};
+
 exports.createProjectObjectModels = createProjectObjectModels;
 exports.createProjectWorkspace = createProjectWorkspace;
 exports.flatten = flatten;
