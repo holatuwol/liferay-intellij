@@ -1,3 +1,4 @@
+var cheerio = require('cheerio');
 var child_process = require('child_process');
 var comparators = require('comparators').default;
 var fs = require('fs');
@@ -72,6 +73,8 @@ function createProjectObjectModels(coreDetails, moduleDetails) {
 };
 
 function createProjectWorkspace(coreDetails, moduleDetails, pluginDetails) {
+	checkBreakpoints(moduleDetails);
+
 	if (pluginDetails) {
 		pluginDetails.forEach(sortModuleAttributes);
 	}
@@ -129,7 +132,7 @@ function createProjectWorkspace(coreDetails, moduleDetails, pluginDetails) {
 		.each(saveContent);
 
 	projectFileStream
-		.sortBy(comparators.comparing('moduleName'))
+		.sortBy(comparators.comparing('breakpointSort').thenComparing('moduleName'))
 		.map(getModuleElement)
 		.collect()
 		.map(getModulesElement)
@@ -195,6 +198,31 @@ function addGitVersionControlSystem() {
 		name: '.idea/vcs.xml',
 		content: vcsXML.join('\n')
 	});
+};
+
+function checkBreakpoints(moduleDetails) {
+	for (var j = 0; j < moduleDetails.length; j++) {
+		moduleDetails[j].breakpointSort = 2;
+	}
+
+	if (!isFile('.idea/workspace.xml')) {
+		return;
+	}
+
+	var workspaceXML = fs.readFileSync('.idea/workspace.xml');
+
+	var workspace = cheerio.load(workspaceXML);
+	var breakpoints = workspace('breakpoint-manager breakpoints url');
+
+	for (var i = 0; i < breakpoints.length; i++) {
+		var breakpointURL = workspace(breakpoints[i]).text().trim().substring('file://$PROJECT_DIR$/'.length);
+
+		for (var j = 0; j < moduleDetails.length; j++) {
+			if (breakpointURL.indexOf(moduleDetails[j].modulePath) == 0) {
+				moduleDetails[j].breakpointSort = 1;
+			}
+		}
+	}
 };
 
 function checkForGitRoot(module) {
