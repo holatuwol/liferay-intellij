@@ -394,6 +394,10 @@ function gatherMavenBomDependencies(module) {
 	}
 };
 
+function getFilePaths(folder) {
+	return fs.readdirSync(folder).map(getFilePath(folder));
+};
+
 function getFileTreeDependencies(module) {
 	var buildGradleContents = module.buildGradleContents;
 
@@ -447,6 +451,17 @@ function getFileTreeDependencies(module) {
 	}
 };
 
+function getGradleEntry(library) {
+	return '\tcompile group: "' + library['group'] + '", name: "' + library['name'] + '", version: "' + library['version'] + '"';
+};
+
+function getGradleFile(entries) {
+	return {
+		name: path.join(process.cwd(), 'tmp/ijbuild/build.gradle'),
+		content: buildGradleContent.join('\n')
+	};
+};
+
 function getGradleRepositoriesBlock(currentValue, repository) {
 	if (currentValue.length == 0) {
 		currentValue = [
@@ -475,21 +490,6 @@ function getGradleRepositoriesBlock(currentValue, repository) {
 	currentValue.push('}');
 
 	return currentValue;
-};
-
-function getFilePaths(folder) {
-	return fs.readdirSync(folder).map(getFilePath(folder));
-};
-
-function getGradleEntry(library) {
-	return '\tcompile group: "' + library['group'] + '", name: "' + library['name'] + '", version: "' + library['version'] + '"';
-};
-
-function getGradleFile(entries) {
-	return {
-		name: path.join(process.cwd(), 'tmp/ijbuild/build.gradle'),
-		content: buildGradleContent.join('\n')
-	};
 };
 
 function getLibraryModule(libraryName) {
