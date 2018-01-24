@@ -267,7 +267,7 @@ function completeGradleCache(coreDetails, moduleDetails, pluginDetails) {
 		.filter(keyExistsInObject('group'))
 		.doto(setLibraryName)
 		.filter(highland.compose(highland.not, hasLibraryPath))
-		.filter(highland.compose(highland.not, isLiferayModule))
+		.filter(needsGradleCache)
 		.map(getGradleEntry)
 		.collect()
 		.each(highland.partial(executeGradleFile, 'Missing dependencies have been downloaded'));
@@ -686,12 +686,24 @@ function hasLibraryPath(library) {
 	return libraryPaths.length != 0;
 };
 
-function isLiferayModule(library) {
-	return library.group != null && library.group.indexOf('com.liferay') == 0 && library.name.indexOf('com.liferay') == 0;
-};
-
 function isTagLibraryFile(fileName) {
 	return fileName.indexOf('.tld') == fileName.length - 4;
+};
+
+function needsGradleCache(library) {
+	if (!library.group) {
+		return false;
+	}
+
+	if (library.group.indexOf('com.liferay') == 0) {
+		return library.hasInitJsp;
+	}
+
+	if (library.name.indexOf('com.liferay') == 0) {
+		return false;
+	}
+
+	return true;
 };
 
 function setWebContextPath(module) {
