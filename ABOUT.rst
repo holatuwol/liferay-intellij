@@ -61,6 +61,7 @@ Change Log
 
 This is a change log for when I started keeping track of the changes that were made.
 
+* **2018-01-23**: Treat non-core project dependencies as transitive dependencies because a few modules (like portal-search) use them that way
 * **2018-01-22**: If you set breakpoints, move the module higher in the module list to work around IntelliJ not knowing the web context path
 * **2018-01-19**: Recognize Gradle string variables used as version dependencies
 * **2018-01-11**: Process BOM dependencies so if invalid versions are specified in build.gradle, we use the ones from the BOM

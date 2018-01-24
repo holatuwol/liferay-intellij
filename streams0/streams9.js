@@ -74,7 +74,7 @@ function createProjectWorkspace(coreDetails, moduleDetails, pluginDetails) {
 
 	moduleDetails.forEach(highland.partial(fixLibraryDependencies, moduleVersions));
 	moduleDetails.forEach(highland.partial(fixProjectDependencies, moduleVersions, true));
-	moduleDetails.forEach(checkExportDependencies);
+	moduleDetails.forEach(highland.partial(checkExportDependencies, moduleVersions));
 
 	coreDetails.forEach(sortModuleAttributes);
 	moduleDetails.forEach(sortModuleAttributes);
@@ -133,7 +133,7 @@ function createProjectWorkspace(coreDetails, moduleDetails, pluginDetails) {
 	detailsStream.done(function() {});
 };
 
-function checkExportDependencies(module) {
+function checkExportDependencies(moduleVersions, module) {
 	var isTestModule = (module.moduleName.indexOf('test') != -1);
 
 	if (isTestModule) {
@@ -170,7 +170,7 @@ function checkExportDependencies(module) {
 		((module.sourceFolders.length == 0) && (module.testSourceFolders.length == 0));
 
 	var checkExportDependency = function(dependency) {
-		if (isTestModule || isThirdPartyModule) {
+		if (isTestModule || isThirdPartyModule || (getDependencyGroup(moduleVersions, dependency) == 'com.liferay')) {
 			dependency.exported = true;
 		}
 	};
@@ -280,6 +280,20 @@ function getCoreLibraryOrderEntryElements(module) {
 		.filter(highland.compose(highland.not, keyExistsInObject('group')))
 		.map(setLibraryName)
 		.map(highland.partial(getLibraryOrderEntryElement, module));
+};
+
+function getDependencyGroup(moduleVersions, dependency) {
+	if (dependency.type == 'library') {
+		return dependency.group;
+	}
+
+	var moduleVersion = moduleVersions[dependency.name];
+
+	if (moduleVersion) {
+		return moduleVersion.bundleGroup || moduleVersion.projectGroup;
+	}
+
+	return null;
 };
 
 function getJarLibraryTableXML(library) {
@@ -635,8 +649,17 @@ function setCoreBundleVersions(accumulator, module) {
 	var bundleVersion = matchResult[1];
 
 	accumulator[bundleName] = {
+		projectGroup: 'com.liferay.portal',
 		projectName: module.moduleName,
-		version: bundleVersion
+		version: bundleVersion,
+		hasInitJsp: (module.moduleName == 'portal-web')
+	};
+
+	accumulator[module.moduleName] = {
+		bundleGroup: 'com.liferay.portal',
+		bundleName: bundleName,
+		version: bundleVersion,
+		hasInitJsp: (module.moduleName == 'portal-web')
 	};
 
 	return accumulator;
@@ -651,12 +674,14 @@ function setModuleBundleVersions(accumulator, module) {
 	module.hasInitJsp = hasInitJsp;
 
 	accumulator[module.bundleSymbolicName] = {
+		projectGroup: 'com.liferay',
 		projectName: module.moduleName,
 		version: module.bundleVersion,
 		hasInitJsp: hasInitJsp
 	};
 
 	accumulator[module.moduleName] = {
+		bundleGroup: 'com.liferay',
 		bundleName: module.bundleSymbolicName,
 		version: module.bundleVersion,
 		hasInitJsp: hasInitJsp
