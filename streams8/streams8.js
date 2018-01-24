@@ -104,7 +104,7 @@ function getLibraryJarPaths(library) {
 	var jarPaths = library['jarPaths'];
 
 	if (jarPaths != null) {
-		return jarPaths;
+		return getLibraryJarList(jarPaths);
 	}
 
 	var folderPath = library['folderPath'];
@@ -121,28 +121,26 @@ function getLibraryJarPaths(library) {
 
 	var jarName = library.name + '-' + library.version + '.jar';
 
-	var jarPaths = fs.readdirSync(folderPath)
+	var jarList = fs.readdirSync(folderPath)
 		.map(getFilePath(folderPath))
 		.map(highland.flip(getFilePath, jarName))
 		.filter(isFile);
 
-	if (jarPaths.length == 0) {
-		jarPaths = [getFilePath(folderPath, jarName)].filter(isFile);
+	if (jarList.length == 0) {
+		jarList = [getFilePath(folderPath, jarName)].filter(isFile);
 	}
+
+	var jarPaths = {};
+	jarPaths[library.group] = {};
+	jarPaths[library.group][library.name] = {};
+	jarPaths[library.group][library.name]['version'] = library.version;
+	jarPaths[library.group][library.name]['jarList'] = jarList;
 
 	library['jarPaths'] = jarPaths;
 
 	processPomDependencies(library);
 
-	return library['jarPaths'];
-};
-
-function isJar(path) {
-	return isFile(path) && path.endsWith('.jar');
-};
-
-function sum(accumulator, next) {
-	return accumulator + next;
+	return getLibraryJarList(library['jarPaths']);
 };
 
 function getModuleXML(module) {
@@ -169,6 +167,234 @@ function getNewModuleRootManagerXML(module) {
 	}
 
 	return newModuleRootManagerXML.join('\n');
+};
+
+function isJar(path) {
+	return isFile(path) && path.endsWith('.jar');
+};
+
+function processPomDependencies(library) {
+	var folderPath = library['folderPath'];
+
+	if (folderPath == null) {
+		folderPath = getLibraryFolderPath(library);
+
+		library['folderPath'] = folderPath;
+	}
+
+	if (folderPath == null) {
+		return;
+	}
+
+	// First, read the pom.xml
+
+	var pomName = library.name + '-' + library.version + '.pom';
+	var pomPaths = [];
+
+	var pomPaths = fs.readdirSync(folderPath)
+		.map(getFilePath(folderPath))
+		.map(highland.flip(getFilePath, pomName))
+		.filter(isFile);
+
+	if (pomPaths.length == 0) {
+		pomPaths = [getFilePath(folderPath, pomName)].filter(isFile);
+	}
+
+	if (pomPaths.length == 0) {
+		return;
+	}
+
+	var pomAbsolutePath = pomPaths[0];
+
+	var pomText = fs.readFileSync(pomAbsolutePath);
+	var pom = cheerio.load(pomText);
+
+	// If we've relocated, parse that one instead
+
+	var relocated = pom('distributionManagement > relocation');
+
+	if (relocated.length > 0) {
+		var newGroupId = relocated.children('groupId').text();
+
+		var newLibrary = initializeLibrary(newGroupId, library.name, library.version);
+
+		for (key in newLibrary) {
+			library[key] = newLibrary[key];
+		}
+
+		return;
+	}
+
+	// Otherwise, parse all the variables if we haven't already
+
+	var variables = library['variables'];
+
+	if (variables == null) {
+		variables = {};
+
+		library['variables'] = variables;
+
+		// If there is a parent pom.xml, parse it first
+
+		var parent = pom('project > parent');
+
+		if (parent.length > 0) {
+			var parentGroupId = parent.children('groupId').text();
+			var parentArtifactId = parent.children('artifactId').text();
+			var parentVersion = parent.children('version').text();
+
+			var parentLibrary = initializeLibrary(parentGroupId, parentArtifactId, parentVersion);
+			var parentVariables = parentLibrary['variables'];
+
+			for (variableName in parentVariables) {
+				variables[variableName] = parentVariables[variableName];
+			}
+
+			variables['project.parent.groupId'] = parentLibrary.group;
+			variables['project.parent.artifactId'] = parentLibrary.name;
+			variables['project.parent.version'] = parentLibrary.version;
+		}
+		else {
+			variables['project.parent.groupId'] = library.group;
+			variables['project.parent.name'] = library.name;
+			variables['project.parent.version'] = library.version;
+		}
+
+		// Now process our own variables
+
+		pom('properties').children()
+			.each(highland.partial(setPropertiesAsVariables, variables, library));
+	}
+
+	// Next, parse all the dependencies
+
+	if (library['jarPaths'] == null) {
+		library['jarPaths'] = {};
+	}
+
+	variables['project.groupId'] = library.group;
+	variables['project.name'] = library.name;
+	variables['project.version'] = library.version;
+
+	pom('project > dependencies').children()
+		.each(highland.partial(setDependenciesAsJars, variables, library));
+
+	pom('project > dependencyManagement > dependencies').children()
+		.each(highland.partial(setDependencyVariables, variables, library));
+};
+
+function replaceVariables(variables, attributeValue) {
+	if (attributeValue == null) {
+		return attributeValue;
+	}
+
+	var x = attributeValue.indexOf('${');
+
+	while (x != -1) {
+		y = attributeValue.indexOf('}', x + 2);
+
+		var variableName = attributeValue.substring(x + 2, y);
+
+		var variableValue = variables[variableName];
+
+		if (variableValue == null) {
+			variableValue = variables[variableName.toLowerCase()];
+		}
+
+		if (variableValue == null) {
+			variableValue = '';
+		}
+
+		attributeValue = attributeValue.substring(0, x) + variableValue + attributeValue.substring(y + 1);
+
+		x = attributeValue.indexOf('${');
+	}
+
+	return attributeValue;
+};
+
+function setDependenciesAsJars(variables, library, index, node) {
+	var artifactInfo = setDependencyVariables(variables, library, index, node);
+
+	var groupId = artifactInfo[0];
+	var artifactId = artifactInfo[1];
+	var version = artifactInfo[2];
+
+	if (groupId.indexOf('com.liferay') == 0) {
+		return;
+	}
+
+	var dependencyLibrary = initializeLibrary(groupId, artifactId, version);
+
+	var jarPaths = library['jarPaths'];
+	var dependencyJarPaths = dependencyLibrary['jarPaths'];
+
+	for (group in dependencyJarPaths) {
+		for (name in dependencyJarPaths[group]) {
+			setDependencyJarList(jarPaths, group, name, dependencyJarPaths[group][name]);
+		}
+	}
+};
+
+function setDependencyJarList(jarPaths, group, name, dependencyInfo) {
+	if (!(keyExistsInObject(group, jarPaths))) {
+		jarPaths[group] = {};
+	}
+
+	if (!keyExistsInObject(name, jarPaths[group])) {
+		jarPaths[group][name] = {
+			version: dependencyInfo['version'],
+			jarList: dependencyInfo['jarList']
+		};
+
+		return;
+	}
+
+	var oldDependencyVersion = jarPaths[group][name]['version'];
+	var newDependencyVersion = dependencyInfo['version'];
+
+	if (oldDependencyVersion < newDependencyVersion) {
+		jarPaths[group][name] = {
+			version: dependencyInfo['version'],
+			jarList: dependencyInfo['jarList']
+		};
+
+		return;
+	}
+};
+
+function setDependencyVariables(variables, library, index, node) {
+	var dependency = cheerio(node);
+
+	var groupId = replaceVariables(variables, dependency.children('groupId').text());
+	var artifactId = replaceVariables(variables, dependency.children('artifactId').text());
+	var version = dependency.children('version').text();
+
+	var versionVariableName = [groupId, artifactId].join(':');
+
+	if (!version) {
+		version = variables[versionVariableName];
+	}
+
+	version = replaceVariables(variables, version);
+
+	if (version) {
+		variables[versionVariableName] = version;
+
+		var dependencyLibrary = initializeLibrary(groupId, artifactId, version);
+
+		for (key in dependencyLibrary.variables) {
+			if (key.indexOf(':') != -1) {
+				variables[key] = dependencyLibrary.variables[key];
+			}
+		}
+	}
+
+	return [groupId, artifactId, version];
+};
+
+function sum(accumulator, next) {
+	return accumulator + next;
 };
 
 exports.createProjectWorkspace = createProjectWorkspace;

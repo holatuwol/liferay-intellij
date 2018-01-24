@@ -144,6 +144,18 @@ function getLibraryJarCount(path) {
 	return fileList.filter(isDirectory).map(getLibraryJarCount).reduce(sum, jarCount);
 };
 
+function getLibraryJarList(jarPaths) {
+	var jarList = [];
+
+	for (group in jarPaths) {
+		for (name in jarPaths[group]) {
+			Array.prototype.push.apply(jarList, jarPaths[group][name]['jarList']);
+		}
+	}
+
+	return jarList;
+};
+
 function getLibraryJarPaths(library) {
 	if (library.group == null) {
 		return [];
@@ -152,7 +164,7 @@ function getLibraryJarPaths(library) {
 	var jarPaths = library['jarPaths'];
 
 	if (jarPaths != null) {
-		return jarPaths;
+		return getLibraryJarList(jarPaths);
 	}
 
 	var folderPath = library['folderPath'];
@@ -169,20 +181,26 @@ function getLibraryJarPaths(library) {
 
 	var jarName = library.name + '-' + library.version + '.jar';
 
-	var jarPaths = fs.readdirSync(folderPath)
+	var jarList = fs.readdirSync(folderPath)
 		.map(getFilePath(folderPath))
 		.map(highland.flip(getFilePath, jarName))
 		.filter(isFile);
 
-	if (jarPaths.length == 0) {
-		jarPaths = [getFilePath(folderPath, jarName)].filter(isFile);
+	if (jarList.length == 0) {
+		jarList = [getFilePath(folderPath, jarName)].filter(isFile);
 	}
+
+	var jarPaths = {};
+	jarPaths[library.group] = {};
+	jarPaths[library.group][library.name] = {};
+	jarPaths[library.group][library.name]['version'] = library.version;
+	jarPaths[library.group][library.name]['jarList'] = jarList;
 
 	library['jarPaths'] = jarPaths;
 
 	processPomDependencies(library);
 
-	return library['jarPaths'];
+	return getLibraryJarList(library['jarPaths']);
 };
 
 function getLibraryOrderEntryElement(module, dependency) {
@@ -294,14 +312,6 @@ function getNewModuleRootManagerXML(module) {
 
 function getUserHome() {
 	return os.homedir ? os.homedir() : process.env[(process.platform === 'win32') ? 'USERPROFILE' : 'HOME'];
-}
-
-function isJar(path) {
-	return isFile(path) && path.endsWith('.jar');
-};
-
-function sum(accumulator, next) {
-	return accumulator + next;
 };
 
 function initializeLibrary(groupId, artifactId, version) {
@@ -322,10 +332,14 @@ function initializeLibrary(groupId, artifactId, version) {
 	getLibraryJarPaths(newLibrary);
 
 	return newLibrary;
-}
+};
 
 function isFirstOccurrence(value, index, array) {
 	return array.indexOf(value) == index;
+};
+
+function isJar(path) {
+	return isFile(path) && path.endsWith('.jar');
 };
 
 function isSameLibraryDependency(left, right) {
@@ -434,7 +448,7 @@ function processPomDependencies(library) {
 	// Next, parse all the dependencies
 
 	if (library['jarPaths'] == null) {
-		library['jarPaths'] = [];
+		library['jarPaths'] = {};
 	}
 
 	variables['project.groupId'] = library.group;
@@ -446,8 +460,6 @@ function processPomDependencies(library) {
 
 	pom('project > dependencyManagement > dependencies').children()
 		.each(highland.partial(setDependencyVariables, variables, library));
-
-	return library['jarPaths'];
 };
 
 function replaceVariables(variables, attributeValue) {
@@ -493,7 +505,41 @@ function setDependenciesAsJars(variables, library, index, node) {
 
 	var dependencyLibrary = initializeLibrary(groupId, artifactId, version);
 
-	Array.prototype.push.apply(library['jarPaths'], dependencyLibrary['jarPaths']);
+	var jarPaths = library['jarPaths'];
+	var dependencyJarPaths = dependencyLibrary['jarPaths'];
+
+	for (group in dependencyJarPaths) {
+		for (name in dependencyJarPaths[group]) {
+			setDependencyJarList(jarPaths, group, name, dependencyJarPaths[group][name]);
+		}
+	}
+};
+
+function setDependencyJarList(jarPaths, group, name, dependencyInfo) {
+	if (!(keyExistsInObject(group, jarPaths))) {
+		jarPaths[group] = {};
+	}
+
+	if (!keyExistsInObject(name, jarPaths[group])) {
+		jarPaths[group][name] = {
+			version: dependencyInfo['version'],
+			jarList: dependencyInfo['jarList']
+		};
+
+		return;
+	}
+
+	var oldDependencyVersion = jarPaths[group][name]['version'];
+	var newDependencyVersion = dependencyInfo['version'];
+
+	if (oldDependencyVersion < newDependencyVersion) {
+		jarPaths[group][name] = {
+			version: dependencyInfo['version'],
+			jarList: dependencyInfo['jarList']
+		};
+
+		return;
+	}
 };
 
 function setDependencyVariables(variables, library, index, node) {
@@ -543,6 +589,10 @@ function setPropertiesAsVariables(variables, library, index, node) {
 	var variableName = node.tagName;
 
 	variables[variableName] = cheerio(node).text();
+};
+
+function sum(accumulator, next) {
+	return accumulator + next;
 };
 
 exports.checkForGradleCache = checkForGradleCache;
