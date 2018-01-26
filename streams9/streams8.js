@@ -386,7 +386,7 @@ function processPomDependencies(library) {
 	var pomAbsolutePath = pomPaths[0];
 
 	var pomText = fs.readFileSync(pomAbsolutePath);
-	var pom = cheerio.load(pomText);
+	var pom = cheerio.load(pomText, {xmlMode: true});
 
 	// If we've relocated, parse that one instead
 
@@ -429,20 +429,27 @@ function processPomDependencies(library) {
 				variables[variableName] = parentVariables[variableName];
 			}
 
+			variables['project.parent.group'] = parentLibrary.group;
 			variables['project.parent.groupId'] = parentLibrary.group;
+			variables['project.parent.name'] = parentLibrary.name;
+			variables['project.parent.artifact'] = parentLibrary.name;
 			variables['project.parent.artifactId'] = parentLibrary.name;
 			variables['project.parent.version'] = parentLibrary.version;
 		}
 		else {
+			variables['project.parent.group'] = library.group;
 			variables['project.parent.groupId'] = library.group;
 			variables['project.parent.name'] = library.name;
+			variables['project.parent.artifact'] = library.name;
+			variables['project.parent.artifactId'] = library.name;
 			variables['project.parent.version'] = library.version;
 		}
 
 		// Now process our own variables
 
-		pom('properties').children()
-			.each(highland.partial(setPropertiesAsVariables, variables, library));
+		pom('project > properties').each(function(i, node) {
+			pom(node).children().each(highland.partial(setPropertiesAsVariables, variables, library));
+		});
 	}
 
 	// Next, parse all the dependencies
@@ -451,15 +458,19 @@ function processPomDependencies(library) {
 		library['jarPaths'] = {};
 	}
 
+	variables['pom.groupId'] = library.group;
+	variables['pom.name'] = library.name;
+	variables['pom.version'] = library.version;
+
 	variables['project.groupId'] = library.group;
 	variables['project.name'] = library.name;
 	variables['project.version'] = library.version;
 
 	pom('project > dependencies').children()
-		.each(highland.partial(setDependenciesAsJars, variables, library));
+		.each(highland.partial(setDependenciesAsJars, pom, variables, library));
 
 	pom('project > dependencyManagement > dependencies').children()
-		.each(highland.partial(setDependencyVariables, variables, library));
+		.each(highland.partial(setDependencyVariables, pom, variables, library));
 };
 
 function replaceVariables(variables, attributeValue) {
@@ -492,8 +503,12 @@ function replaceVariables(variables, attributeValue) {
 	return attributeValue;
 };
 
-function setDependenciesAsJars(variables, library, index, node) {
-	var artifactInfo = setDependencyVariables(variables, library, index, node);
+function setDependenciesAsJars(pom, variables, library, index, node) {
+	if (node.tagName != 'dependency') {
+		return;
+	}
+
+	var artifactInfo = setDependencyVariables(pom, variables, library, index, node);
 
 	var groupId = artifactInfo[0];
 	var artifactId = artifactInfo[1];
@@ -542,8 +557,8 @@ function setDependencyJarList(jarPaths, group, name, dependencyInfo) {
 	}
 };
 
-function setDependencyVariables(variables, library, index, node) {
-	var dependency = cheerio(node);
+function setDependencyVariables(pom, variables, library, index, node) {
+	var dependency = pom(node);
 
 	var groupId = replaceVariables(variables, dependency.children('groupId').text());
 	var artifactId = replaceVariables(variables, dependency.children('artifactId').text());
