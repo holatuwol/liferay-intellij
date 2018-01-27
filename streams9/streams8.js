@@ -134,6 +134,36 @@ function getLibraryFolderPath(library) {
 		}
 	}
 
+	if (library.group != 'com.liferay') {
+		return null;
+	}
+
+	// Check for a snapshot release
+
+	var artifactNameRelativePath = [library.group, library.name].join('/');
+	prefix = library.version + '-';
+
+	for (gradleCache of gradleCaches) {
+		var artifactNameAbsolutePath = getFilePath(gradleCache, artifactNameRelativePath);
+
+		if (!isDirectory(artifactNameAbsolutePath)) {
+			continue;
+		}
+
+		var folders = fs.readdirSync(artifactNameAbsolutePath);
+
+		for (var i = 0; i < folders.length; i++) {
+			if (folders[i].indexOf(prefix) != 0) {
+				continue;
+			}
+
+			library.version = folders[i];
+
+			var gradleAbsolutePath = getFilePath(artifactNameAbsolutePath, library.version);
+			return gradleAbsolutePath;
+		}
+	}
+
 	return null;
 };
 

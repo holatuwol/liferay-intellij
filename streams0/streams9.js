@@ -265,7 +265,11 @@ function fixProjectDependencies(moduleVersions, addAsLibrary, module) {
 			hasInitJsp: true
 		};
 
-		module.libraryDependencies.push(libraryDependency);
+		var jarPaths = getLibraryJarPaths(libraryDependency);
+
+		if (jarPaths.length > 0) {
+			module.libraryDependencies.push(libraryDependency);
+		}
 	}
 
 	return module;
