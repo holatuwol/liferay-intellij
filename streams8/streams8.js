@@ -169,6 +169,50 @@ function getNewModuleRootManagerXML(module) {
 	return newModuleRootManagerXML.join('\n');
 };
 
+function getVariableValue(library, variables, variableName) {
+	var variableValue = variables[variableName];
+
+	if (variableValue != null) {
+		return variableValue;
+	}
+
+	variableValue = variables[variableName.toLowerCase()];
+
+	if (variableValue != null) {
+		return variableValue;
+	}
+
+	var parentLibrary = library['parentLibrary'];
+
+	if (parentLibrary) {
+		return getVariableValue(parentLibrary, parentLibrary['variables'], variableName);
+	}
+
+	return null;
+};
+
+function initializeLibrary(groupId, artifactId, version) {
+	var libraryName = [groupId, artifactId, version].join(':');
+	var newLibrary = libraryCache[libraryName];
+
+	if (newLibrary != null) {
+		return newLibrary;
+	}
+
+	newLibrary = {
+		'group': groupId,
+		'name': artifactId,
+		'version': version,
+		'libraryName' : libraryName
+	}
+
+	libraryCache[libraryName] = newLibrary;
+
+	getLibraryJarPaths(newLibrary);
+
+	return newLibrary;
+};
+
 function isJar(path) {
 	return isFile(path) && path.endsWith('.jar');
 };
@@ -230,47 +274,8 @@ function processPomDependencies(library) {
 	var variables = library['variables'];
 
 	if (variables == null) {
-		variables = {};
-
-		library['variables'] = variables;
-
-		// If there is a parent pom.xml, parse it first
-
-		var parent = pom('project > parent');
-
-		if (parent.length > 0) {
-			var parentGroupId = parent.children('groupId').text();
-			var parentArtifactId = parent.children('artifactId').text();
-			var parentVersion = parent.children('version').text();
-
-			var parentLibrary = initializeLibrary(parentGroupId, parentArtifactId, parentVersion);
-			var parentVariables = parentLibrary['variables'];
-
-			for (variableName in parentVariables) {
-				variables[variableName] = parentVariables[variableName];
-			}
-
-			variables['project.parent.group'] = parentLibrary.group;
-			variables['project.parent.groupId'] = parentLibrary.group;
-			variables['project.parent.name'] = parentLibrary.name;
-			variables['project.parent.artifact'] = parentLibrary.name;
-			variables['project.parent.artifactId'] = parentLibrary.name;
-			variables['project.parent.version'] = parentLibrary.version;
-		}
-		else {
-			variables['project.parent.group'] = library.group;
-			variables['project.parent.groupId'] = library.group;
-			variables['project.parent.name'] = library.name;
-			variables['project.parent.artifact'] = library.name;
-			variables['project.parent.artifactId'] = library.name;
-			variables['project.parent.version'] = library.version;
-		}
-
-		// Now process our own variables
-
-		pom('project > properties').each(function(i, node) {
-			pom(node).children().each(highland.partial(setPropertiesAsVariables, variables, library));
-		});
+		processPomVariables(library, pom);
+		variables = library['variables'];
 	}
 
 	// Next, parse all the dependencies
@@ -287,14 +292,55 @@ function processPomDependencies(library) {
 	variables['project.name'] = library.name;
 	variables['project.version'] = library.version;
 
-	pom('project > dependencies').children()
-		.each(highland.partial(setDependenciesAsJars, pom, variables, library));
-
 	pom('project > dependencyManagement > dependencies').children()
 		.each(highland.partial(setDependencyVariables, pom, variables, library));
+
+	pom('project > dependencies').children()
+		.each(highland.partial(setDependenciesAsJars, pom, variables, library));
 };
 
-function replaceVariables(variables, attributeValue) {
+function processPomVariables(library, pom) {
+	variables = {};
+
+	library['variables'] = variables;
+
+	// If there is a parent pom.xml, parse it first
+
+	var parent = pom('project > parent');
+
+	if (parent.length > 0) {
+		var parentGroupId = parent.children('groupId').text();
+		var parentArtifactId = parent.children('artifactId').text();
+		var parentVersion = parent.children('version').text();
+
+		var parentLibrary = initializeLibrary(parentGroupId, parentArtifactId, parentVersion);
+
+		library['parentLibrary'] = parentLibrary;
+
+		variables['project.parent.group'] = parentLibrary.group;
+		variables['project.parent.groupId'] = parentLibrary.group;
+		variables['project.parent.name'] = parentLibrary.name;
+		variables['project.parent.artifact'] = parentLibrary.name;
+		variables['project.parent.artifactId'] = parentLibrary.name;
+		variables['project.parent.version'] = parentLibrary.version;
+	}
+	else {
+		variables['project.parent.group'] = library.group;
+		variables['project.parent.groupId'] = library.group;
+		variables['project.parent.name'] = library.name;
+		variables['project.parent.artifact'] = library.name;
+		variables['project.parent.artifactId'] = library.name;
+		variables['project.parent.version'] = library.version;
+	}
+
+	// Now process our own variables
+
+	pom('project > properties').each(function(i, node) {
+		pom(node).children().each(highland.partial(setPropertiesAsVariables, variables, library));
+	});
+};
+
+function replaceVariables(library, variables, attributeValue) {
 	if (attributeValue == null) {
 		return attributeValue;
 	}
@@ -306,11 +352,7 @@ function replaceVariables(variables, attributeValue) {
 
 		var variableName = attributeValue.substring(x + 2, y);
 
-		var variableValue = variables[variableName];
-
-		if (variableValue == null) {
-			variableValue = variables[variableName.toLowerCase()];
-		}
+		var variableValue = getVariableValue(library, variables, variableName);
 
 		if (variableValue == null) {
 			variableValue = '';
@@ -381,26 +423,30 @@ function setDependencyJarList(jarPaths, group, name, dependencyInfo) {
 function setDependencyVariables(pom, variables, library, index, node) {
 	var dependency = pom(node);
 
-	var groupId = replaceVariables(variables, dependency.children('groupId').text());
-	var artifactId = replaceVariables(variables, dependency.children('artifactId').text());
+	var groupId = replaceVariables(library, variables, dependency.children('groupId').text());
+	var artifactId = replaceVariables(library, variables, dependency.children('artifactId').text());
 	var version = dependency.children('version').text();
 
 	var versionVariableName = [groupId, artifactId].join(':');
 
 	if (!version) {
-		version = variables[versionVariableName];
+		version = getVariableValue(library, variables, versionVariableName);
 	}
 
-	version = replaceVariables(variables, version);
+	version = replaceVariables(library, variables, version);
 
 	if (version) {
 		variables[versionVariableName] = version;
+	}
 
+	var type = dependency.children('type').text();
+
+	if (version && type && (type == 'pom')) {
 		var dependencyLibrary = initializeLibrary(groupId, artifactId, version);
 
-		for (key in dependencyLibrary.variables) {
-			if (key.indexOf(':') != -1) {
-				variables[key] = dependencyLibrary.variables[key];
+		for (variableName in dependencyLibrary['variables']) {
+			if ((variableName.indexOf(':') != -1) && !(variableName in library['variables'])) {
+				library['variables'][variableName] = dependencyLibrary['variables'][variableName];
 			}
 		}
 	}
