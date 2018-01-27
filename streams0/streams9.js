@@ -65,6 +65,13 @@ function createProjectObjectModels(coreDetails, moduleDetails) {
 };
 
 function createProjectWorkspace(coreDetails, moduleDetails, pluginDetails) {
+	moduleDetails.forEach(checkForGradleCache);
+	checkForGradleCache(getUserHome());
+	checkForGradleCache('../liferay-binaries-cache-2017');
+
+	moduleDetails.forEach(checkForMavenCache);
+	checkForMavenCache(getUserHome());
+
 	if (pluginDetails) {
 		pluginDetails.forEach(sortModuleAttributes);
 	}
@@ -78,13 +85,6 @@ function createProjectWorkspace(coreDetails, moduleDetails, pluginDetails) {
 
 	coreDetails.forEach(sortModuleAttributes);
 	moduleDetails.forEach(sortModuleAttributes);
-
-	moduleDetails.forEach(checkForGradleCache);
-	checkForGradleCache(getUserHome());
-	checkForGradleCache('../liferay-binaries-cache-2017');
-
-	moduleDetails.forEach(checkForMavenCache);
-	checkForMavenCache(getUserHome());
 
 	var moduleStream = highland(moduleDetails);
 	var coreStream = highland(coreDetails);

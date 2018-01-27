@@ -9,6 +9,8 @@ var streams7 = require('../streams8/streams7');
 var streams8 = require('./streams8');
 var xmlbuilder = require('xmlbuilder');
 
+var checkForGradleCache = streams8.checkForGradleCache;
+var checkForMavenCache = streams8.checkForMavenCache;
 var getAncestorFiles = streams7.getAncestorFiles;
 var getComponentXML = streams6.getComponentXML;
 var getExcludeFolderElement = streams6.getExcludeFolderElement;
@@ -33,18 +35,10 @@ var keyExistsInObject = highland.ncurry(2, streams8.keyExistsInObject);
 var saveContent = streams6.saveContent;
 var setLibraryName = streams8.setLibraryName;
 
-var gradleCaches = new Set();
+var gradleCaches = streams8.gradleCaches;
+var mavenCaches = streams8.mavenCaches;
+
 var projectRepositories = [];
-
-function checkForGradleCache(module) {
-	if (!module.modulePath) {
-		return;
-	}
-
-	var candidates = getAncestorFiles(module.modulePath, '.gradle/caches/modules-2/files-2.1');
-
-	candidates.forEach(Set.prototype.add.bind(gradleCaches));
-};
 
 function createProjectObjectModels(coreDetails, moduleDetails) {
 	var moduleStream = highland(moduleDetails);
@@ -62,6 +56,13 @@ function createProjectObjectModels(coreDetails, moduleDetails) {
 };
 
 function createProjectWorkspace(coreDetails, moduleDetails) {
+	moduleDetails.forEach(checkForGradleCache);
+	checkForGradleCache(getUserHome());
+	checkForGradleCache('../liferay-binaries-cache-2017');
+
+	moduleDetails.forEach(checkForMavenCache);
+	checkForMavenCache(getUserHome());
+
 	var moduleVersions = coreDetails.reduce(setCoreBundleVersions, {});
 	moduleVersions = moduleDetails.reduce(setModuleBundleVersions, moduleVersions);
 
@@ -70,10 +71,6 @@ function createProjectWorkspace(coreDetails, moduleDetails) {
 
 	coreDetails.forEach(sortModuleAttributes);
 	moduleDetails.forEach(sortModuleAttributes);
-
-	moduleDetails.forEach(checkForGradleCache);
-	checkForGradleCache(getUserHome());
-	checkForGradleCache('../liferay-binaries-cache-2017');
 
 	var moduleStream = highland(moduleDetails);
 	var coreStream = highland(coreDetails);

@@ -73,6 +73,16 @@ function createProjectObjectModels(coreDetails, moduleDetails) {
 };
 
 function createProjectWorkspace(coreDetails, moduleDetails, pluginDetails) {
+	coreDetails.forEach(checkForGitRoot);
+	moduleDetails.forEach(checkForGitRoot);
+
+	moduleDetails.forEach(checkForGradleCache);
+	checkForGradleCache(getUserHome());
+	checkForGradleCache('../liferay-binaries-cache-2017');
+
+	moduleDetails.forEach(checkForMavenCache);
+	checkForMavenCache(getUserHome());
+
 	checkBreakpoints(moduleDetails);
 
 	if (pluginDetails) {
@@ -90,16 +100,6 @@ function createProjectWorkspace(coreDetails, moduleDetails, pluginDetails) {
 
 	coreDetails.forEach(sortModuleAttributes);
 	moduleDetails.forEach(sortModuleAttributes);
-
-	coreDetails.forEach(checkForGitRoot);
-	moduleDetails.forEach(checkForGitRoot);
-
-	moduleDetails.forEach(checkForGradleCache);
-	checkForGradleCache(getUserHome());
-	checkForGradleCache('../liferay-binaries-cache-2017');
-
-	moduleDetails.forEach(checkForMavenCache);
-	checkForMavenCache(getUserHome());
 
 	console.log('Processing BOM dependencies');
 
