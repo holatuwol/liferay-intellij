@@ -47,6 +47,9 @@ var gitRoots = new Set();
 var gradleCaches = streams9.gradleCaches;
 var mavenCaches = streams9.mavenCaches;
 
+var lastLibraryCount = 0;
+var gradleCacheStable = false;
+
 function createProjectObjectModels(coreDetails, moduleDetails) {
 	var moduleVersions = coreDetails.reduce(setCoreBundleVersions, {});
 	moduleVersions = moduleDetails.reduce(setModuleBundleVersions, moduleVersions);
@@ -103,12 +106,23 @@ function createProjectWorkspace(coreDetails, moduleDetails, pluginDetails) {
 
 	console.log('Processing BOM dependencies');
 
-	completeBomCache(moduleDetails);
+	lastLibraryCount = 0;
+	gradleCacheStable = false;
+
+	while (!gradleCacheStable) {
+		completeBomCache(moduleDetails);
+	}
+
 	moduleDetails.forEach(fixMavenBomDependencies);
 
 	console.log('Processing missing dependencies');
 
-	completeGradleCache(coreDetails, moduleDetails, pluginDetails);
+	lastLibraryCount = 0;
+	gradleCacheStable = false;
+
+	while (!gradleCacheStable) {
+		completeGradleCache(coreDetails, moduleDetails, pluginDetails);
+	}
 
 	console.log('Generating IntelliJ workspace');
 
@@ -274,9 +288,13 @@ function completeGradleCache(coreDetails, moduleDetails, pluginDetails) {
 };
 
 function executeGradleFile(completionMessage, entries) {
-	if (entries.length == 0) {
+	if (entries.length == lastLibraryCount) {
+		gradleCacheStable = true;
+		console.log(completionMessage);
 		return;
 	}
+
+	lastLibraryCount = entries.length;
 
 	var gradleRepositoriesBlock = getProjectRepositories().reduce(getGradleRepositoriesBlock, []);
 
@@ -297,7 +315,7 @@ function executeGradleFile(completionMessage, entries) {
 	buildGradleContent = buildGradleContent.concat([
 		'task completeGradleCache(type: Exec) {',
 		'\tconfigurations.compile.files',
-		'\tcommandLine "echo", "' + completionMessage + '"',
+		'\tcommandLine "echo", ""',
 		'}'
 	]);
 

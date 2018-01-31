@@ -61,6 +61,7 @@ Change Log
 
 This is a change log for when I started keeping track of the changes that were made.
 
+* **2018-01-31**: Allow multiple passes in order to fill in the Gradle cache
 * **2018-01-26**: Improve pom.xml property value parsing
 * **2018-01-24**: Avoid having different versions of the same JAR on the classpath (use a simple latest version check rather than true dependency resolution as an approximation)
 * **2018-01-23**: Treat non-core project dependencies as transitive dependencies because a few modules (like portal-search) use them that way
