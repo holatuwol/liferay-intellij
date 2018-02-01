@@ -134,7 +134,7 @@ function createProjectWorkspace(coreDetails, moduleDetails, pluginDetails) {
 };
 
 function checkExportDependencies(moduleVersions, module) {
-	var isTestModule = (module.moduleName.indexOf('test') != -1);
+	var isTestModule = (module.modulePath.indexOf('test') != -1);
 
 	if (isTestModule) {
 		var isDevelopmentLibrary = function(dependency) {
