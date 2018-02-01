@@ -133,24 +133,36 @@ function createProjectWorkspace(coreDetails, moduleDetails, pluginDetails) {
 	detailsStream.done(function() {});
 };
 
+function addTestLibraryDependency(module, dependencyName) {
+	var isLibraryIncluded = function(dependency) {
+		return dependency.name == dependencyName;
+	};
+
+	module.libraryDependencies = module.libraryDependencies || [];
+
+	if (module.libraryDependencies.some(isLibraryIncluded)) {
+		return;
+	}
+
+	var dependency = {
+		type: 'library',
+		name: dependencyName,
+		libraryName: dependencyName,
+		testScope: true
+	};
+
+	module.libraryDependencies.push(dependency);
+};
+
 function checkExportDependencies(moduleVersions, module) {
 	var isTestModule = (module.modulePath.indexOf('test') != -1);
 
 	if (isTestModule) {
-		var isDevelopmentLibrary = function(dependency) {
-			return dependency.name == 'development';
-		};
+		addTestLibraryDependency(module, 'development');
 
-		module.libraryDependencies = module.libraryDependencies || [];
-
-		if (!module.libraryDependencies.some(isDevelopmentLibrary)) {
-			var developmentDependency = {
-				type: 'library',
-				name: 'development',
-				libraryName: 'development'
-			};
-
-			module.libraryDependencies.push(developmentDependency);
+		if (module.testSourceFolders.indexOf('src/testIntegration/java') != -1) {
+			addTestLibraryDependency(module, 'global');
+			addTestLibraryDependency(module, 'portal');
 		}
 	}
 
