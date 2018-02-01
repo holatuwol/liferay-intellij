@@ -51,11 +51,52 @@ var lastLibraryCount = 0;
 var gradleCacheStable = false;
 
 function createProjectObjectModels(coreDetails, moduleDetails) {
+	coreDetails.forEach(checkForGitRoot);
+	moduleDetails.forEach(checkForGitRoot);
+
+	moduleDetails.forEach(checkForGradleCache);
+	checkForGradleCache(getUserHome());
+	checkForGradleCache('../liferay-binaries-cache-2017');
+
+	moduleDetails.forEach(checkForMavenCache);
+	checkForMavenCache(getUserHome());
+
+	checkBreakpoints(moduleDetails);
+
+	if (pluginDetails) {
+		pluginDetails.forEach(sortModuleAttributes);
+	}
+
+	console.log('Processing dependency versions');
+
 	var moduleVersions = coreDetails.reduce(setCoreBundleVersions, {});
 	moduleVersions = moduleDetails.reduce(setModuleBundleVersions, moduleVersions);
 
 	moduleDetails.forEach(highland.partial(fixLibraryDependencies, moduleVersions));
-	moduleDetails.forEach(highland.partial(fixProjectDependencies, moduleVersions, false));
+	moduleDetails.forEach(highland.partial(fixProjectDependencies, moduleVersions, true));
+	moduleDetails.forEach(highland.partial(checkExportDependencies, moduleVersions));
+
+	console.log('Processing BOM dependencies');
+
+	lastLibraryCount = 0;
+	gradleCacheStable = false;
+
+	while (!gradleCacheStable) {
+		completeBomCache(moduleDetails);
+	}
+
+	moduleDetails.forEach(fixMavenBomDependencies);
+
+	console.log('Processing missing dependencies');
+
+	lastLibraryCount = 0;
+	gradleCacheStable = false;
+
+	while (!gradleCacheStable) {
+		completeGradleCache(coreDetails, moduleDetails, pluginDetails);
+	}
+
+	console.log('Generating Maven project');
 
 	var moduleStream = highland(moduleDetails.concat(getLibraryModules()));
 
