@@ -168,6 +168,7 @@ function createProjectWorkspace(coreDetails, moduleDetails, pluginDetails) {
 	console.log('Generating IntelliJ workspace');
 
 	moduleDetails.forEach(getFileTreeDependencies);
+	moduleDetails.forEach(reorderLibraryDependencies);
 
 	var moduleStream = highland(moduleDetails);
 	var coreStream = highland(coreDetails);
@@ -763,6 +764,41 @@ function needsGradleCache(library) {
 	}
 
 	return true;
+};
+
+function reorderLibraryDependencies(module) {
+	if (!module.libraryDependencies) {
+		return;
+	}
+
+	for (var i = 1; i < module.libraryDependencies.length; i++) {
+		var right = module.libraryDependencies[i];
+
+		if (!right.group) {
+			continue;
+		}
+
+		var rightVariableName = [right.group, right.name].join(':');
+
+		for (var j = 0; j < i; j++) {
+			var left = module.libraryDependencies[j];
+
+			if (!left.group) {
+				continue;
+			}
+
+			var leftCacheKey = [left.group, left.name, left.version].join(':');
+			var leftLibrary = libraryCache[leftCacheKey];
+
+			if (!leftLibrary || !leftLibrary['variables'] || !leftLibrary['variables'][rightVariableName]) {
+				continue;
+			}
+
+			module.libraryDependencies.splice(i, 1);
+			module.libraryDependencies.splice(j, 0, right);
+			break;
+		}
+	}
 };
 
 function setWebContextPath(module) {
