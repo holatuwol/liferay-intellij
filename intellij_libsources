@@ -6,13 +6,10 @@ SCRIPT_FOLDER=$(dirname "$0")
 
 checknode
 setupsdk
+copylibs
 setuplibs
 
-"$NODEJS" "${SCRIPT_FOLDER}/bin/pom.js" "$PWD" "$@"
-
-mvn --fail-at-end dependency:sources
-grep '<module>.*</module>' pom.xml | awk -F'[<>]' '{ print $3 "/pom.xml" }' | xargs rm
-rm pom.xml
+runmaven dependency:sources
 
 "$NODEJS" "${SCRIPT_FOLDER}/bin/run.js" "$PWD" "$@"
 

@@ -41,6 +41,7 @@ if [ ! -d modules ]; then
 fi
 
 setupsdk
+copylibs
 setuplibs
 
 gradlewidea $@

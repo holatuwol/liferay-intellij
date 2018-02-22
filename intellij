@@ -6,8 +6,8 @@ SCRIPT_FOLDER=$(dirname "$0")
 
 checknode
 setupsdk
-setuplibs
 copylibs
+setuplibs
 
 "$NODEJS" "${SCRIPT_FOLDER}/bin/run.js" "$PWD" "$@"
 

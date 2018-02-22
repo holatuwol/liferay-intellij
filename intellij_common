@@ -26,18 +26,12 @@ checknode() {
 }
 
 copylibs() {
-	if [ ! -d modules ] || [ ! -d .gradle ] || [ -f build.xml ]; then
+	if [ ! -d modules ]; then
 		return 0
 	fi
 
 	if [ ! -d ../liferay-binaries-cache-2017 ]; then
-		"$NODEJS" "${SCRIPT_FOLDER}/bin/pom.js" "$PWD" "$@"
-
-		mvn  --fail-at-end dependency:go-offline
-		grep '<module>.*</module>' pom.xml | awk -F'[<>]' '{ print $3 "/pom.xml" }' | xargs rm
-		rm pom.xml
-
-		mkdir -p .gradle
+		runmaven dependency:go-offline
 	fi
 
 	for folder in development global portal; do
@@ -48,10 +42,6 @@ copylibs() {
 		for dependency in $(cat lib/$folder/dependencies.properties); do
 			local lib_jar=lib/$folder/$(echo $dependency | cut -d'=' -f 1).jar
 
-			if [ -f $lib_jar ]; then
-				continue
-			fi
-
 			local group_gradle=$(echo $dependency | cut -d'=' -f 2 | cut -d':' -f 1)
 			local group_maven=$(echo $group_gradle | tr '.' '/')
 			local name=$(echo $dependency | cut -d'=' -f 2 | cut -d':' -f 2)
@@ -61,12 +51,13 @@ copylibs() {
 
 			if [ -f $maven_path ]; then
 				cp $maven_path $lib_jar
+				continue
 			fi
 
 			local gradle_path=../liferay-binaries-cache-2017/.gradle/caches/modules-2/files-2.1/${group_gradle}/${name}/${version}
 
 			if [ -d $gradle_path ]; then
-				local gradle_jar=$(find $gradle_path -name ${name}-${version}.jar)
+				local gradle_jar=$(find $gradle_path -name ${name}-${version}.jar | head -1)
 
 				if [ "" != "$gradle_jar" ]; then
 					cp $gradle_jar $lib_jar
@@ -80,6 +71,14 @@ ignoreiml() {
 	if [ -d .git ] || [ -f .git ]; then
 		git ls-files | grep '\(\.idea\|\.iml\)' | xargs git update-index --assume-unchanged
 	fi
+}
+
+runmaven() {
+	"$NODEJS" "${SCRIPT_FOLDER}/bin/pom.js" "$PWD" "$@"
+
+	mvn  --fail-at-end $@
+	grep '<module>.*</module>' pom.xml | awk -F'[<>]' '{ print $3 "/pom.xml" }' | xargs rm
+	rm pom.xml
 }
 
 setantopts() {
