@@ -95,6 +95,8 @@ setantopts() {
 }
 
 setuplibs() {
+	rm -rf .idea/libraries
+
 	if [ ! -f build.xml ]; then
 		return 0
 	fi
