@@ -31,7 +31,11 @@ copylibs() {
 	fi
 
 	if [ ! -d ../liferay-binaries-cache-2017 ]; then
-		runmaven dependency:go-offline
+		"$NODEJS" "${SCRIPT_FOLDER}/bin/pom.js" "$PWD"
+
+		mvn  --fail-at-end dependency:go-offline
+		grep '<module>.*</module>' pom.xml | awk -F'[<>]' '{ print $3 "/pom.xml" }' | xargs rm
+		rm pom.xml
 	fi
 
 	for folder in development global portal; do
@@ -71,14 +75,6 @@ ignoreiml() {
 	if [ -d .git ] || [ -f .git ]; then
 		git ls-files | grep '\(\.idea\|\.iml\)' | xargs git update-index --assume-unchanged
 	fi
-}
-
-runmaven() {
-	"$NODEJS" "${SCRIPT_FOLDER}/bin/pom.js" "$PWD" "$@"
-
-	mvn  --fail-at-end $@
-	grep '<module>.*</module>' pom.xml | awk -F'[<>]' '{ print $3 "/pom.xml" }' | xargs rm
-	rm pom.xml
 }
 
 setantopts() {
