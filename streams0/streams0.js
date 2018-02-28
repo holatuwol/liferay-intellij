@@ -83,6 +83,10 @@ function createProjectObjectModels(coreDetails, moduleDetails, pluginDetails) {
 
 	while (!gradleCacheStable) {
 		completeBomCache(moduleDetails);
+
+		if (lastLibraryCount == 0) {
+			gradleCacheStable = true;
+		}
 	}
 
 	moduleDetails.forEach(fixMavenBomDependencies);
@@ -94,6 +98,10 @@ function createProjectObjectModels(coreDetails, moduleDetails, pluginDetails) {
 
 	while (!gradleCacheStable) {
 		completeGradleCache(coreDetails, moduleDetails, pluginDetails);
+
+		if (lastLibraryCount == 0) {
+			gradleCacheStable = true;
+		}
 	}
 
 	console.log('Generating Maven project');
@@ -152,6 +160,10 @@ function createProjectWorkspace(coreDetails, moduleDetails, pluginDetails) {
 
 	while (!gradleCacheStable) {
 		completeBomCache(moduleDetails);
+
+		if (lastLibraryCount == 0) {
+			gradleCacheStable = true;
+		}
 	}
 
 	moduleDetails.forEach(fixMavenBomDependencies);
@@ -163,6 +175,10 @@ function createProjectWorkspace(coreDetails, moduleDetails, pluginDetails) {
 
 	while (!gradleCacheStable) {
 		completeGradleCache(coreDetails, moduleDetails, pluginDetails);
+
+		if (lastLibraryCount == 0) {
+			gradleCacheStable = true;
+		}
 	}
 
 	console.log('Generating IntelliJ workspace');
