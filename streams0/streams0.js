@@ -50,7 +50,7 @@ var mavenCaches = streams9.mavenCaches;
 var lastLibraryCount = 0;
 var gradleCacheStable = false;
 
-function createProjectObjectModels(coreDetails, moduleDetails) {
+function createProjectObjectModels(coreDetails, moduleDetails, pluginDetails) {
 	coreDetails.forEach(checkForGitRoot);
 	moduleDetails.forEach(checkForGitRoot);
 

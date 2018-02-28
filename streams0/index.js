@@ -188,7 +188,9 @@ function prepareProject(portalSourceFolder, otherSourceFolders) {
 	var portalSourceModulesRootPath = getFilePath(portalSourceFolder, 'modules');
 	var coreModuleFolders = getModuleFolders(portalSourceFolder, portalSourceModulesRootPath);
 
-	var coreDetails = coreFolders.map(getCoreDetails);
+	var portalPreModules = coreModuleFolders.filter(isPortalPreModule).map(highland.ncurry(1, path.basename));
+
+	var coreDetails = coreFolders.map(getCoreDetails.bind(null, portalPreModules));
 	var moduleDetails = moduleFolders.map(getModuleDetails);
 
 	var moduleNames = new Set(moduleDetails.map(getModuleName));
