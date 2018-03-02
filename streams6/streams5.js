@@ -427,9 +427,7 @@ function isPluginFolder(folder) {
 		return false;
 	}
 
-	var pluginName = path.basename(folder);
-
-	return (pluginName.indexOf('test-') != 0);
+	return true;
 };
 
 function isUniqueAssumeSorted(element, index, array) {
