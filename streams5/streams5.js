@@ -96,9 +96,15 @@ function getCoreDependencies(portalPreModules, folder) {
 		dependencyNames = customDependencyNames[folder];
 	}
 
+	var coreProjectDependencies = dependencyNames.projectNames.filter(isDirectory);
+
+	if (folder == 'portal-kernel') {
+		coreProjectDependencies = coreProjectDependencies.concat(portalPreModules);
+	}
+
 	return {
 		libraryDependencies: dependencyNames.libraryNames.map(getLibraryDependency),
-		projectDependencies: dependencyNames.projectNames.concat(portalPreModules).map(getProjectDependency)
+		projectDependencies: coreProjectDependencies.map(getProjectDependency)
 	};
 };
 
