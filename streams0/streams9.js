@@ -459,8 +459,33 @@ function getMavenDependencyElement(library) {
 		dependencyElement['type'] = 'pom';
 	}
 
+	var exclusions = null;
+
+	if ((library.group == 'easyconf') && (library.name == 'easyconf') && (library.version == '0.9.5')) {
+		exclusions = ['xdoclet:xdoclet', 'xdoclet:xdoclet-web-module', 'xpp3:xpp3_min'];
+	}
+
+	if ((library.group == 'net.open-esb.core') && (library.name == 'jbi_rt') && (library.version == '2.4.3')) {
+		exclusions = ['glassfish:appserv-ext'];
+	}
+
+	if (exclusions != null) {
+		dependencyElement['exclusions'] = {
+			'exclusion': exclusions.map(getMavenExclusion)
+		};
+	}
+
 	return dependencyElement;
 };
+
+function getMavenExclusion(exclusion) {
+	var pos = exclusion.indexOf(':');
+
+	return {
+		'groupId': exclusion.substring(0, pos),
+		'artifactId': exclusion.substring(pos + 1)
+	};
+}
 
 function getMavenProject(module) {
 	var dependencyObjects = {};
