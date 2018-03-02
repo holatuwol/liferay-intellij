@@ -79,7 +79,8 @@ function flatMap(array, lambda) {
 function getCoreDependency(dependencyType, dependencyName) {
 	return {
 		type: dependencyType,
-		name: dependencyName
+		name: dependencyName,
+		exported: ('project' == dependencyType)
 	};
 };
 
