@@ -124,7 +124,7 @@ function createProjectObjectModels(coreDetails, moduleDetails, pluginDetails) {
 	moduleStream.done(function() {});
 };
 
-function createProjectWorkspace(coreDetails, moduleDetails, pluginDetails) {
+function createProjectWorkspace(coreDetails, moduleDetails, pluginDetails, unload) {
 	coreDetails.forEach(checkForGitRoot);
 	moduleDetails.forEach(checkForGitRoot);
 
@@ -196,6 +196,11 @@ function createProjectWorkspace(coreDetails, moduleDetails, pluginDetails) {
 	var projectFileStream = detailsStream.observe();
 	var libraryFilesStream = detailsStream.observe();
 	var tagLibrariesStream = detailsStream.observe();
+	var unloadModuleStream = null;
+
+	if (unload) {
+		unloadModuleStream = detailsStream.observe();
+	}
 
 	moduleFilesStream
 		.map(getModuleXML)
@@ -239,6 +244,16 @@ function createProjectWorkspace(coreDetails, moduleDetails, pluginDetails) {
 		.collect()
 		.map(getMiscXML)
 		.each(saveContent);
+
+	if (unloadModuleStream != null) {
+		unloadModuleStream
+			.filter(isUnloadModule)
+			.map(getUnloadModuleElement)
+			.sort()
+			.collect()
+			.map(getUnloadModuleXML)
+			.each(saveContent);
+	}
 
 	detailsStream.done(function() {});
 
@@ -756,6 +771,28 @@ function getTagLibraryPaths(module) {
 		.filter(isTagLibraryFile);
 };
 
+function getUnloadModuleElement(module) {
+	return '<module name="' + module.moduleName + '" />';
+};
+
+function getUnloadModuleXML(unloadModuleElements) {
+	var workspaceXML = [
+		'<?xml version="1.0" encoding="UTF-8"?>',
+		'<project version="4">',
+		'<component name="UnloadedModulesList">'
+	];
+
+	workspaceXML = workspaceXML.concat(unloadModuleElements);
+
+	workspaceXML.push('</component>');
+	workspaceXML.push('</project>');
+
+	return {
+		name: '.idea/workspace.xml',
+		content: workspaceXML.join('\n')
+	};
+};
+
 function hasLibraryPath(library) {
 	var libraryPaths = getLibraryJarPaths(library);
 
@@ -764,6 +801,17 @@ function hasLibraryPath(library) {
 
 function isTagLibraryFile(fileName) {
 	return fileName.indexOf('.tld') == fileName.length - 4;
+};
+
+function isUnloadModule(module) {
+	if ((module.modulePath.indexOf('modules/') != 0) ||
+		isFile(getFilePath(module.modulePath, '.lfrbuild-portal')) ||
+		isFile(getFilePath(module.modulePath, '.lfrbuild-portal-pre'))) {
+
+		return false;
+	}
+
+	return true;
 };
 
 function needsGradleCache(library) {

@@ -61,6 +61,7 @@ Change Log
 
 This is a change log for when I started keeping track of the changes that were made.
 
+* **2018-03-07**: Allow passing ``--unload=true`` as an argument to `unload modules <https://blog.jetbrains.com/idea/2017/06/intellij-idea-2017-2-eap-introduces-unloaded-modules/>`__ that aren't built as part of ``ant all``
 * **2018-03-01**: Re-allow test plugins SDK portlets, add workaround for pom dependencies that no longer exist
 * **2018-02-28**: Address regression issue where pom.js script stopped working
 * **2018-01-31**: Allow multiple passes in order to fill in the Gradle cache

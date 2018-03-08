@@ -24,7 +24,7 @@ var getPluginSDKRoot = streams5.getPluginSDKRoot;
 var isDirectory = streams2.isDirectory;
 var isFile = streams2.isFile;
 
-function createProject(portalSourceFolder, otherSourceFolders) {
+function createProject(portalSourceFolder, otherSourceFolders, unload) {
 	var initialCWD = process.cwd();
 
 	process.chdir(portalSourceFolder);
@@ -101,7 +101,7 @@ function createProject(portalSourceFolder, otherSourceFolders) {
 
 	var pluginDetails = pluginFolders.map(getPluginDetails);
 
-	createProjectWorkspace(coreDetails, moduleDetails.concat(coreModuleDetails), pluginDetails);
+	createProjectWorkspace(coreDetails, moduleDetails.concat(coreModuleDetails), pluginDetails, unload);
 
 	process.chdir(initialCWD);
 };

@@ -7,6 +7,7 @@
     "cheerio": "0.22.x",
     "comparators": "2.0.x",
     "highland": "2.7.x",
+    "minimist": "1.2.0",
     "shelljs": "0.6.x",
     "xmlbuilder": "7.0.x"
   },
