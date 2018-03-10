@@ -4,12 +4,12 @@
   "description": "",
   "main": "streams0/index.js",
   "dependencies": {
-    "cheerio": "0.22.x",
-    "comparators": "2.0.x",
-    "highland": "2.7.x",
+    "cheerio": "0.22.0",
+    "comparators": "2.0.3",
+    "highland": "2.7.4",
     "minimist": "1.2.0",
-    "shelljs": "0.6.x",
-    "xmlbuilder": "7.0.x"
+    "shelljs": "0.6.0",
+    "xmlbuilder": "7.0.0"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
