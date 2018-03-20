@@ -1,10 +1,12 @@
 var fs = require('fs');
 var highland = require('highland');
+var streams2 = require('../streams2/streams2');
 var streams3 = require('../streams4/streams3');
 var streams5 = require('../streams6/streams5');
 
 var excludeFolderMap = streams3.excludeFolderMap;
 var getFilePath = streams5.getFilePath;
+var isDirectory = streams2.isDirectory;
 
 function createProjectWorkspace(coreDetails, moduleDetails) {
 	var moduleStream = highland(moduleDetails);
@@ -49,6 +51,32 @@ function getFacetManagerXML(module) {
 			'</configuration>',
 			'</facet>'
 		];
+	}
+
+	var springFolders = [
+		'src/META-INF',
+		'docroot/WEB-INF/src/META-INF',
+		'src/main/resources/META-INF',
+		'src/main/resources/META-INF/spring',
+		'src/main/resources/META-INF/spring/parent'
+	];
+
+	var springXMLFiles = Array.prototype.concat.apply([], springFolders.map(highland.partial(getSpringFolders, module.modulePath)));
+
+	if (springXMLFiles.length > 0) {
+		facetManagerXML = facetManagerXML.concat([
+			'<facet type="Spring" name="' + module.moduleName + '">',
+			'<configuration>',
+			'<fileset id="fileset" name="Spring Application Context" removed="false">'
+		]);
+
+		facetManagerXML = facetManagerXML.concat(springXMLFiles.map(getSpringFacetFileElement));
+
+		facetManagerXML = facetManagerXML.concat([
+			'</fileset>',
+			'</configuration>',
+			'</facet>'
+		]);
 	}
 
 	return facetManagerXML.join('\n');
@@ -150,6 +178,24 @@ function getNewModuleRootManagerXML(module) {
 function getSourceFolderElement(attributeName, attributeValue, folder) {
 	return '<sourceFolder url="file://$MODULE_DIR$/' + folder + '" ' +
 		attributeName + '="' + attributeValue + '" />';
+};
+
+function getSpringFacetFileElement(springXMLFile) {
+	return '<file>file://$MODULE_DIR$/' + springXMLFile + '</file>';
+};
+
+function getSpringFolders(modulePath, subfolder) {
+	var springFolder = getFilePath(modulePath, subfolder);
+
+	if (!isDirectory(springFolder)) {
+		return [];
+	}
+
+	return fs.readdirSync(springFolder).map(getFilePath(subfolder)).filter(isSpringXML);
+};
+
+function isSpringXML(path) {
+	return ((path.indexOf('/spring/') != -1) || (path.indexOf('-spring') != -1)) && (path.indexOf('.xml') != -1);
 };
 
 function saveContent(file) {
