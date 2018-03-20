@@ -29,6 +29,7 @@ var getWorkspaceModulesXML = streams7.getWorkspaceModulesXML;
 var isDirectory = streams2.isDirectory;
 var isFile = streams2.isFile;
 var isFirstOccurrence = streams8.isFirstOccurrence;
+var isJar = streams8.isJar;
 var isSameLibraryDependency = streams8.isSameLibraryDependency;
 var keyExistsInObject = highland.ncurry(2, streams8.keyExistsInObject);
 var saveContent = streams6.saveContent;
@@ -312,6 +313,26 @@ function getDependencyGroup(moduleVersions, dependency) {
 	return null;
 };
 
+function getGradleLibraryJars() {
+	var folders = ['.gradle/wrapper/dists'];
+	var gradleLibraryJars = [];
+
+	while (folders.length > 0) {
+		var folder = folders.splice(0, 1)[0];
+		var subfiles = fs.readdirSync(folder).map(getFilePath(folder));
+
+		Array.prototype.push.apply(
+			folders,
+			subfiles.filter(isDirectory));
+
+		Array.prototype.push.apply(
+			gradleLibraryJars,
+			subfiles.filter(isJar));
+	}
+
+	return gradleLibraryJars.filter(highland.compose(highland.not, isKotlinJar));
+};
+
 function getJarLibraryTableXML(library) {
 	var libraryTableXML = [
 		'<library name="' + library.name + '">',
@@ -333,8 +354,11 @@ function getJarLibraryTableXML(library) {
 		}
 	}
 	else if (library.name == 'gradlew') {
-		libraryTableXML.push(
-			'<root url="file://$PROJECT_DIR$/.gradle/wrapper/dists" />');
+		var jarFiles = getGradleLibraryJars();
+
+		Array.prototype.push.apply(
+			libraryTableXML,
+			jarFiles.map(getLibraryRootElement));
 	}
 	else {
 		libraryTableXML.push(
@@ -346,10 +370,7 @@ function getJarLibraryTableXML(library) {
 		'<JAVADOC />',
 		'<SOURCES />');
 
-	if (library.name == 'gradlew') {
-		libraryTableXML.push('<jarDirectory url="file://$PROJECT_DIR$/.gradle/wrapper/dists" recursive="true" />');
-	}
-	else if (library.name != 'development') {
+	if ((library.name != 'development') && (library.name != 'gradlew')) {
 		libraryTableXML.push('<jarDirectory url="file://$PROJECT_DIR$/lib/' + library.name + '" recursive="false" />');
 	}
 
@@ -651,6 +672,10 @@ function getRepositoryMetadata(propertiesContent) {
 
 function isDevelopmentLibrary(libraryName) {
 	return libraryName.indexOf('.jar') == libraryName.length - 4;
+};
+
+function isKotlinJar(jarPath) {
+	return jarPath.indexOf('kotlin') != -1;
 };
 
 function setCoreBundleVersions(accumulator, module) {

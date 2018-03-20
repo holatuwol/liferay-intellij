@@ -678,6 +678,7 @@ exports.getModuleXML = getModuleXML;
 exports.gradleCaches = gradleCaches;
 exports.getUserHome = getUserHome;
 exports.isFirstOccurrence = isFirstOccurrence;
+exports.isJar = isJar;
 exports.isSameLibraryDependency = isSameLibraryDependency;
 exports.keyExistsInObject = keyExistsInObject;
 exports.libraryCache = libraryCache;
