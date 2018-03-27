@@ -16,6 +16,8 @@ checknode() {
 
 	echo 'Running npm/yarn to update script dependencies'
 
+	rm -rf node_modules
+
 	if [ "" != "$(which yarn 2> /dev/null)" ]; then
 		yarn
 	else
