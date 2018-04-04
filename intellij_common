@@ -14,15 +14,11 @@ checknode() {
 
 	pushd "$(dirname "${BASH_SOURCE[0]}")" > /dev/null
 
-	echo 'Running npm/yarn to update script dependencies'
+	echo 'Running npm to update script dependencies'
 
 	rm -rf node_modules
 
-	if [ "" != "$(which yarn 2> /dev/null)" ]; then
-		yarn
-	else
-		npm install
-	fi
+	npm install
 
 	popd > /dev/null
 }
