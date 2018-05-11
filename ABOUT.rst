@@ -61,6 +61,7 @@ Change Log
 
 This is a change log for when I started keeping track of the changes that were made.
 
+* **2018-05-11**: Handle tag libraries that were added to ``src/main/resources/META-INF/resources`` instead of ``src/main/resources/META-INF``
 * **2018-03-19**: Exclude Kotlin jars from ``gradlew`` library to avoid infinite indexing loop
 * **2018-03-19**: Add spring facet detection
 * **2018-03-09**: Force ``domutils`` transitive dependency to 1.7.0 to workaround potential call stack size exceeded error

@@ -756,11 +756,15 @@ function getTagLibraryPaths(module) {
 	var resourceFolders = module.resourceFolders
 		.map(highland.flip(getFilePath, 'META-INF'));
 
+	var nestedResourceFolders = module.resourceFolders
+		.map(highland.flip(getFilePath, 'META-INF/resources'));
+
 	var webrootFolders = module.webrootFolders
 		.map(highland.flip(getFilePath, 'WEB-INF/tld'));
 
 	var searchFolders = sourceFolders
 		.concat(resourceFolders)
+		.concat(nestedResourceFolders)
 		.concat(webrootFolders)
 		.map(getFilePath(module.modulePath))
 		.filter(isDirectory);
