@@ -124,7 +124,7 @@ function createProjectObjectModels(coreDetails, moduleDetails, pluginDetails) {
 	moduleStream.done(function() {});
 };
 
-function createProjectWorkspace(coreDetails, moduleDetails, pluginDetails, unload) {
+function createProjectWorkspace(coreDetails, moduleDetails, pluginDetails, config) {
 	coreDetails.forEach(checkForGitRoot);
 	moduleDetails.forEach(checkForGitRoot);
 
@@ -198,7 +198,7 @@ function createProjectWorkspace(coreDetails, moduleDetails, pluginDetails, unloa
 	var tagLibrariesStream = detailsStream.observe();
 	var unloadModuleStream = null;
 
-	if (unload) {
+	if (config.unload) {
 		unloadModuleStream = detailsStream.observe();
 	}
 

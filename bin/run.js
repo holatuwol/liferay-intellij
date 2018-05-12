@@ -24,4 +24,4 @@ if (process.argv.length > 3) {
 	}
 }
 
-liferay_intellij.createProject(portalSourceFolder, otherSourceFolders, argv.unload);
+liferay_intellij.createProject(portalSourceFolder, otherSourceFolders, argv);
