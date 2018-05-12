@@ -196,10 +196,16 @@ function createProjectWorkspace(coreDetails, moduleDetails, pluginDetails, confi
 	var projectFileStream = detailsStream.observe();
 	var libraryFilesStream = detailsStream.observe();
 	var tagLibrariesStream = detailsStream.observe();
+
 	var unloadModuleStream = null;
+	var unzipBinariesStream = null;
 
 	if (config.unload) {
 		unloadModuleStream = detailsStream.observe();
+	}
+
+	if (config.unzip) {
+		unzipBinariesStream = detailsStream.observe();
 	}
 
 	moduleFilesStream
@@ -253,6 +259,19 @@ function createProjectWorkspace(coreDetails, moduleDetails, pluginDetails, confi
 			.collect()
 			.map(getUnloadModuleXML)
 			.each(saveContent);
+	}
+
+	if (unzipBinariesStream != null) {
+		var liferayHome = getLiferayHome();
+
+		if (liferayHome.indexOf('${project.dir}/') == 0) {
+			liferayHome = liferayHome.substring(15);
+		}
+
+		var catalinaHome = getCatalinaHome(liferayHome);
+
+		unzipBinariesStream
+			.each(unzipBinary.bind(null, liferayHome, catalinaHome));
 	}
 
 	detailsStream.done(function() {});
@@ -547,6 +566,32 @@ function gatherMavenBomDependencies(module) {
 	}
 };
 
+function getAppServerProperty(propertyName) {
+	var appServerPropertiesPath = ['app', 'server', process.env.USER || process.env.USERNAME, 'properties'].join('.')
+
+	var propertyValue = getProperty(appServerPropertiesPath, propertyName);
+
+	if (propertyValue) {
+		return propertyValue;
+	}
+
+	return getProperty('app.server.properties', propertyName);
+}
+
+function getCatalinaHome(liferayHome) {
+	if (process.env.CATALINA_HOME) {
+		return process.env.CATALINA_HOME;
+	}
+
+	var tomcatVersion = getAppServerProperty('app.server.tomcat.version');
+
+	if (!tomcatVersion) {
+		return null;
+	}
+
+	return getFilePath(liferayHome, 'tomcat-' + tomcatVersion);
+};
+
 function getFilePaths(folder) {
 	return fs.readdirSync(folder).map(getFilePath(folder));
 };
@@ -684,6 +729,20 @@ function getLibraryModules() {
 	return libraryNames.map(getLibraryModule);
 };
 
+function getLiferayHome() {
+	if (process.env.LIFERAY_HOME) {
+		return process.env.LIFERAY_HOME;
+	}
+
+	var liferayHome = getAppServerProperty('app.server.parent.dir');
+
+	if (liferayHome) {
+		return liferayHome;
+	}
+
+	return '${project.dir}/../bundles';
+};
+
 function getMiscXML(resourceElements) {
 	var miscXMLContent = [
 		'<?xml version="1.0" encoding="UTF-8"?>',
@@ -723,6 +782,50 @@ function getMiscXML(resourceElements) {
 		content: miscXMLContent.join('\n')
 	}
 };
+
+function getProperty(filePath, propertyName) {
+	if (!isFile(filePath)) {
+		return null;
+	}
+
+	var lines = fs.readFileSync(filePath).toString().split('\n').map(trim);
+
+	var needle = propertyName + '=';
+
+	var propertyValue = [];
+
+	for (var i = 0; i < lines.length; i++) {
+		var currentValue = null;
+
+		if (propertyValue.length > 0) {
+			currentValue = lines[i];
+		}
+		else if (lines[i].startsWith(needle)) {
+			currentValue = lines[i].substring(needle.length);
+		}
+		else {
+			continue;
+		}
+
+		if (currentValue.length == 0) {
+			continue;
+		}
+
+		if (currentValue.charAt(currentValue.length - 1) != '\\') {
+			propertyValue.push(currentValue);
+
+			break;
+		}
+
+		propertyValue.push(currentValue.substring(0, currentValue.length - 1));
+	}
+
+	if (propertyValue.length == 0) {
+		return null;
+	}
+
+	return propertyValue.join('');
+}
 
 function getTagLibraryURIs(accumulator, tagLibraryPath) {
 	var tagLibraryContent = fs.readFileSync(tagLibraryPath, {encoding: 'UTF8'});
@@ -801,6 +904,10 @@ function hasLibraryPath(library) {
 	var libraryPaths = getLibraryJarPaths(library);
 
 	return libraryPaths.length != 0;
+};
+
+function hasTagLibrary(module) {
+	return isDirectory(getFilePath(module.modulePath, 'src')) && getTagLibraryPaths(module).length > 0;
 };
 
 function isTagLibraryFile(fileName) {
@@ -888,6 +995,58 @@ function setWebContextPath(module) {
 
 	module.webContextPath = '/o' + matchResult[1];
 	return module;
+};
+
+function trim(str) {
+	return str.trim();
+}
+
+function unzipBinary(liferayHome, catalinaHome, module) {
+	if (!liferayHome) {
+		return;
+	}
+
+	var moduleClassesPath = getFilePath(module.modulePath, 'classes');
+
+	if (isDirectory(moduleClassesPath)) {
+		return;
+	}
+
+	var moduleBinaryPaths = [
+		path.join(liferayHome, 'osgi', 'core', module.bundleSymbolicName + '.jar'),
+		path.join(liferayHome, 'osgi', 'modules', module.bundleSymbolicName + '.jar'),
+		path.join(liferayHome, 'osgi', 'portal', module.bundleSymbolicName + '.jar'),
+		path.join(liferayHome, 'osgi', 'static', module.bundleSymbolicName + '.jar'),
+		path.join(catalinaHome, 'lib', 'ext', module.moduleName + '.jar'),
+		path.join(catalinaHome, 'webapps', 'ROOT', 'WEB-INF', 'lib', module.moduleName + '.jar')
+	].filter(isFile);
+
+	if (moduleBinaryPaths.length == 0) {
+		return;
+	}
+
+	var moduleBinaryPath = moduleBinaryPaths[0];
+
+	shelljs.mkdir('-p', moduleClassesPath);
+
+	var args = ['-oqq', moduleBinaryPath];
+
+	var options = {
+		'cwd': moduleClassesPath,
+		'stdio': [0,1,2]
+	};
+
+	console.log('Unzipping', moduleBinaryPath, 'to', moduleClassesPath);
+
+	try {
+		execFileSync('unzip', args, options);
+
+		if (moduleBinaryPath.indexOf('osgi') == -1) {
+			execFileSync('cp', [moduleBinaryPath, module.modulePath]);
+		}
+	}
+	catch (e) {
+	}
 };
 
 exports.createProjectObjectModels = createProjectObjectModels;
