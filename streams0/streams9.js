@@ -601,7 +601,8 @@ function getProjectRepositories() {
 	});
 
 	if (isDirectory('.git') || isFile('.git')) {
-		var passwordBranch = child_process.execSync('git for-each-ref --format="%(refname)" refs/remotes/ | grep "/upstream[^/]*/7.0.x-private$" | cut -d"/" -f 3,4').toString().trim();
+		var passwordBranchName = '7.0.x-private';
+		var passwordBranch = child_process.execSync('git for-each-ref --format="%(refname)" refs/remotes/ | grep "/upstream[^/]*/' + passwordBranchName + '$" | cut -d"/" -f 3,4').toString().trim();
 
 		if (passwordBranch) {
 			var propertiesContent = child_process.execSync('git show ' + passwordBranch + ':working.dir.properties');

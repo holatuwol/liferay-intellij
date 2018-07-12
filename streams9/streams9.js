@@ -490,22 +490,30 @@ function getProjectRepositories() {
 		layout: 'default'
 	});
 
-	var buildPropertiesContent = child_process.execSync('git show upstream/ee-7.0.x:build.properties');
+	if (isDirectory('.git') || isFile('.git')) {
+		var passwordBranchName = '7.0.x-private';
+		var passwordBranch = child_process.execSync('git for-each-ref --format="%(refname)" refs/remotes/ | grep "/upstream[^/]*/' + passwordBranchName + '$" | cut -d"/" -f 3,4').toString().trim();
 
-	var privateRepositoryRegex = /build.repository.private.password=(\S*)\s*build.repository.private.url=https:\/\/(\S*)\s*build.repository.private.username=(\S*)/g;
+		if (passwordBranch) {
+			var propertiesContent = child_process.execSync('git show ' + passwordBranch + ':working.dir.properties');
 
-	var matchResult = privateRepositoryRegex.exec(buildPropertiesContent);
+			var repositoryMetadata = getRepositoryMetadata(propertiesContent);
+			var repositoryPath = repositoryMetadata['url'];
 
-	if (matchResult) {
-		tempProjectRepositories.push({
-			id: 'liferay-private',
-			name: 'Liferay Private',
-			scheme: 'https',
-			username: matchResult[3],
-			password: matchResult[1],
-			path: matchResult[2],
-			layout: 'default'
-		});
+			if (repositoryPath.indexOf('https://') == 0) {
+				repositoryPath = repositoryPath.substring(8);
+			}
+
+			tempProjectRepositories.push({
+				id: 'liferay-private',
+				name: 'Liferay Private',
+				scheme: 'https',
+				username: repositoryMetadata['username'],
+				password: repositoryMetadata['password'],
+				path: repositoryPath,
+				layout: 'default'
+			});
+		}
 	}
 
 	projectRepositories = tempProjectRepositories;
