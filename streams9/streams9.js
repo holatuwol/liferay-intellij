@@ -485,8 +485,8 @@ function getProjectRepositories() {
 	tempProjectRepositories.push({
 		id: 'liferay-public',
 		name: 'Liferay Public',
-		scheme: 'http',
-		path: 'repository.liferay.com/nexus/content/repositories/public',
+		scheme: 'https',
+		path: 'repository-cdn.liferay.com/nexus/content/repositories/public',
 		layout: 'default'
 	});
 

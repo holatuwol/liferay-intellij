@@ -164,7 +164,7 @@ Even though we are generating many of them, the format for ``pom.xml`` files is 
 			<repository>
 				<id>liferay</id>
 				<name>Liferay</name>
-				<url>http://repository.liferay.com/nexus/content/repositories/public</url>
+				<url>https://repository-cdn.liferay.com/nexus/content/repositories/public</url>
 				<layout>default</layout>
 			</repository>
 			<repository>
@@ -209,7 +209,7 @@ Perform operations on ``mavenProjectStream`` in the function ``createProjectObje
 			<repository>
 				<id>liferay</id>
 				<name>Liferay</name>
-				<url>http://repository.liferay.com/nexus/content/repositories/public</url>
+				<url>https://repository-cdn.liferay.com/nexus/content/repositories/public</url>
 				<layout>default</layout>
 			</repository>
 			<repository>
