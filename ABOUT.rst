@@ -61,6 +61,7 @@ Change Log
 
 This is a change log for when I started keeping track of the changes that were made.
 
+* **2018-07-12**: Switch to the CDN, because Liferay will soon disable direct access to its public Maven repository
 * **2018-03-07**: Allow passing ``--unzip=true`` as an argument to unzip existing binaries from a Tomcat bundle
 * **2018-05-11**: Handle tag libraries that were added to ``src/main/resources/META-INF/resources`` instead of ``src/main/resources/META-INF``
 * **2018-03-19**: Exclude Kotlin jars from ``gradlew`` library to avoid infinite indexing loop
