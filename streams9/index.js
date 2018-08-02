@@ -20,6 +20,22 @@ var isDirectory = streams2.isDirectory;
 var isFile = streams2.isFile;
 
 function createProject(portalSourceFolder, otherSourceFolders) {
+	scanProject(portalSourceFolder, otherSourceFolders, createProjectWorkspace);
+};
+
+function getModuleName(module) {
+	return module.moduleName;
+};
+
+function isPluginsSDK(otherSourceFolder) {
+	return getPluginSDKRoot(otherSourceFolder) != null;
+};
+
+function prepareProject(portalSourceFolder, otherSourceFolders) {
+	scanProject(portalSourceFolder, otherSourceFolders, createProjectObjectModels);
+};
+
+function scanProject(portalSourceFolder, otherSourceFolders, callback) {
 	var initialCWD = process.cwd();
 
 	process.chdir(portalSourceFolder);
@@ -66,50 +82,6 @@ function createProject(portalSourceFolder, otherSourceFolders) {
 		.filter(highland.compose(highland.not, Set.prototype.has.bind(moduleNames), getModuleName));
 
 	createProjectWorkspace(coreDetails, moduleDetails.concat(coreModuleDetails), pluginDetails);
-
-	process.chdir(initialCWD);
-};
-
-function getModuleName(module) {
-	return module.moduleName;
-};
-
-function isPluginsSDK(otherSourceFolder) {
-	return getPluginSDKRoot(otherSourceFolder) != null;
-};
-
-function prepareProject(portalSourceFolder, otherSourceFolders) {
-	var initialCWD = process.cwd();
-
-	process.chdir(portalSourceFolder);
-
-	var coreFolders = getCoreFolders();
-
-	var moduleFolders = [];
-
-	for (var i = 0; i < otherSourceFolders.length; i++) {
-		var otherSourceFolder = otherSourceFolders[i];
-
-		if (!isPluginsSDK(otherSourceFolder)) {
-			var newFolders = getModuleFolders(portalSourceFolder, otherSourceFolder);
-
-			moduleFolders = moduleFolders.concat(newFolders);
-		}
-	}
-
-	var portalSourceModulesRootPath = getFilePath(portalSourceFolder, 'modules');
-	var coreModuleFolders = getModuleFolders(portalSourceFolder, portalSourceModulesRootPath);
-
-	var coreDetails = coreFolders.map(getCoreDetails);
-	var moduleDetails = moduleFolders.map(getModuleDetails);
-
-	var moduleNames = new Set(moduleDetails.map(getModuleName));
-
-	var coreModuleDetails = coreModuleFolders
-		.map(getModuleDetails)
-		.filter(highland.compose(highland.not, Set.prototype.has.bind(moduleNames), getModuleName));
-
-	createProjectObjectModels(coreDetails, moduleDetails.concat(coreModuleDetails));
 
 	process.chdir(initialCWD);
 };

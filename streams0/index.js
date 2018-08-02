@@ -25,6 +25,64 @@ var isDirectory = streams2.isDirectory;
 var isFile = streams2.isFile;
 
 function createProject(portalSourceFolder, otherSourceFolders, unload) {
+	scanProject(portalSourceFolder, otherSourceFolders, unload, createProjectWorkspace);
+};
+
+function getModuleName(module) {
+	return module.moduleName;
+};
+
+function getModulePluginsFolders(sourceRoot, pluginFolders, getNewPluginFolders) {
+	var appsPath = getFilePath(sourceRoot, 'modules/apps');
+
+	if (isDirectory(appsPath)) {
+		pluginFolders = fs.readdirSync(appsPath)
+			.map(getFilePath.bind(null, appsPath))
+			.filter(isDirectory)
+			.map(getNewPluginFolders)
+			.reduce(flatten, pluginFolders);
+	}
+
+	var privateAppsPath = getFilePath(sourceRoot, 'modules/private/apps');
+
+	if (isDirectory(privateAppsPath)) {
+		pluginFolders = fs.readdirSync(privateAppsPath)
+			.map(getFilePath.bind(null, privateAppsPath))
+			.filter(isDirectory)
+			.map(getNewPluginFolders)
+			.reduce(flatten, pluginFolders);
+	}
+
+	return pluginFolders;
+};
+
+function getSourceRoots(folderPath) {
+	var gitRoots = getAncestorFiles(folderPath, '.git');
+
+	if (gitRoots.length > 0) {
+		return [folderPath];
+	}
+
+	var fileNames = fs.readdirSync(folderPath);
+	var filePaths = fileNames.map(getFilePath.bind(null, folderPath));
+	var directoryPaths = filePaths.filter(isDirectory);
+
+	return directoryPaths.map(getSourceRoots).reduce(flatten, []);
+};
+
+function isPluginsSDK(otherSourceFolder) {
+	return getPluginSDKRoot(otherSourceFolder) != null;
+};
+
+function isPortalPreModule(folder) {
+	return isFile(getFilePath(folder, '.lfrbuild-portal-pre'));
+};
+
+function prepareProject(portalSourceFolder, otherSourceFolders) {
+	scanProject(portalSourceFolder, otherSourceFolders, false, createProjectObjectModels);
+};
+
+function scanProject(portalSourceFolder, otherSourceFolders, unload, callback) {
 	var initialCWD = process.cwd();
 
 	process.chdir(portalSourceFolder);
@@ -81,14 +139,18 @@ function createProject(portalSourceFolder, otherSourceFolders, unload) {
 		}
 	}
 
-	console.log('[' + new Date().toLocaleTimeString() + ']', 'Scanning ' + portalSourceFolder);
+	console.log('[' + new Date().toLocaleTimeString() + ']', 'Scanning ' + portalSourceFolder + ' for legacy plugins');
 
 	pluginFolders = getModulePluginsFolders(portalSourceFolder, pluginFolders, getNewPluginFolders);
+
+	console.log('[' + new Date().toLocaleTimeString() + ']', 'Scanning ' + portalSourceFolder + ' for modules');
 
 	var portalSourceModulesRootPath = getFilePath(portalSourceFolder, 'modules');
 	var coreModuleFolders = getModuleFolders(portalSourceFolder, portalSourceModulesRootPath);
 
 	var portalPreModules = coreModuleFolders.filter(isPortalPreModule).map(highland.ncurry(1, path.basename));
+
+	console.log('[' + new Date().toLocaleTimeString() + ']', 'Extracting metadata from module build files');
 
 	var coreDetails = coreFolders.map(getCoreDetails.bind(null, portalPreModules));
 	var moduleDetails = moduleFolders.map(getModuleDetails);
@@ -101,105 +163,7 @@ function createProject(portalSourceFolder, otherSourceFolders, unload) {
 
 	var pluginDetails = pluginFolders.map(getPluginDetails);
 
-	createProjectWorkspace(coreDetails, moduleDetails.concat(coreModuleDetails), pluginDetails, unload);
-
-	process.chdir(initialCWD);
-};
-
-function getModuleName(module) {
-	return module.moduleName;
-};
-
-function getModulePluginsFolders(sourceRoot, pluginFolders, getNewPluginFolders) {
-	var appsPath = getFilePath(sourceRoot, 'modules/apps');
-
-	if (isDirectory(appsPath)) {
-		pluginFolders = fs.readdirSync(appsPath)
-			.map(getFilePath.bind(null, appsPath))
-			.filter(isDirectory)
-			.map(getNewPluginFolders)
-			.reduce(flatten, pluginFolders);
-	}
-
-	var privateAppsPath = getFilePath(sourceRoot, 'modules/private/apps');
-
-	if (isDirectory(privateAppsPath)) {
-		pluginFolders = fs.readdirSync(privateAppsPath)
-			.map(getFilePath.bind(null, privateAppsPath))
-			.filter(isDirectory)
-			.map(getNewPluginFolders)
-			.reduce(flatten, pluginFolders);
-	}
-
-	return pluginFolders;
-};
-
-function getSourceRoots(folderPath) {
-	var gitRoots = getAncestorFiles(folderPath, '.git');
-
-	if (gitRoots.length > 0) {
-		return [folderPath];
-	}
-
-	var fileNames = fs.readdirSync(folderPath);
-	var filePaths = fileNames.map(getFilePath.bind(null, folderPath));
-	var directoryPaths = filePaths.filter(isDirectory);
-
-	return directoryPaths.map(getSourceRoots).reduce(flatten, []);
-};
-
-function isPluginsSDK(otherSourceFolder) {
-	return getPluginSDKRoot(otherSourceFolder) != null;
-};
-
-function isPortalPreModule(folder) {
-	return isFile(getFilePath(folder, '.lfrbuild-portal-pre'));
-};
-
-function prepareProject(portalSourceFolder, otherSourceFolders) {
-	var initialCWD = process.cwd();
-
-	process.chdir(portalSourceFolder);
-
-	var coreFolders = getCoreFolders();
-
-	var moduleFolders = [];
-
-	for (var i = 0; i < otherSourceFolders.length; i++) {
-		var sourceRoots = getSourceRoots(otherSourceFolders[i]);
-
-		if (sourceRoots.length == 0) {
-			sourceRoots = [otherSourceFolders[i]];
-		}
-
-		for (var j = 0; j < sourceRoots.length; j++) {
-			var sourceRoot = sourceRoots[j];
-
-			console.log('[' + new Date().toLocaleTimeString() + ']', 'Scanning ' + sourceRoot);
-
-			if (!isPluginsSDK(sourceRoot)) {
-				var newFolders = getModuleFolders(portalSourceFolder, sourceRoot);
-
-				moduleFolders = moduleFolders.concat(newFolders);
-			}
-		}
-	}
-
-	var portalSourceModulesRootPath = getFilePath(portalSourceFolder, 'modules');
-	var coreModuleFolders = getModuleFolders(portalSourceFolder, portalSourceModulesRootPath);
-
-	var portalPreModules = coreModuleFolders.filter(isPortalPreModule).map(highland.ncurry(1, path.basename));
-
-	var coreDetails = coreFolders.map(getCoreDetails.bind(null, portalPreModules));
-	var moduleDetails = moduleFolders.map(getModuleDetails);
-
-	var moduleNames = new Set(moduleDetails.map(getModuleName));
-
-	var coreModuleDetails = coreModuleFolders
-		.map(getModuleDetails)
-		.filter(highland.compose(highland.not, Set.prototype.has.bind(moduleNames), getModuleName));
-
-	createProjectObjectModels(coreDetails, moduleDetails.concat(coreModuleDetails));
+	callback(coreDetails, moduleDetails.concat(coreModuleDetails), pluginDetails, unload);
 
 	process.chdir(initialCWD);
 };
