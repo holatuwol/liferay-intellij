@@ -605,7 +605,7 @@ function getProjectRepositories() {
 		var privateRemoteName = child_process.execSync('git remote -v | grep -F "liferay/liferay-portal-ee" | cut -f 1 | head -1').toString().trim();
 
 		if (privateRemoteName) {
-			var propertiesContent = child_process.execSync('git show ' + privateRemoteName + '/' + passwordBranch + ':working.dir.properties');
+			var propertiesContent = child_process.execSync('git show ' + privateRemoteName + '/' + passwordBranchName + ':working.dir.properties');
 
 			var repositoryMetadata = getRepositoryMetadata(propertiesContent);
 			var repositoryPath = repositoryMetadata['url'];
