@@ -67,7 +67,7 @@ function createProjectObjectModels(coreDetails, moduleDetails, pluginDetails) {
 		pluginDetails.forEach(sortModuleAttributes);
 	}
 
-	console.log('Processing dependency versions');
+	console.log('[' + new Date().toLocaleTimeString() + ']', 'Processing dependency versions');
 
 	var moduleVersions = coreDetails.reduce(setCoreBundleVersions, {});
 	moduleVersions = moduleDetails.reduce(setModuleBundleVersions, moduleVersions);
@@ -76,7 +76,7 @@ function createProjectObjectModels(coreDetails, moduleDetails, pluginDetails) {
 	moduleDetails.forEach(highland.partial(fixProjectDependencies, moduleVersions, true));
 	moduleDetails.forEach(highland.partial(checkExportDependencies, moduleVersions));
 
-	console.log('Processing BOM dependencies');
+	console.log('[' + new Date().toLocaleTimeString() + ']', 'Processing BOM dependencies');
 
 	lastLibraryCount = 0;
 	gradleCacheStable = false;
@@ -91,7 +91,7 @@ function createProjectObjectModels(coreDetails, moduleDetails, pluginDetails) {
 
 	moduleDetails.forEach(fixMavenBomDependencies);
 
-	console.log('Processing missing dependencies');
+	console.log('[' + new Date().toLocaleTimeString() + ']', 'Processing missing dependencies');
 
 	lastLibraryCount = 0;
 	gradleCacheStable = false;
@@ -104,7 +104,7 @@ function createProjectObjectModels(coreDetails, moduleDetails, pluginDetails) {
 		}
 	}
 
-	console.log('Generating Maven project');
+	console.log('[' + new Date().toLocaleTimeString() + ']', 'Generating Maven project');
 
 	var moduleStream = highland(moduleDetails.concat(getLibraryModules()));
 
@@ -141,7 +141,7 @@ function createProjectWorkspace(coreDetails, moduleDetails, pluginDetails, confi
 		pluginDetails.forEach(sortModuleAttributes);
 	}
 
-	console.log('Processing dependency versions');
+	console.log('[' + new Date().toLocaleTimeString() + ']', 'Processing dependency versions');
 
 	var moduleVersions = coreDetails.reduce(setCoreBundleVersions, {});
 	moduleVersions = moduleDetails.reduce(setModuleBundleVersions, moduleVersions);
@@ -153,7 +153,7 @@ function createProjectWorkspace(coreDetails, moduleDetails, pluginDetails, confi
 	coreDetails.forEach(sortModuleAttributes);
 	moduleDetails.forEach(sortModuleAttributes);
 
-	console.log('Processing BOM dependencies');
+	console.log('[' + new Date().toLocaleTimeString() + ']', 'Processing BOM dependencies');
 
 	lastLibraryCount = 0;
 	gradleCacheStable = false;
@@ -168,7 +168,7 @@ function createProjectWorkspace(coreDetails, moduleDetails, pluginDetails, confi
 
 	moduleDetails.forEach(fixMavenBomDependencies);
 
-	console.log('Processing missing dependencies');
+	console.log('[' + new Date().toLocaleTimeString() + ']', 'Processing missing dependencies');
 
 	lastLibraryCount = 0;
 	gradleCacheStable = false;
@@ -181,7 +181,7 @@ function createProjectWorkspace(coreDetails, moduleDetails, pluginDetails, confi
 		}
 	}
 
-	console.log('Generating IntelliJ workspace');
+	console.log('[' + new Date().toLocaleTimeString() + ']', 'Generating IntelliJ workspace');
 
 	moduleDetails.forEach(getFileTreeDependencies);
 	moduleDetails.forEach(reorderLibraryDependencies);
@@ -382,7 +382,7 @@ function completeGradleCache(coreDetails, moduleDetails, pluginDetails) {
 function executeGradleFile(completionMessage, entries) {
 	if (entries.length == lastLibraryCount) {
 		gradleCacheStable = true;
-		console.log(completionMessage);
+		console.log('[' + new Date().toLocaleTimeString() + ']', completionMessage);
 		return;
 	}
 
@@ -455,7 +455,7 @@ function fixMavenBomDependencies(module) {
 		var library = libraryCache[cacheKey];
 
 		if (!library) {
-			console.log('Failed to resolve bom for ' + cacheKey);
+			console.log('[' + new Date().toLocaleTimeString() + ']', 'Failed to resolve bom for ' + cacheKey);
 			continue;
 		}
 
@@ -1036,7 +1036,7 @@ function unzipBinary(liferayHome, catalinaHome, module) {
 		'stdio': [0,1,2]
 	};
 
-	console.log('Unzipping', moduleBinaryPath, 'to', moduleClassesPath);
+	console.log('[' + new Date().toLocaleTimeString() + ']', 'Unzipping', moduleBinaryPath, 'to', moduleClassesPath);
 
 	try {
 		execFileSync('unzip', args, options);

@@ -58,7 +58,7 @@ function createProject(portalSourceFolder, otherSourceFolders, unload) {
 		for (var j = 0; j < sourceRoots.length; j++) {
 			var sourceRoot = sourceRoots[j];
 
-			console.log('Scanning ' + sourceRoot);
+			console.log('[' + new Date().toLocaleTimeString() + ']', 'Scanning ' + sourceRoot);
 
 			if (isPluginsSDK(sourceRoot)) {
 				var newFolders = getNewPluginFolders(sourceRoot);
@@ -81,7 +81,7 @@ function createProject(portalSourceFolder, otherSourceFolders, unload) {
 		}
 	}
 
-	console.log('Scanning ' + portalSourceFolder);
+	console.log('[' + new Date().toLocaleTimeString() + ']', 'Scanning ' + portalSourceFolder);
 
 	pluginFolders = getModulePluginsFolders(portalSourceFolder, pluginFolders, getNewPluginFolders);
 
@@ -175,7 +175,7 @@ function prepareProject(portalSourceFolder, otherSourceFolders) {
 		for (var j = 0; j < sourceRoots.length; j++) {
 			var sourceRoot = sourceRoots[j];
 
-			console.log('Scanning ' + sourceRoot);
+			console.log('[' + new Date().toLocaleTimeString() + ']', 'Scanning ' + sourceRoot);
 
 			if (!isPluginsSDK(sourceRoot)) {
 				var newFolders = getModuleFolders(portalSourceFolder, sourceRoot);
