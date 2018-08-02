@@ -602,10 +602,10 @@ function getProjectRepositories() {
 
 	if (isDirectory('.git') || isFile('.git')) {
 		var passwordBranchName = '7.0.x-private';
-		var passwordBranch = child_process.execSync('git for-each-ref --format="%(refname)" refs/remotes/ | grep "/upstream[^/]*/' + passwordBranchName + '$" | cut -d"/" -f 3,4').toString().trim();
+		var privateRemoteName = child_process.execSync('git remote -v | grep -F "liferay/liferay-portal-ee" | cut -f 1 | head -1').toString().trim();
 
-		if (passwordBranch) {
-			var propertiesContent = child_process.execSync('git show ' + passwordBranch + ':working.dir.properties');
+		if (privateRemoteName) {
+			var propertiesContent = child_process.execSync('git show ' + privateRemoteName + '/' + passwordBranch + ':working.dir.properties');
 
 			var repositoryMetadata = getRepositoryMetadata(propertiesContent);
 			var repositoryPath = repositoryMetadata['url'];
