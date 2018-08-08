@@ -8,7 +8,7 @@ checknode() {
 	fi
 
 	if [ "" == "$NODEJS" ]; then
-		echo "Please install node.js"
+		timeecho "Please install node.js"
 		exit 1
 	fi
 
@@ -18,7 +18,7 @@ checknode() {
 
 	checknodeversion
 
-	echo 'Running npm to update script dependencies'
+	timeecho 'Running npm to update script dependencies'
 
 	npm install
 
@@ -50,8 +50,8 @@ copylibs() {
 		return 0
 	fi
 
-	echo 'Missing clone of https://github.com/liferay/liferay-binaries-cache-2017'
-	echo 'Retrieving dependency libraries using Maven'
+	timeecho 'Missing clone of https://github.com/liferay/liferay-binaries-cache-2017'
+	timeecho 'Retrieving dependency libraries using Maven'
 
 	"$NODEJS" "${SCRIPT_FOLDER}/bin/pom.js" "$PWD"
 
@@ -120,7 +120,7 @@ setuplibs() {
 
 	setantopts
 
-	echo 'Running ant setup-libs to initialize portal libraries'
+	timeecho 'Running ant setup-libs to initialize portal libraries'
 
 	ant setup-libs
 }
@@ -132,7 +132,7 @@ setupsdk() {
 
 	setantopts
 
-	echo 'Running ant setup-sdk to initialize gradle configuration'
+	timeecho 'Running ant setup-sdk to initialize gradle configuration'
 
 	ant setup-sdk
 }
@@ -155,7 +155,7 @@ setupwork() {
 	git merge-base $UPSTREAM_BRANCH $WORKING_DIR_HASH > /dev/null
 
 	if [[ 0 -ne $? ]]; then
-		echo "Specified $LOCAL_BRANCH hash not available, fetching latest $UPSTREAM_BRANCH"
+		timeecho "Specified $LOCAL_BRANCH hash not available, fetching latest $UPSTREAM_BRANCH"
 
 		git fetch --no-tags $(echo $UPSTREAM_BRANCH | tr '/' ' ')
 	fi
@@ -163,11 +163,15 @@ setupwork() {
 	ant -f build-working-dir.xml
 }
 
+timeecho() {
+	echo '['$(date '+%H:%M:%S')']' $@
+}
+
 setupwork
 
 if [ ! -d portal-impl ]; then
-	echo 'Unable to find portal-impl folder, the current working directory does not appear to be the portal source'
-	echo 'Please navigate to the portal source folder and then re-run your command'
-	echo 'Note: additional arguments are additional source roots (blade workspaces, subrepositories, plugins SDK, etc.)'
+	timeecho 'Unable to find portal-impl folder, the current working directory does not appear to be the portal source'
+	timeecho 'Please navigate to the portal source folder and then re-run your command'
+	timeecho 'Note: additional arguments are additional source roots (blade workspaces, subrepositories, plugins SDK, etc.)'
 	exit 1
 fi
