@@ -8,6 +8,7 @@ checknode
 setupsdk
 copylibs
 setuplibs
+cachemodules
 
 "$NODEJS" "${SCRIPT_FOLDER}/bin/pom.js" "$PWD" $@
 
@@ -16,5 +17,7 @@ grep '<module>.*</module>' pom.xml | awk -F'[<>]' '{ print $3 "/pom.xml" }' | xa
 rm pom.xml
 
 "$NODEJS" "${SCRIPT_FOLDER}/bin/run.js" "$PWD" "$@"
+
+uncachemodules $@
 
 ignoreiml

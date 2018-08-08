@@ -8,7 +8,10 @@ checknode
 setupsdk
 copylibs
 setuplibs
+cachemodules $@
 
 "$NODEJS" "${SCRIPT_FOLDER}/bin/run.js" "$PWD" "$@"
+
+uncachemodules $@
 
 ignoreiml

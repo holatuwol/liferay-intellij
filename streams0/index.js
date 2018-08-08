@@ -17,7 +17,6 @@ var getCoreDetails = streams5.getCoreDetails;
 var getCoreFolders = streams5.getCoreFolders;
 var getFilePath = streams5.getFilePath;
 var getModuleDetails = streams4.getModuleDetails;
-var getModuleFolders = streams3.getModuleFolders;
 var getPluginDetails = streams5.getPluginDetails;
 var getPluginFolders = streams5.getPluginFolders;
 var getPluginSDKRoot = streams5.getPluginSDKRoot;
@@ -28,29 +27,94 @@ function createProject(portalSourceFolder, otherSourceFolders, unload) {
 	scanProject(portalSourceFolder, otherSourceFolders, unload, createProjectWorkspace);
 };
 
+function getBaseFolderName(folderName) {
+	var pos = folderName.indexOf('/src/');
+
+	if (pos != -1) {
+		return folderName.substring(0, pos + 4);
+	}
+
+	pos = folderName.indexOf('/docroot/');
+
+	if (pos != -1) {
+		return folderName.substring(0, pos + 8);
+	}
+
+	return folderName;
+};
+
+function getModuleFolders(portalSourceFolder, moduleSourceFolder) {
+	var lsFileCachePath = path.join(moduleSourceFolder, 'git_ls_files_modules.txt');
+
+	if (!isFile(lsFileCachePath)) {
+		console.log('[' + new Date().toLocaleTimeString() + ']', 'Scanning', moduleSourceFolder, 'for modules');
+
+		return streams3.getModuleFolders(portalSourceFolder, moduleSourceFolder);
+	}
+
+	console.log('[' + new Date().toLocaleTimeString() + ']', 'Scanning', moduleSourceFolder, 'ls-files cache for modules');
+
+	var moduleFileList = fs.readFileSync(lsFileCachePath).toString().split('\n');
+	var moduleFileSet = new Set(moduleFileList);
+
+	var moduleFolderSet = new Set(moduleFileList.map(path.dirname).map(getBaseFolderName));
+	var moduleFolderList = Array.from(moduleFolderSet);
+
+	var gitRoot = path.dirname(moduleSourceFolder);
+
+	var newModuleFolders = moduleFolderList
+		.filter(highland.ncurry(3, isModuleFolder, moduleFileSet, moduleFolderSet))
+		.map(getFilePath.bind(null, gitRoot));
+
+	return newModuleFolders;
+};
+
 function getModuleName(module) {
 	return module.moduleName;
 };
 
 function getModulePluginsFolders(sourceRoot, pluginFolders, getNewPluginFolders) {
-	var appsPath = getFilePath(sourceRoot, 'modules/apps');
+	var lsFileCachePath = path.join(sourceRoot, 'modules/git_ls_files_modules.txt');
 
-	if (isDirectory(appsPath)) {
-		pluginFolders = fs.readdirSync(appsPath)
-			.map(getFilePath.bind(null, appsPath))
-			.filter(isDirectory)
-			.map(getNewPluginFolders)
-			.reduce(flatten, pluginFolders);
+	if (isFile(lsFileCachePath)) {
+		console.log('[' + new Date().toLocaleTimeString() + ']', 'Scanning', sourceRoot, 'ls-files cache for legacy plugins');
+
+		var moduleFileList = fs.readFileSync(lsFileCachePath).toString().split('\n');
+		var moduleFileSet = new Set(moduleFileList);
+
+		var moduleFolderSet = new Set(moduleFileList.map(path.dirname).map(getBaseFolderName));
+		var moduleFolderList = Array.from(moduleFolderSet);
+
+		var newPluginFolders = moduleFolderList
+			.filter(highland.ncurry(3, isPluginFolder, moduleFileSet, moduleFolderSet))
+			.map(getFilePath.bind(null, sourceRoot));
+
+		pluginFolders = pluginFolders.concat(newPluginFolders);
 	}
+	else {
+		var appsPath = path.join(sourceRoot, 'modules/apps');
 
-	var privateAppsPath = getFilePath(sourceRoot, 'modules/private/apps');
+		if (isDirectory(appsPath)) {
+			console.log('[' + new Date().toLocaleTimeString() + ']', 'Scanning', appsPath, 'for legacy plugins');
 
-	if (isDirectory(privateAppsPath)) {
-		pluginFolders = fs.readdirSync(privateAppsPath)
-			.map(getFilePath.bind(null, privateAppsPath))
-			.filter(isDirectory)
-			.map(getNewPluginFolders)
-			.reduce(flatten, pluginFolders);
+			pluginFolders = fs.readdirSync(appsPath)
+				.map(getFilePath.bind(null, appsPath))
+				.filter(isDirectory)
+				.map(getNewPluginFolders)
+				.reduce(flatten, pluginFolders);
+		}
+
+		var privateAppsPath = path.join(sourceRoot, 'modules/private/apps');
+
+		if (isDirectory(privateAppsPath)) {
+			console.log('[' + new Date().toLocaleTimeString() + ']', 'Scanning', privateAppsPath, 'for legacy plugins');
+
+			pluginFolders = fs.readdirSync(privateAppsPath)
+				.map(getFilePath.bind(null, privateAppsPath))
+				.filter(isDirectory)
+				.map(getNewPluginFolders)
+				.reduce(flatten, pluginFolders);
+		}
 	}
 
 	return pluginFolders;
@@ -70,12 +134,44 @@ function getSourceRoots(folderPath) {
 	return directoryPaths.map(getSourceRoots).reduce(flatten, []);
 };
 
+function isModuleFolder(moduleFileSet, moduleFolderSet, folder) {
+	if ((folder.indexOf('/archetype-resources') != -1) || (folder.indexOf('/gradleTest') != -1)) {
+		return false;
+	}
+
+	if (!moduleFileSet.has(path.join(folder, 'bnd.bnd')) && !moduleFileSet.has(path.join(folder, 'package.json'))) {
+		return false;
+	}
+
+	if (!moduleFileSet.has(path.join(folder, 'build.gradle'))) {
+		return false;
+	}
+
+	if (!moduleFolderSet.has(path.join(folder, 'docroot')) && !moduleFolderSet.has(path.join(folder, 'src'))) {
+		return false;
+	}
+
+	return true;
+};
+
+function isPluginFolder(moduleFileSet, moduleFolderSet, folder) {
+	if (!moduleFolderSet.has(path.join(folder, 'docroot')) && !moduleFolderSet.has(path.join(folder, 'src'))) {
+		return false;
+	}
+
+	if (!moduleFileSet.has(path.join(folder, 'build.xml'))) {
+		return false;
+	}
+
+	return true;
+};
+
 function isPluginsSDK(otherSourceFolder) {
 	return getPluginSDKRoot(otherSourceFolder) != null;
 };
 
 function isPortalPreModule(folder) {
-	return isFile(getFilePath(folder, '.lfrbuild-portal-pre'));
+	return isFile(path.join(folder, '.lfrbuild-portal-pre'));
 };
 
 function prepareProject(portalSourceFolder, otherSourceFolders) {
@@ -116,37 +212,45 @@ function scanProject(portalSourceFolder, otherSourceFolders, unload, callback) {
 		for (var j = 0; j < sourceRoots.length; j++) {
 			var sourceRoot = sourceRoots[j];
 
-			console.log('[' + new Date().toLocaleTimeString() + ']', 'Scanning ' + sourceRoot);
-
 			if (isPluginsSDK(sourceRoot)) {
 				var newFolders = getNewPluginFolders(sourceRoot);
+
+				console.log('[' + new Date().toLocaleTimeString() + ']', 'Located', newFolders.length, 'legacy plugins folders in', sourceRoot);
 
 				pluginFolders = pluginFolders.concat(newFolders);
 			}
 			else {
+				var oldPluginFolderCount = pluginFolders.length;
+
 				pluginFolders = getModulePluginsFolders(sourceRoot, pluginFolders, getNewPluginFolders);
+
+				console.log('[' + new Date().toLocaleTimeString() + ']', 'Located', pluginFolders.length - oldPluginFolderCount, 'legacy plugins folders in', sourceRoot);
 			}
 
-			var modulesPrivatePath = getFilePath(sourceRoot, 'modules/private');
+			var modulesPath = path.join(sourceRoot, 'modules');
 
-			if (isDirectory(modulesPrivatePath)) {
-				sourceRoot = modulesPrivatePath;
+			if (isDirectory(modulesPath)) {
+				sourceRoot = modulesPath;
 			}
 
 			var newFolders = getModuleFolders(portalSourceFolder, sourceRoot);
+
+			console.log('[' + new Date().toLocaleTimeString() + ']', 'Located', newFolders.length, 'modules folders in', sourceRoot);
 
 			moduleFolders = moduleFolders.concat(newFolders);
 		}
 	}
 
-	console.log('[' + new Date().toLocaleTimeString() + ']', 'Scanning ' + portalSourceFolder + ' for legacy plugins');
+	var oldPluginFolderCount = pluginFolders.length;
 
 	pluginFolders = getModulePluginsFolders(portalSourceFolder, pluginFolders, getNewPluginFolders);
 
-	console.log('[' + new Date().toLocaleTimeString() + ']', 'Scanning ' + portalSourceFolder + ' for modules');
+	console.log('[' + new Date().toLocaleTimeString() + ']', 'Located', pluginFolders.length - oldPluginFolderCount, 'legacy plugins folders in', portalSourceFolder);
 
-	var portalSourceModulesRootPath = getFilePath(portalSourceFolder, 'modules');
+	var portalSourceModulesRootPath = path.join(portalSourceFolder, 'modules');
 	var coreModuleFolders = getModuleFolders(portalSourceFolder, portalSourceModulesRootPath);
+
+	console.log('[' + new Date().toLocaleTimeString() + ']', 'Located', coreModuleFolders.length, 'modules folders in', portalSourceFolder);
 
 	var portalPreModules = coreModuleFolders.filter(isPortalPreModule).map(highland.ncurry(1, path.basename));
 

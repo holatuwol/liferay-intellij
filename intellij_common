@@ -1,5 +1,24 @@
 #!/bin/bash
 
+cachemodules() {
+	for folder in $@; do
+		if [ ! -e "${folder}/.git" ]; then
+			continue
+		fi
+
+		timeecho "Building ${folder} ls-files cache to speed up directory scanning"
+
+		pushd "${folder}" > /dev/null
+		git ls-files modules > modules/git_ls_files_modules.txt
+		popd > /dev/null
+	done
+
+	if [ -e .git ]; then
+		timeecho "Building ${PWD} ls-files cache to speed up directory scanning"
+		git ls-files modules > modules/git_ls_files_modules.txt
+	fi
+}
+
 checknode() {
 	NODEJS=$(which nodejs 2> /dev/null)
 
@@ -165,6 +184,14 @@ setupwork() {
 
 timeecho() {
 	echo '['$(date '+%H:%M:%S')']' $@
+}
+
+uncachemodules() {
+	for folder in $@; do
+		rm -f ${folder}/modules/git_ls_files_modules.txt
+	done
+
+	rm -f modules/git_ls_files_modules.txt
 }
 
 setupwork
