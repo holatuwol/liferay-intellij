@@ -91,7 +91,7 @@ setuplibs() {
 	local NEEDS_SETUP_LIBS=
 
 	for folder in development global portal; do
-		if [ -f "lib/$folder/dependencies.properties" ] && [[ $(find lib/$folder -name '*.jar' | wc -l) -lt $(cat "lib/$folder/dependencies.properties" | wc -l) ]]; then
+		if [ -f "lib/$folder/dependencies.properties" ] && [[ $(ls -1 lib/$folder/ | grep -c '\.jar$') -lt $(cat "lib/$folder/dependencies.properties" | wc -l) ]]; then
 			NEEDS_SETUP_LIBS=true
 		fi
 	done
