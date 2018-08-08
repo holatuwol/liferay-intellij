@@ -12,15 +12,33 @@ checknode() {
 		exit 1
 	fi
 
-	pushd "$(dirname "${BASH_SOURCE[0]}")" > /dev/null
+	local SCRIPT_ROOT="$(dirname "${BASH_SOURCE[0]}")"
+
+	pushd "${SCRIPT_ROOT}" > /dev/null
+
+	checknodeversion
 
 	echo 'Running npm to update script dependencies'
-
-	rm -rf node_modules
 
 	npm install
 
 	popd > /dev/null
+}
+
+checknodeversion() {
+	node --version > node.version.new
+
+	if [ -f node.version.old ]; then
+		if [ "$(cat node.version.old)" != "$(cat node.version.new)" ]; then
+			rm -rf node_modules
+		fi
+
+		rm node.version.old
+	else
+		rm -rf node_modules
+	fi
+
+	mv node.version.new node.version.old
 }
 
 copylibs() {
