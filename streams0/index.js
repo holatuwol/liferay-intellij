@@ -44,7 +44,7 @@ function getBaseFolderName(folderName) {
 };
 
 function getModuleFolders(portalSourceFolder, moduleSourceFolder) {
-	var lsFileCachePath = path.join(moduleSourceFolder, 'git_ls_files_modules.txt');
+	var lsFileCachePath = getFilePath(moduleSourceFolder, 'git_ls_files_modules.txt');
 
 	if (!isFile(lsFileCachePath)) {
 		console.log('[' + new Date().toLocaleTimeString() + ']', 'Scanning', moduleSourceFolder, 'for modules');
@@ -74,7 +74,7 @@ function getModuleName(module) {
 };
 
 function getModulePluginsFolders(sourceRoot, pluginFolders, getNewPluginFolders) {
-	var lsFileCachePath = path.join(sourceRoot, 'modules/git_ls_files_modules.txt');
+	var lsFileCachePath = getFilePath(sourceRoot, 'modules/git_ls_files_modules.txt');
 
 	if (isFile(lsFileCachePath)) {
 		console.log('[' + new Date().toLocaleTimeString() + ']', 'Scanning', sourceRoot, 'ls-files cache for legacy plugins');
@@ -92,7 +92,7 @@ function getModulePluginsFolders(sourceRoot, pluginFolders, getNewPluginFolders)
 		pluginFolders = pluginFolders.concat(newPluginFolders);
 	}
 	else {
-		var appsPath = path.join(sourceRoot, 'modules/apps');
+		var appsPath = getFilePath(sourceRoot, 'modules/apps');
 
 		if (isDirectory(appsPath)) {
 			console.log('[' + new Date().toLocaleTimeString() + ']', 'Scanning', appsPath, 'for legacy plugins');
@@ -104,7 +104,7 @@ function getModulePluginsFolders(sourceRoot, pluginFolders, getNewPluginFolders)
 				.reduce(flatten, pluginFolders);
 		}
 
-		var privateAppsPath = path.join(sourceRoot, 'modules/private/apps');
+		var privateAppsPath = getFilePath(sourceRoot, 'modules/private/apps');
 
 		if (isDirectory(privateAppsPath)) {
 			console.log('[' + new Date().toLocaleTimeString() + ']', 'Scanning', privateAppsPath, 'for legacy plugins');
@@ -139,15 +139,15 @@ function isModuleFolder(moduleFileSet, moduleFolderSet, folder) {
 		return false;
 	}
 
-	if (!moduleFileSet.has(path.join(folder, 'bnd.bnd')) && !moduleFileSet.has(path.join(folder, 'package.json'))) {
+	if (!moduleFileSet.has(getFilePath(folder, 'bnd.bnd')) && !moduleFileSet.has(getFilePath(folder, 'package.json'))) {
 		return false;
 	}
 
-	if (!moduleFileSet.has(path.join(folder, 'build.gradle'))) {
+	if (!moduleFileSet.has(getFilePath(folder, 'build.gradle'))) {
 		return false;
 	}
 
-	if (!moduleFolderSet.has(path.join(folder, 'docroot')) && !moduleFolderSet.has(path.join(folder, 'src'))) {
+	if (!moduleFolderSet.has(getFilePath(folder, 'docroot')) && !moduleFolderSet.has(getFilePath(folder, 'src'))) {
 		return false;
 	}
 
@@ -155,11 +155,11 @@ function isModuleFolder(moduleFileSet, moduleFolderSet, folder) {
 };
 
 function isPluginFolder(moduleFileSet, moduleFolderSet, folder) {
-	if (!moduleFolderSet.has(path.join(folder, 'docroot')) && !moduleFolderSet.has(path.join(folder, 'src'))) {
+	if (!moduleFolderSet.has(getFilePath(folder, 'docroot')) && !moduleFolderSet.has(getFilePath(folder, 'src'))) {
 		return false;
 	}
 
-	if (!moduleFileSet.has(path.join(folder, 'build.xml'))) {
+	if (!moduleFileSet.has(getFilePath(folder, 'build.xml'))) {
 		return false;
 	}
 
@@ -171,7 +171,7 @@ function isPluginsSDK(otherSourceFolder) {
 };
 
 function isPortalPreModule(folder) {
-	return isFile(path.join(folder, '.lfrbuild-portal-pre'));
+	return isFile(getFilePath(folder, '.lfrbuild-portal-pre'));
 };
 
 function prepareProject(portalSourceFolder, otherSourceFolders) {
@@ -227,7 +227,7 @@ function scanProject(portalSourceFolder, otherSourceFolders, unload, callback) {
 				console.log('[' + new Date().toLocaleTimeString() + ']', 'Located', pluginFolders.length - oldPluginFolderCount, 'legacy plugins folders in', sourceRoot);
 			}
 
-			var modulesPath = path.join(sourceRoot, 'modules');
+			var modulesPath = getFilePath(sourceRoot, 'modules');
 
 			if (isDirectory(modulesPath)) {
 				sourceRoot = modulesPath;
@@ -247,7 +247,7 @@ function scanProject(portalSourceFolder, otherSourceFolders, unload, callback) {
 
 	console.log('[' + new Date().toLocaleTimeString() + ']', 'Located', pluginFolders.length - oldPluginFolderCount, 'legacy plugins folders in', portalSourceFolder);
 
-	var portalSourceModulesRootPath = path.join(portalSourceFolder, 'modules');
+	var portalSourceModulesRootPath = getFilePath(portalSourceFolder, 'modules');
 	var coreModuleFolders = getModuleFolders(portalSourceFolder, portalSourceModulesRootPath);
 
 	console.log('[' + new Date().toLocaleTimeString() + ']', 'Located', coreModuleFolders.length, 'modules folders in', portalSourceFolder);
