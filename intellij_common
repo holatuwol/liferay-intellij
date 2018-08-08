@@ -28,13 +28,18 @@ copylibs() {
 		return 0
 	fi
 
-	if [ ! -d ../liferay-binaries-cache-2017 ]; then
-		"$NODEJS" "${SCRIPT_FOLDER}/bin/pom.js" "$PWD"
-
-		mvn  --fail-at-end dependency:go-offline
-		grep '<module>.*</module>' pom.xml | awk -F'[<>]' '{ print $3 "/pom.xml" }' | xargs rm
-		rm pom.xml
+	if [ -d ../liferay-binaries-cache-2017 ]; then
+		return 0
 	fi
+
+	echo 'Missing clone of https://github.com/liferay/liferay-binaries-cache-2017'
+	echo 'Retrieving dependency libraries using Maven'
+
+	"$NODEJS" "${SCRIPT_FOLDER}/bin/pom.js" "$PWD"
+
+	mvn --fail-at-end dependency:go-offline
+	grep '<module>.*</module>' pom.xml | awk -F'[<>]' '{ print $3 "/pom.xml" }' | xargs rm
+	rm pom.xml
 
 	for folder in development global portal; do
 		if [ ! -f lib/$folder/dependencies.properties ]; then
@@ -44,8 +49,7 @@ copylibs() {
 		for dependency in $(cat lib/$folder/dependencies.properties); do
 			local lib_jar=lib/$folder/$(echo $dependency | cut -d'=' -f 1).jar
 
-			local group_gradle=$(echo $dependency | cut -d'=' -f 2 | cut -d':' -f 1)
-			local group_maven=$(echo $group_gradle | tr '.' '/')
+			local group_maven=$(echo $dependency | cut -d'=' -f 2 | cut -d':' -f 1 | tr '.' '/')
 			local name=$(echo $dependency | cut -d'=' -f 2 | cut -d':' -f 2)
 			local version=$(echo $dependency | cut -d'=' -f 2 | cut -d':' -f 3)
 
@@ -54,16 +58,6 @@ copylibs() {
 			if [ -f $maven_path ]; then
 				cp $maven_path $lib_jar
 				continue
-			fi
-
-			local gradle_path=../liferay-binaries-cache-2017/.gradle/caches/modules-2/files-2.1/${group_gradle}/${name}/${version}
-
-			if [ -d $gradle_path ]; then
-				local gradle_jar=$(find $gradle_path -name ${name}-${version}.jar | head -1)
-
-				if [ "" != "$gradle_jar" ]; then
-					cp $gradle_jar $lib_jar
-				fi
 			fi
 		done
 	done
