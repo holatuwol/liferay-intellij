@@ -80,7 +80,7 @@ function getModuleName(module) {
 	return module.moduleName;
 };
 
-function getModulePluginsFolders(sourceRoot, pluginFolders, getNewPluginFolders) {
+function getModulePluginsFolders(portalSourceFolder, sourceRoot, pluginFolders, getNewPluginFolders) {
 	var lsFileCachePath = getFilePath(sourceRoot, 'modules/git_ls_files_modules.txt');
 
 	if (isFile(lsFileCachePath)) {
@@ -92,9 +92,18 @@ function getModulePluginsFolders(sourceRoot, pluginFolders, getNewPluginFolders)
 		var moduleFolderSet = new Set(moduleFileList.map(path.dirname).map(getBaseFolderName));
 		var moduleFolderList = Array.from(moduleFolderSet);
 
+		var relativeRoot = sourceRoot;
+
+		if (relativeRoot.indexOf(portalSourceFolder) == 0) {
+			relativeRoot = relativeRoot.substring(portalSourceFolder.length);
+		}
+
 		var newPluginFolders = moduleFolderList
-			.filter(highland.ncurry(3, isPluginFolder, moduleFileSet, moduleFolderSet))
-			.map(getFilePath.bind(null, sourceRoot));
+			.filter(highland.ncurry(3, isPluginFolder, moduleFileSet, moduleFolderSet));
+
+		if (relativeRoot != '') {
+			newPluginFolders = newPluginFolders.map(getFilePath.bind(null, relativeRoot));
+		}
 
 		pluginFolders = pluginFolders.concat(newPluginFolders);
 	}
@@ -223,7 +232,7 @@ function scanProject(portalSourceFolder, otherSourceFolders, unload, callback) {
 			else {
 				var oldPluginFolderCount = pluginFolders.length;
 
-				pluginFolders = getModulePluginsFolders(sourceRoot, pluginFolders, getNewPluginFolders);
+				pluginFolders = getModulePluginsFolders(portalSourceFolder, sourceRoot, pluginFolders, getNewPluginFolders);
 
 				console.log('[' + new Date().toLocaleTimeString() + ']', 'Located', pluginFolders.length - oldPluginFolderCount, 'legacy plugins folders in', sourceRoot);
 			}
@@ -244,7 +253,7 @@ function scanProject(portalSourceFolder, otherSourceFolders, unload, callback) {
 
 	var oldPluginFolderCount = pluginFolders.length;
 
-	pluginFolders = getModulePluginsFolders(portalSourceFolder, pluginFolders, getNewPluginFolders);
+	pluginFolders = getModulePluginsFolders(portalSourceFolder, portalSourceFolder, pluginFolders, getNewPluginFolders);
 
 	console.log('[' + new Date().toLocaleTimeString() + ']', 'Located', pluginFolders.length - oldPluginFolderCount, 'legacy plugins folders in', portalSourceFolder);
 
