@@ -60,11 +60,18 @@ function getModuleFolders(portalSourceFolder, moduleSourceFolder) {
 	var moduleFolderSet = new Set(moduleFileList.map(path.dirname).map(getBaseFolderName));
 	var moduleFolderList = Array.from(moduleFolderSet);
 
-	var gitRoot = path.dirname(moduleSourceFolder);
+	var relativeRoot = path.dirname(moduleSourceFolder);
+
+	if (relativeRoot.indexOf(portalSourceFolder) == 0) {
+		relativeRoot = relativeRoot.substring(portalSourceFolder.length);
+	}
 
 	var newModuleFolders = moduleFolderList
-		.filter(highland.ncurry(3, isModuleFolder, moduleFileSet, moduleFolderSet))
-		.map(getFilePath.bind(null, gitRoot));
+		.filter(highland.ncurry(3, isModuleFolder, moduleFileSet, moduleFolderSet));
+
+	if (relativeRoot != '') {
+		newModuleFolders = newModuleFolders.map(getFilePath.bind(null, relativeRoot));
+	}
 
 	return newModuleFolders;
 };
