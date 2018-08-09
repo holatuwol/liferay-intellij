@@ -2,6 +2,10 @@
 
 cachemodules() {
 	for folder in $@; do
+		if [ ! -d "${folder}" ]; then
+			continue
+		fi
+
 		timeecho "Building ${folder} ls-files cache to speed up directory scanning"
 
 		pushd "${folder}" > /dev/null
@@ -193,6 +197,10 @@ timeecho() {
 
 uncachemodules() {
 	for folder in $@; do
+		if [ ! -d "${folder}" ]; then
+			continue
+		fi
+
 		rm -f ${folder}/modules/git_ls_files_modules.txt
 	done
 
