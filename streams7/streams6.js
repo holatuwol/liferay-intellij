@@ -229,7 +229,7 @@ function saveContent(file) {
 		}
 	}
 
-	fs.writeFile(file.name, splitContent.join('\n'), function() {});
+	fs.writeFileSync(file.name, splitContent.join('\n'));
 };
 
 exports.createProjectWorkspace = createProjectWorkspace;

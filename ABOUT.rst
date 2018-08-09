@@ -61,6 +61,7 @@ Change Log
 
 This is a change log for when I started keeping track of the changes that were made.
 
+* **2018-08-09**: Fix invalid ``modules.xml`` and ``.iml`` files being generated
 * **2018-08-08**: Use ``git ls-files`` to speed up directory scanning for clones of the portal source
 * **2018-08-02**: Avoid scanning remote tags and branches just to find the remote corresponding to ``liferay/liferay-portal-ee``
 * **2018-07-12**: Switch to the CDN, because Liferay will soon disable direct access to its public Maven repository
