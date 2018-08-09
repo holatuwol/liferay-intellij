@@ -37,7 +37,7 @@ function getBaseFolderName(folderName) {
 	pos = folderName.indexOf('/docroot/');
 
 	if (pos != -1) {
-		return folderName.substring(0, pos + 8);
+		return folderName.substring(0, pos);
 	}
 
 	return folderName;
@@ -143,11 +143,7 @@ function isModuleFolder(moduleFileSet, moduleFolderSet, folder) {
 		return false;
 	}
 
-	if (!moduleFileSet.has(getFilePath(folder, 'build.gradle'))) {
-		return false;
-	}
-
-	if (!moduleFolderSet.has(getFilePath(folder, 'docroot')) && !moduleFolderSet.has(getFilePath(folder, 'src'))) {
+	if (!moduleFolderSet.has(getFilePath(folder, 'src'))) {
 		return false;
 	}
 
@@ -155,11 +151,9 @@ function isModuleFolder(moduleFileSet, moduleFolderSet, folder) {
 };
 
 function isPluginFolder(moduleFileSet, moduleFolderSet, folder) {
-	if (!moduleFolderSet.has(getFilePath(folder, 'docroot')) && !moduleFolderSet.has(getFilePath(folder, 'src'))) {
-		return false;
-	}
+	if (!moduleFileSet.has(getFilePath(folder, 'docroot/WEB-INF/liferay-plugin-package.properties')) &&
+		!moduleFileSet.has(getFilePath(folder, 'src/WEB-INF/liferay-plugin-package.properties'))) {
 
-	if (!moduleFileSet.has(getFilePath(folder, 'build.xml'))) {
 		return false;
 	}
 

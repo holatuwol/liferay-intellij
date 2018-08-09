@@ -109,11 +109,11 @@ Checkpoint 1
 			return false;
 		}
 
-		if (!isFile(getFilePath(folder, 'build.gradle'))) {
+		if (!isFile(getFilePath(folder, 'bnd.bnd')) && !isFile(getFilePath(folder, 'package.json'))) {
 			return false;
 		}
 
-		if (!isFile(getFilePath(folder, 'bnd.bnd')) && !isFile(getFilePath(folder, 'package.json'))) {
+		if (!isDirectory(getFilePath(folder, 'src'))) {
 			return false;
 		}
 
@@ -126,7 +126,7 @@ All Javascript arrays have a ``some`` function and an ``every`` function. ``some
 * `Array.some <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/some>`__
 * `Array.every <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/every>`__
 
-Update our ``isModuleFolder`` function to use ``map`` in order to convert the names contained in ``subfiles`` and ``subfolders`` into paths, and use ``every`` for the ``subfiles`` and ``some`` for the ``subfolders`` in order to determine if we have a module folder.
+Update our ``isModuleFolder`` function to use ``map`` in order to convert the names contained in ``descriptors`` and ``requiredFolders`` into paths, and use ``every`` for the ``subfiles`` and ``some`` for the ``subfolders`` in order to determine if we have a module folder.
 
 .. code-block:: javascript
 
@@ -137,8 +137,8 @@ Update our ``isModuleFolder`` function to use ``map`` in order to convert the na
 
 		var getPath = getFilePath.bind(null, folder);
 
-		var requiredFiles = ['build.gradle'];
 		var descriptors = ['bnd.bnd', 'package.json'];
+		var requiredFolders = ['src'];
 
 		// Determine whether it is potentially a module folder
 		var isPotentialModuleFolder = ...;

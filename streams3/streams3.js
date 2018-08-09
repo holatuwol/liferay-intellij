@@ -95,11 +95,7 @@ function isModuleFolder(folder) {
 		return false;
 	}
 
-	if (!isFile(getFilePath(folder, 'build.gradle'))) {
-		return false;
-	}
-
-	if (!isDirectory(getFilePath(folder, 'docroot')) && !isDirectory(getFilePath(folder, 'src'))) {
+	if (!isDirectory(getFilePath(folder, 'src'))) {
 		return false;
 	}
 

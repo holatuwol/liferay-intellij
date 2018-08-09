@@ -404,6 +404,11 @@ function getSharedDependencies(folder, pluginSDKRoot) {
 	}
 
 	var buildXmlPath = getFilePath(folder, 'build.xml');
+
+	if (!isFile(buildXmlPath)) {
+		return dependencyNames;
+	}
+
 	var buildXmlContents = fs.readFileSync(buildXmlPath);
 
 	var dependencyTextRegex = /<property name="import.shared" value="([^"]*)"/g;
@@ -425,15 +430,11 @@ function isCoreFolder(folder) {
 };
 
 function isPluginFolder(folder) {
-	if (!isCoreFolder(folder)) {
-		return false;
-	}
+	var getPath = getFilePath.bind(null, folder);
 
-	if (!isFile(getFilePath(folder, 'build.xml'))) {
-		return false;
-	}
+	var files = ['docroot/WEB-INF/liferay-plugin-package.properties', 'src/WEB-INF/liferay-plugin-package.properties'];
 
-	return true;
+	return files.some(highland.compose(isFile, getPath));
 };
 
 function isUniqueAssumeSorted(element, index, array) {

@@ -2,20 +2,25 @@
 
 cachemodules() {
 	for folder in $@; do
-		if [ ! -e "${folder}/.git" ]; then
-			continue
-		fi
-
 		timeecho "Building ${folder} ls-files cache to speed up directory scanning"
 
 		pushd "${folder}" > /dev/null
-		git ls-files modules > modules/git_ls_files_modules.txt
+
+		if [ -e "${folder}/.git" ]; then
+			git ls-files modules > modules/git_ls_files_modules.txt
+		else
+			find modules -type f > modules/git_ls_files_modules.txt
+		fi
+
 		popd > /dev/null
 	done
 
+	timeecho "Building ${PWD} ls-files cache to speed up directory scanning"
+
 	if [ -e .git ]; then
-		timeecho "Building ${PWD} ls-files cache to speed up directory scanning"
 		git ls-files modules > modules/git_ls_files_modules.txt
+	else
+		find modules -type f > modules/git_ls_files_modules.txt
 	fi
 }
 

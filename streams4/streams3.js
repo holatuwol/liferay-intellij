@@ -165,11 +165,11 @@ function isModuleFolder(folder) {
 
 	var getPath = getFilePath.bind(null, folder);
 
-	var requiredFiles = ['build.gradle'];
 	var descriptors = ['bnd.bnd', 'package.json'];
+	var requiredFolders = ['src'];
 
-	var isPotentialModuleFolder = requiredFiles.map(getPath).every(isFile) &&
-		descriptors.map(getPath).some(isFile);
+	var isPotentialModuleFolder = descriptors.map(getPath).some(isFile) &&
+		requiredFolders.map(getPath).every(isDirectory);
 
 	if (!isPotentialModuleFolder) {
 		return false;
