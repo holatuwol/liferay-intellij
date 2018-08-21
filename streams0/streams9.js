@@ -604,25 +604,45 @@ function getProjectRepositories() {
 		var passwordBranchName = '7.0.x-private';
 		var privateRemoteName = child_process.execSync('git remote -v | grep -F "liferay/liferay-portal-ee" | cut -f 1 | head -1').toString().trim();
 
+		if (!privateRemoteName) {
+			child_process.execSync('git remote -v | grep -F "/liferay-portal-ee" | cut -f 1 | head -1').toString().trim();
+		}
+
 		if (privateRemoteName) {
-			var propertiesContent = child_process.execSync('git show ' + privateRemoteName + '/' + passwordBranchName + ':working.dir.properties');
+			var propertiesContent = null;
 
-			var repositoryMetadata = getRepositoryMetadata(propertiesContent);
-			var repositoryPath = repositoryMetadata['url'];
-
-			if (repositoryPath.indexOf('https://') == 0) {
-				repositoryPath = repositoryPath.substring(8);
+			try {
+				propertiesContent = child_process.execSync('git show ' + privateRemoteName + '/' + passwordBranchName + ':working.dir.properties');
+			}
+			catch (e) {
 			}
 
-			tempProjectRepositories.push({
-				id: 'liferay-private',
-				name: 'Liferay Private',
-				scheme: 'https',
-				username: repositoryMetadata['username'],
-				password: repositoryMetadata['password'],
-				path: repositoryPath,
-				layout: 'default'
-			});
+			if (!propertiesContent) {
+				try {
+					propertiesContent = child_process.execSync('git show ' + passwordBranchName + ':working.dir.properties');
+				}
+				catch (e) {
+				}
+			}
+
+			if (propertiesContent) {
+				var repositoryMetadata = getRepositoryMetadata(propertiesContent);
+				var repositoryPath = repositoryMetadata['url'];
+
+				if (repositoryPath.indexOf('https://') == 0) {
+					repositoryPath = repositoryPath.substring(8);
+				}
+
+				tempProjectRepositories.push({
+					id: 'liferay-private',
+					name: 'Liferay Private',
+					scheme: 'https',
+					username: repositoryMetadata['username'],
+					password: repositoryMetadata['password'],
+					path: repositoryPath,
+					layout: 'default'
+				});
+			}
 		}
 	}
 
