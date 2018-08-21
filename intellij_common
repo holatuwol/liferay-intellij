@@ -79,6 +79,12 @@ copylibs() {
 	fi
 
 	timeecho 'Missing clone of https://github.com/liferay/liferay-binaries-cache-2017'
+
+	if [ "" == "$(which mvn)" ]; then
+		echo 'Maven is not available in the path, dependency libraries will be missing'
+		return 1
+	fi
+
 	timeecho 'Retrieving dependency libraries using Maven'
 
 	"$NODEJS" "${SCRIPT_FOLDER}/bin/pom.js" "$PWD"
