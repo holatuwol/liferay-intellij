@@ -604,10 +604,6 @@ function getProjectRepositories() {
 		var passwordBranchName = '7.0.x-private';
 		var privateRemoteName = child_process.execSync('git remote -v | grep -F "liferay/liferay-portal-ee" | cut -f 1 | head -1').toString().trim();
 
-		if (!privateRemoteName) {
-			child_process.execSync('git remote -v | grep -F "/liferay-portal-ee" | cut -f 1 | head -1').toString().trim();
-		}
-
 		if (privateRemoteName) {
 			var propertiesContent = null;
 
