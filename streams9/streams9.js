@@ -313,7 +313,8 @@ function getLibraryTableXML(library) {
 
 	var binaryPaths = getLibraryJarPaths(library);
 
-	binaryPaths = Array.from(new Set(binaryPaths));
+	binaryPaths = [];
+	binaryPathsSet.forEach(highland.ncurry(1, Array.prototype.push.bind(binaryPaths)));
 
 	if (binaryPaths.length > 0) {
 		libraryTableXML.push('<CLASSES>');

@@ -58,7 +58,8 @@ function getModuleFolders(portalSourceFolder, moduleSourceFolder) {
 	var moduleFileSet = new Set(moduleFileList);
 
 	var moduleFolderSet = new Set(moduleFileList.map(path.dirname).map(getBaseFolderName));
-	var moduleFolderList = Array.from(moduleFolderSet);
+	var moduleFolderList = [];
+	moduleFolderSet.forEach(highland.ncurry(1, Array.prototype.push.bind(moduleFolderList)));
 
 	var relativeRoot = path.dirname(moduleSourceFolder);
 
@@ -90,7 +91,8 @@ function getModulePluginsFolders(portalSourceFolder, sourceRoot, pluginFolders, 
 		var moduleFileSet = new Set(moduleFileList);
 
 		var moduleFolderSet = new Set(moduleFileList.map(path.dirname).map(getBaseFolderName));
-		var moduleFolderList = Array.from(moduleFolderSet);
+		var moduleFolderList = [];
+		moduleFolderSet.forEach(highland.ncurry(1, Array.prototype.push.bind(moduleFolderList)));
 
 		var relativeRoot = sourceRoot;
 

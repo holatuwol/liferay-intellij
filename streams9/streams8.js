@@ -393,7 +393,7 @@ function isFirstOccurrence(value, index, array) {
 };
 
 function isJar(path) {
-	return isFile(path) && path.endsWith('.jar');
+	return isFile(path) && path.substring(path.length - 4) == '.jar';
 };
 
 function isSameLibraryDependency(left, right) {
