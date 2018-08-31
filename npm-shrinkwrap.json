@@ -230,11 +230,6 @@
       "from": "minimist@1.2.0",
       "resolved": "http://registry.npmjs.org/minimist/-/minimist-1.2.0.tgz"
     },
-    "shelljs": {
-      "version": "0.6.0",
-      "from": "shelljs@0.6.0",
-      "resolved": "http://registry.npmjs.org/shelljs/-/shelljs-0.6.0.tgz"
-    },
     "xmlbuilder": {
       "version": "7.0.0",
       "from": "xmlbuilder@7.0.0",

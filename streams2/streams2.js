@@ -1,11 +1,6 @@
 var fs = require('fs');
 var highland = require('highland');
 var path = require('path');
-var shelljs = require('shelljs');
-
-var isFile = shelljs.test.bind(shelljs, '-f');
-var isDirectory = shelljs.test.bind(shelljs, '-d');
-var isSymbolicLink = shelljs.test.bind(shelljs, '-L');
 
 function getFilePath(folderPath, fileName) {
 	if (folderPath == '.') {
@@ -61,6 +56,24 @@ function getModuleFolders(portalSourceFolder, moduleSourceFolder, includeSubRepo
 	return moduleFolders;
 };
 
+function isDirectory(path) {
+	try {
+		return fs.lstatSync(path).isDirectory();
+	}
+	catch (e) {
+		return false;
+	}
+};
+
+function isFile(path) {
+	try {
+		return fs.lstatSync(path).isFile();
+	}
+	catch (e) {
+		return false;
+	}
+};
+
 function isHidden(fileName) {
 	var pos = fileName.indexOf('/');
 	var firstPathElement = fileName.substring(0, pos);
@@ -106,6 +119,15 @@ function isSubRepo(folder) {
 		.filter(isFile)
 		.map(highland.ncurry(1, fs.getFilePath))
 		.some(isRepoModePull);
+};
+
+function isSymbolicLink(path) {
+	try {
+		return fs.lstatSync(path).isSymbolicLink();
+	}
+	catch (e) {
+		return false;
+	}
 };
 
 exports.getFilePath = getFilePath;

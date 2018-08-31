@@ -4,7 +4,6 @@ var comparators = require('comparators').default;
 var fs = require('fs');
 var highland = require('highland');
 var path = require('path');
-var shelljs = require('shelljs');
 var streams2 = require('../streams2/streams2');
 var streams5 = require('../streams6/streams5');
 var streams6 = require('../streams7/streams6');
@@ -417,7 +416,7 @@ function executeGradleFile(completionMessage, entries) {
 
 	var buildGradleFolder = path.join(process.cwd(), 'tmp/ijbuild');
 
-	shelljs.mkdir('-p', buildGradleFolder);
+	mkdirSync('tmp/ijbuild');
 
 	fs.writeFileSync(path.join(buildGradleFolder, 'build.gradle'), buildGradleContent.join('\n'));
 
@@ -929,6 +928,24 @@ function isUnloadModule(module) {
 	return true;
 };
 
+function mkdirSync(path) {
+	var pos = path.indexOf('/');
+
+	while (pos != -1) {
+		var ancestor = path.substring(0, pos);
+
+		if (!isDirectory(ancestor)) {
+			fs.mkdirSync(ancestor, 0775);
+		}
+
+		pos = path.indexOf('/', pos + 1);
+	}
+
+	if (!isDirectory(path)) {
+		mkdirSync(path);
+	}
+};
+
 function needsGradleCache(library) {
 	if (!library.group) {
 		return false;
@@ -1031,7 +1048,7 @@ function unzipBinary(liferayHome, catalinaHome, module) {
 
 	var moduleBinaryPath = moduleBinaryPaths[0];
 
-	shelljs.mkdir('-p', moduleClassesPath);
+	mkdirSync(moduleClassesPath);
 
 	var args = ['-oqq', moduleBinaryPath];
 
