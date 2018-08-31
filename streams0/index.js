@@ -23,8 +23,8 @@ var getPluginSDKRoot = streams5.getPluginSDKRoot;
 var isDirectory = streams2.isDirectory;
 var isFile = streams2.isFile;
 
-function createProject(portalSourceFolder, otherSourceFolders, unload) {
-	scanProject(portalSourceFolder, otherSourceFolders, unload, createProjectWorkspace);
+function createProject(portalSourceFolder, otherSourceFolders, config) {
+	scanProject(portalSourceFolder, otherSourceFolders, config, createProjectWorkspace);
 };
 
 function getBaseFolderName(folderName) {
@@ -190,7 +190,7 @@ function prepareProject(portalSourceFolder, otherSourceFolders) {
 	scanProject(portalSourceFolder, otherSourceFolders, false, createProjectObjectModels);
 };
 
-function scanProject(portalSourceFolder, otherSourceFolders, unload, callback) {
+function scanProject(portalSourceFolder, otherSourceFolders, config, callback) {
 	var initialCWD = process.cwd();
 
 	process.chdir(portalSourceFolder);
@@ -279,7 +279,7 @@ function scanProject(portalSourceFolder, otherSourceFolders, unload, callback) {
 
 	var pluginDetails = pluginFolders.map(getPluginDetails);
 
-	callback(coreDetails, moduleDetails.concat(coreModuleDetails), pluginDetails, unload);
+	callback(coreDetails, moduleDetails.concat(coreModuleDetails), pluginDetails, config);
 
 	process.chdir(initialCWD);
 };
