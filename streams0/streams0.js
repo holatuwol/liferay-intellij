@@ -942,7 +942,7 @@ function mkdirSync(path) {
 	}
 
 	if (!isDirectory(path)) {
-		mkdirSync(path);
+		fs.mkdirSync(path);
 	}
 };
 
