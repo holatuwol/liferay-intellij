@@ -803,7 +803,7 @@ function getProperty(filePath, propertyName) {
 		if (propertyValue.length > 0) {
 			currentValue = lines[i];
 		}
-		else if (lines[i].startsWith(needle)) {
+		else if (lines[i].indexOf(needle) == 0) {
 			currentValue = lines[i].substring(needle.length);
 		}
 		else {
