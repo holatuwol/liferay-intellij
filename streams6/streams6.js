@@ -25,7 +25,7 @@ function getFacetManagerXML(module) {
 };
 
 function getIndent(indent) {
-	return new Array(indent + 1).join('\t');
+	return new Array(indent + 1).join('  ');
 };
 
 function getIntellijXML(fileData) {
