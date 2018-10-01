@@ -61,6 +61,7 @@ Change Log
 
 This is a change log for when I started keeping track of the changes that were made.
 
+* **2018-10-01**: Mark ``test/functional`` as a test resources folder rather than an excluded folder
 * **2018-09-03**: Fix infinite recursive loop
 * **2018-08-30**: Remove dependency on ``shelljs``, because after checking the source code, it didn't give us anything
 * **2018-08-09**: Fix invalid ``modules.xml`` and ``.iml`` files being generated
