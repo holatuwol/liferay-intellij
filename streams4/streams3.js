@@ -80,10 +80,6 @@ function getModuleExcludeFolders(folder, moduleIncludeFolders) {
 		moduleExcludeFolders.push('node_modules');
 	}
 
-	if (isDirectory(getFilePath(folder, 'test/functional'))) {
-		moduleExcludeFolders.push('test/functional');
-	}
-
 	for (key in moduleIncludeFolders) {
 		if (moduleIncludeFolders.hasOwnProperty(key)) {
 			moduleIncludeFolders[key].reduce(updateExcludeFolders, moduleExcludeFolders);

@@ -9,7 +9,7 @@ var util = require('util');
 var sourceFolders = ['src'];
 var resourceFolders = [];
 var testSourceFolders = ['test/unit', 'test/integration'];
-var testResourceFolders = [];
+var testResourceFolders = ['test/functional'];
 var webrootFolders = ['docroot'];
 
 var getFilePath = function(item1, item2) {
