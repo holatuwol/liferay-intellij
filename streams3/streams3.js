@@ -16,6 +16,8 @@ function getFolders(folderPath, maxDepth) {
 		return folders;
 	}
 
+	folders.push(folderPath);
+
 	var fileNames = fs.readdirSync(folderPath);
 
 	for (var i = 0; i < fileNames.length; i++) {
