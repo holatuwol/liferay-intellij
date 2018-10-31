@@ -23,6 +23,8 @@ var getPluginSDKRoot = streams5.getPluginSDKRoot;
 var isDirectory = streams2.isDirectory;
 var isFile = streams2.isFile;
 
+var portalModuleFileSet = null;
+
 function createProject(portalSourceFolder, otherSourceFolders, config) {
 	scanProject(portalSourceFolder, otherSourceFolders, config, createProjectWorkspace);
 };
@@ -56,6 +58,10 @@ function getModuleFolders(portalSourceFolder, moduleSourceFolder) {
 
 	var moduleFileList = fs.readFileSync(lsFileCachePath).toString().split('\n');
 	var moduleFileSet = new Set(moduleFileList);
+
+	if (getFilePath(portalSourceFolder, 'modules') == moduleSourceFolder) {
+		portalModuleFileSet = moduleFileSet;
+	}
 
 	var moduleFolderSet = new Set(moduleFileList.map(path.dirname).map(getBaseFolderName));
 	var moduleFolderList = [];
@@ -183,7 +189,14 @@ function isPluginsSDK(otherSourceFolder) {
 };
 
 function isPortalPreModule(folder) {
-	return isFile(getFilePath(folder, '.lfrbuild-portal-pre'));
+	var markerFilePath = getFilePath(folder, '.lfrbuild-portal-pre');
+
+	if (portalModuleFileSet != null) {
+		return portalModuleFileSet.has(markerFilePath)
+	}
+	else {
+		return isFile(markerFilePath);
+	}
 };
 
 function prepareProject(portalSourceFolder, otherSourceFolders) {
