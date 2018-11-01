@@ -130,8 +130,10 @@ function generateFileListCache(cachePath) {
 
 	var fileSet = new Set(fileList);
 
-	for (fileName of fileSet) {
+	for (var i = 0; i < fileList.length; i++) {
+		var fileName = fileList[i];
 		var filePath = getFilePath(cachePath, fileName);
+
 		var folderName = fileName
 
 		var pos = folderName.lastIndexOf('/');
