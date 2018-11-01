@@ -2,7 +2,7 @@
 
 cachemodules() {
 	for folder in $@; do
-		if [ ! -d "${folder}" ]; then
+		if [ ! -d "${folder}" ] || [ ! -d "${folder}/modules" ]; then
 			continue
 		fi
 
