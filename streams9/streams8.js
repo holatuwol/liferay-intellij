@@ -197,14 +197,14 @@ function getLibraryFolderPath(library) {
 
 	// Check for a snapshot release
 
-	var artifactNameRelativePath = ['.', library.group, library.name, '-SNAPSHOT'].join('/');
+	var artifactNameRelativePath = ['.', library.group, library.name, library.version + '-SNAPSHOT'].join('/');
 
 	for (gradleCache of gradleCaches) {
 		if (!fileListCache[gradleCache].has(artifactNameRelativePath)) {
 			continue;
 		}
 
-		return getFilePath(gradleCache, gradleRelativePath);
+		return getFilePath(gradleCache, artifactNameRelativePath);
 	}
 
 	return null;
