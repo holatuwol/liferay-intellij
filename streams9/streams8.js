@@ -1,4 +1,5 @@
 var cheerio = require('cheerio');
+var child_process = require('child_process');
 var comparators = require('comparators').default;
 var fs = require('fs');
 var highland = require('highland');
@@ -9,6 +10,7 @@ var streams5 = require('../streams6/streams5');
 var streams6 = require('../streams7/streams6');
 var streams7 = require('../streams8/streams7');
 
+var execFileSync = child_process.execFileSync;
 var getAncestorFiles = streams7.getAncestorFiles;
 var getComponentXML = streams6.getComponentXML;
 var getDependenciesWithWhileLoop = streams4.getDependenciesWithWhileLoop;
@@ -28,6 +30,8 @@ var isFile = streams2.isFile;
 var isTestDependency = streams7.isTestDependency;
 var saveContent = streams6.saveContent;
 
+var fileListCache = {};
+
 var gradleCaches = new Set();
 var mavenCaches = new Set();
 
@@ -38,7 +42,15 @@ function createProjectWorkspace(coreDetails, moduleDetails) {
 	checkForGradleCache(getUserHome());
 	checkForGradleCache('../liferay-binaries-cache-2017');
 
+	for (gradleCache of gradleCaches) {
+		generateFileListCache(gradleCache);
+	}
+
 	checkForMavenCache(getUserHome());
+
+	for (mavenCache of mavenCaches) {
+		generateFileListCache(mavenCache);
+	}
 
 	var moduleStream = highland(moduleDetails);
 	var coreStream = highland(coreDetails);
@@ -100,36 +112,50 @@ function checkForMavenCache(obj) {
 	candidates.forEach(Set.prototype.add.bind(mavenCaches));
 };
 
+function generateFileListCache(cachePath) {
+	var args = ['.'];
+
+	var options = {
+		'cwd': cachePath
+	};
+
+	try {
+		fileListCache[cachePath] = new Set(execFileSync('find', args, options).toString().split('\n'));
+	}
+	catch (e) {
+	}
+}
+
 function getLibraryFolderPath(library) {
 	if (library.group == null) {
 		return null;
 	}
 
-	var mavenRelativePath = library.group.split('.').concat([library.name, library.version]).join('/');
+	var mavenRelativePath = library.group.split('.').concat(['.', library.name, library.version]).join('/');
 
 	for (mavenCache of mavenCaches) {
+		if (!fileListCache[mavenCache].has(mavenRelativePath)) {
+			continue;
+		}
+
 		var mavenAbsolutePath = getFilePath(mavenCache, mavenRelativePath);
 
-		if (isDirectory(mavenAbsolutePath) && (getLibraryJarCount(mavenAbsolutePath) > 0)) {
+		if (getLibraryJarCount(mavenAbsolutePath) > 0) {
 			return mavenAbsolutePath;
 		}
 	}
 
-	var gradleRelativePath = [library.group, library.name, library.version].join('/');
+	var gradleRelativePath = ['.', library.group, library.name, library.version].join('/');
 
 	for (gradleCache of gradleCaches) {
-		var gradleAbsolutePath = getFilePath(gradleCache, gradleRelativePath);
-
-		if (isDirectory(gradleAbsolutePath) && (fs.readdirSync(gradleAbsolutePath).length != 0)) {
-			return gradleAbsolutePath;
+		if (fileListCache[gradleCache].has(gradleRelativePath)) {
+			return getFilePath(gradleCache, gradleRelativePath);
 		}
 	}
 
 	for (mavenCache of mavenCaches) {
-		var mavenAbsolutePath = getFilePath(mavenCache, mavenRelativePath);
-
-		if (isDirectory(mavenAbsolutePath) && (fs.readdirSync(mavenAbsolutePath).length != 0)) {
-			return mavenAbsolutePath;
+		if (fileListCache[mavenCache].has(mavenRelativePath)) {
+			return getFilePath(mavenCache, mavenRelativePath);
 		}
 	}
 
@@ -139,25 +165,16 @@ function getLibraryFolderPath(library) {
 
 	// Check for a snapshot release
 
-	var artifactNameRelativePath = [library.group, library.name].join('/');
-	prefix = library.version + '-';
+	var artifactNameRelativePath = ['.', library.group, library.name, '-SNAPSHOT'].join('/');
 
 	for (gradleCache of gradleCaches) {
-		var artifactNameAbsolutePath = getFilePath(gradleCache, artifactNameRelativePath);
-
-		if (!isDirectory(artifactNameAbsolutePath)) {
+		if (!fileListCache[gradleCache].has(artifactNameRelativePath)) {
 			continue;
 		}
 
 		var folders = fs.readdirSync(artifactNameAbsolutePath);
 
 		for (var i = 0; i < folders.length; i++) {
-			if (folders[i].indexOf(prefix) != 0) {
-				continue;
-			}
-
-			library.version = folders[i];
-
 			var gradleAbsolutePath = getFilePath(artifactNameAbsolutePath, library.version);
 			return gradleAbsolutePath;
 		}
@@ -668,6 +685,7 @@ function sum(accumulator, next) {
 exports.checkForGradleCache = checkForGradleCache;
 exports.checkForMavenCache = checkForMavenCache;
 exports.createProjectWorkspace = createProjectWorkspace;
+exports.generateFileListCache = generateFileListCache;
 exports.getLibraryJarPaths = getLibraryJarPaths;
 exports.getLibraryOrderEntryElement = getLibraryOrderEntryElement;
 exports.getLibraryRootElement = getLibraryRootElement;

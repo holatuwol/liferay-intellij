@@ -11,6 +11,7 @@ var xmlbuilder = require('xmlbuilder');
 
 var checkForGradleCache = streams8.checkForGradleCache;
 var checkForMavenCache = streams8.checkForMavenCache;
+var generateFileListCache = streams8.generateFileListCache;
 var getAncestorFiles = streams7.getAncestorFiles;
 var getComponentXML = streams6.getComponentXML;
 var getExcludeFolderElement = streams6.getExcludeFolderElement;
@@ -61,7 +62,15 @@ function createProjectWorkspace(coreDetails, moduleDetails) {
 	checkForGradleCache(getUserHome());
 	checkForGradleCache('../liferay-binaries-cache-2017');
 
+	for (gradleCache of gradleCaches) {
+		generateFileListCache(gradleCache);
+	}
+
 	checkForMavenCache(getUserHome());
+
+	for (mavenCache of mavenCaches) {
+		generateFileListCache(mavenCache);
+	}
 
 	var moduleVersions = coreDetails.reduce(setCoreBundleVersions, {});
 	moduleVersions = moduleDetails.reduce(setModuleBundleVersions, moduleVersions);

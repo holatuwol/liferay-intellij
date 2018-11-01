@@ -16,6 +16,7 @@ var checkForGradleCache = streams8.checkForGradleCache;
 var checkForMavenCache = streams8.checkForMavenCache;
 var execFileSync = child_process.execFileSync;
 var fixLibraryDependencies = streams9.fixLibraryDependencies;
+var generateFileListCache = streams8.generateFileListCache;
 var getAncestorFiles = streams7.getAncestorFiles;
 var getFilePath = streams5.getFilePath;
 var getIntellijXML = streams6.getIntellijXML;
@@ -59,7 +60,15 @@ function createProjectObjectModels(coreDetails, moduleDetails, pluginDetails) {
 	checkForGradleCache(getUserHome());
 	checkForGradleCache('../liferay-binaries-cache-2017');
 
+	for (gradleCache of gradleCaches) {
+		generateFileListCache(gradleCache);
+	}
+
 	checkForMavenCache(getUserHome());
+
+	for (mavenCache of mavenCaches) {
+		generateFileListCache(mavenCache);
+	}
 
 	console.log('[' + new Date().toLocaleTimeString() + ']', 'Analyzing existing IntelliJ breakpoints');
 
@@ -134,7 +143,15 @@ function createProjectWorkspace(coreDetails, moduleDetails, pluginDetails, confi
 	checkForGradleCache(getUserHome());
 	checkForGradleCache('../liferay-binaries-cache-2017');
 
+	for (gradleCache of gradleCaches) {
+		generateFileListCache(gradleCache);
+	}
+
 	checkForMavenCache(getUserHome());
+
+	for (mavenCache of mavenCaches) {
+		generateFileListCache(mavenCache);
+	}
 
 	checkBreakpoints(moduleDetails);
 
@@ -389,6 +406,8 @@ function executeGradleFile(completionMessage, entries) {
 
 	lastLibraryCount = entries.length;
 
+	console.log('[' + new Date().toLocaleTimeString() + ']', 'Attempting to download', lastLibraryCount, 'dependencies');
+
 	var gradleRepositoriesBlock = getProjectRepositories().reduce(getGradleRepositoriesBlock, []);
 
 	var buildGradleContent = [
@@ -432,6 +451,8 @@ function executeGradleFile(completionMessage, entries) {
 	}
 	catch (e) {
 	}
+
+	generateFileListCache('');
 };
 
 function fixMavenBomDependencies(module) {
