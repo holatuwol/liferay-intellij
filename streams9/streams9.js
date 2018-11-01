@@ -61,7 +61,6 @@ function createProjectWorkspace(coreDetails, moduleDetails) {
 	checkForGradleCache(getUserHome());
 	checkForGradleCache('../liferay-binaries-cache-2017');
 
-	moduleDetails.forEach(checkForMavenCache);
 	checkForMavenCache(getUserHome());
 
 	var moduleVersions = coreDetails.reduce(setCoreBundleVersions, {});

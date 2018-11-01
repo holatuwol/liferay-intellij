@@ -59,7 +59,6 @@ function createProjectObjectModels(coreDetails, moduleDetails, pluginDetails) {
 	checkForGradleCache(getUserHome());
 	checkForGradleCache('../liferay-binaries-cache-2017');
 
-	moduleDetails.forEach(checkForMavenCache);
 	checkForMavenCache(getUserHome());
 
 	console.log('[' + new Date().toLocaleTimeString() + ']', 'Analyzing existing IntelliJ breakpoints');
@@ -135,7 +134,6 @@ function createProjectWorkspace(coreDetails, moduleDetails, pluginDetails, confi
 	checkForGradleCache(getUserHome());
 	checkForGradleCache('../liferay-binaries-cache-2017');
 
-	moduleDetails.forEach(checkForMavenCache);
 	checkForMavenCache(getUserHome());
 
 	checkBreakpoints(moduleDetails);

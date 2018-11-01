@@ -70,7 +70,6 @@ function createProjectWorkspace(coreDetails, moduleDetails, pluginDetails) {
 	checkForGradleCache(getUserHome());
 	checkForGradleCache('../liferay-binaries-cache-2017');
 
-	moduleDetails.forEach(checkForMavenCache);
 	checkForMavenCache(getUserHome());
 
 	if (pluginDetails) {
