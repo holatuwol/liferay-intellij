@@ -136,6 +136,8 @@ function createProjectObjectModels(coreDetails, moduleDetails, pluginDetails) {
 };
 
 function createProjectWorkspace(coreDetails, moduleDetails, pluginDetails, config) {
+	console.log('[' + new Date().toLocaleTimeString() + ']', 'Checking for Git roots, Gradle caches, and Maven caches');
+
 	coreDetails.forEach(checkForGitRoot);
 	moduleDetails.forEach(checkForGitRoot);
 
@@ -152,6 +154,8 @@ function createProjectWorkspace(coreDetails, moduleDetails, pluginDetails, confi
 	for (mavenCache of mavenCaches) {
 		generateFileListCache(mavenCache);
 	}
+
+	console.log('[' + new Date().toLocaleTimeString() + ']', 'Analyzing existing IntelliJ breakpoints');
 
 	checkBreakpoints(moduleDetails);
 
