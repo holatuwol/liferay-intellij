@@ -25,12 +25,11 @@ var getModuleIMLPath = streams6.getModuleIMLPath;
 var getOrderEntryElement = streams7.getOrderEntryElement;
 var getSourceFolderElement = streams6.getSourceFolderElement;
 var getWorkspaceModulesXML = streams7.getWorkspaceModulesXML;
-var isDirectory = streams2.isDirectory;
-var isFile = streams2.isFile;
 var isTestDependency = streams7.isTestDependency;
 var saveContent = streams6.saveContent;
 
 var fileListCache = {};
+var folderListCache = {};
 
 var gradleCaches = new Set();
 var mavenCaches = new Set();
@@ -113,17 +112,48 @@ function checkForMavenCache(obj) {
 };
 
 function generateFileListCache(cachePath) {
-	var args = ['.'];
+	var args = ['.', '-name', '*.jar', '-o', '-name', '*.pom'];
 
 	var options = {
 		'cwd': cachePath
 	};
 
+	var fileList = [];
+
 	try {
-		fileListCache[cachePath] = new Set(execFileSync('find', args, options).toString().split('\n'));
+		fileList = execFileSync('find', args, options).toString().split('\n');
 	}
 	catch (e) {
 	}
+
+	fileList.sort();
+
+	var fileSet = new Set(fileList);
+
+	for (fileName of fileSet) {
+		var filePath = getFilePath(cachePath, fileName);
+		var folderName = fileName
+
+		var pos = folderName.lastIndexOf('/');
+
+		while (pos != -1) {
+			folderName = folderName.substring(0, pos);
+
+			var folderPath = getFilePath(cachePath, folderName);
+
+			if (folderListCache[folderPath]) {
+				folderListCache[folderPath].push(filePath);
+			}
+			else {
+				folderListCache[folderPath] = [filePath];
+				fileSet.add(folderName);
+			}
+
+			pos = folderName.lastIndexOf('/');
+		}
+	}
+
+	fileListCache[cachePath] = fileSet;
 }
 
 function getLibraryFolderPath(library) {
@@ -172,22 +202,14 @@ function getLibraryFolderPath(library) {
 			continue;
 		}
 
-		var folders = fs.readdirSync(artifactNameAbsolutePath);
-
-		for (var i = 0; i < folders.length; i++) {
-			var gradleAbsolutePath = getFilePath(artifactNameAbsolutePath, library.version);
-			return gradleAbsolutePath;
-		}
+		return getFilePath(gradleCache, gradleRelativePath);
 	}
 
 	return null;
 };
 
 function getLibraryJarCount(path) {
-	var fileList = fs.readdirSync(path);
-	var jarCount = fileList.filter(isJar).length;
-
-	return fileList.filter(isDirectory).map(getLibraryJarCount).reduce(sum, jarCount);
+	return folderListCache[path].filter(isJar).length;
 };
 
 function getLibraryJarList(jarPaths) {
@@ -226,14 +248,14 @@ function getLibraryJarPaths(library) {
 	}
 
 	var jarName = library.name + '-' + library.version + '.jar';
+	var jarList = [];
 
-	var jarList = fs.readdirSync(folderPath)
-		.map(getFilePath(folderPath))
-		.map(highland.flip(getFilePath, jarName))
-		.filter(isFile);
+	var candidateFiles = folderListCache[folderPath];
 
-	if (jarList.length == 0) {
-		jarList = [getFilePath(folderPath, jarName)].filter(isFile);
+	for (var i = 0; i < candidateFiles.length; i++) {
+		if (candidateFiles[i].indexOf(jarName) != -1) {
+			jarList.push(candidateFiles[i]);
+		}
 	}
 
 	var jarPaths = {};
@@ -409,7 +431,7 @@ function isFirstOccurrence(value, index, array) {
 };
 
 function isJar(path) {
-	return isFile(path) && path.substring(path.length - 4) == '.jar';
+	return path.substring(path.length - 4) == '.jar';
 };
 
 function isSameLibraryDependency(left, right) {
@@ -440,13 +462,12 @@ function processPomDependencies(library) {
 	var pomName = library.name + '-' + library.version + '.pom';
 	var pomPaths = [];
 
-	var pomPaths = fs.readdirSync(folderPath)
-		.map(getFilePath(folderPath))
-		.map(highland.flip(getFilePath, pomName))
-		.filter(isFile);
+	var candidateFiles = folderListCache[folderPath];
 
-	if (pomPaths.length == 0) {
-		pomPaths = [getFilePath(folderPath, pomName)].filter(isFile);
+	for (var i = 0; i < candidateFiles.length; i++) {
+		if (candidateFiles[i].indexOf(pomName) != -1) {
+			pomPaths.push(candidateFiles[i]);
+		}
 	}
 
 	if (pomPaths.length == 0) {
