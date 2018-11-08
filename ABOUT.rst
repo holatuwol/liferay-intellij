@@ -61,6 +61,7 @@ Change Log
 
 This is a change log for when I started keeping track of the changes that were made.
 
+* **2018-11-08**: Parse BOM dependencies declared in parent ``build.gradle`` files
 * **2018-10-31**: Use ``find`` to speed up checks for whether we have a library in the Gradle or Maven caches
 * **2018-10-15**: When pointing directly at a module folder (rather than a folder holding multiple modules), recognize that module folder
 * **2018-10-01**: Mark ``test/functional`` as a test resources folder rather than an excluded folder

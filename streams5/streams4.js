@@ -45,7 +45,7 @@ function getLibraryDependency(matchResult) {
 		type: 'library',
 		group: matchResult[1],
 		name: matchResult[2],
-		version: matchResult[3],
+		version: matchResult.length > 2 ? matchResult[3] : null,
 		testScope: matchResult[0].indexOf('test') == 0
 	};
 
@@ -105,9 +105,9 @@ function getModuleDependencies(folder, moduleDependencies) {
 	var dependencyTextRegex = /dependencies \{([\s\S]*?)\n\s*\}/g;
 	var dependencyTextResult = null;
 
-	var libraryDependencyRegex1 = /(?:test|compile|provided)[^\n]*\sgroup *: *['"]([^'"]*)['"],[\s*]name *: *['"]([^'"]*)['"], [^\n]*version *: *['"]([^'"]*)['"]/;
+	var libraryDependencyRegex1 = /(?:test|compile|provided)[^\n]*\sgroup *: *['"]([^'"]*)['"],[\s*]name *: *['"]([^'"]*)['"](?:, [^\n]*version *: *['"]([^'"]*)['"])?/;
 	var libraryDependencyRegex2 = /(?:test|compile|provided)[^\n]*\s['"]([^'"]*):([^'"]*):([^'"]*)['"]/;
-	var libraryDependencyRegex3 = /(?:test|compile|provided)[^\n]*\sgroup *: *['"]([^'"]*)['"],[\s*]name *: *['"]([^'"]*)['"], [^\n]*version *: ([^'"]+)/;
+	var libraryDependencyRegex3 = /(?:test|compile|provided)[^\n]*\sgroup *: *['"]([^'"]*)['"],[\s*]name *: *['"]([^'"]*)['"](?:, [^\n]*version *: ([^'"]+))?/;
 	var projectDependencyRegex = /(?:test|compile|provided)[^\n]*\sproject\(['"]:(?:[^'"]*:)?([^'"]*)['"]/;
 
 	while ((dependencyTextResult = dependencyTextRegex.exec(buildGradleContents)) !== null) {
@@ -174,4 +174,5 @@ function getProjectDependency(matchResult) {
 exports.getDependenciesWithWhileLoop = getDependenciesWithWhileLoop;
 exports.getDependenciesWithStreams = getDependenciesWithStreams;
 exports.getLibraryDependency = getLibraryDependency;
+exports.getLibraryVariableDependency = getLibraryVariableDependency;
 exports.getModuleDetails = getModuleDetails;

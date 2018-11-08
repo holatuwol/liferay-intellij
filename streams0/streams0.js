@@ -5,6 +5,7 @@ var fs = require('fs');
 var highland = require('highland');
 var path = require('path');
 var streams2 = require('../streams2/streams2');
+var streams4 = require('../streams5/streams4');
 var streams5 = require('../streams6/streams5');
 var streams6 = require('../streams7/streams6');
 var streams7 = require('../streams8/streams7');
@@ -18,10 +19,13 @@ var execFileSync = child_process.execFileSync;
 var fixLibraryDependencies = streams9.fixLibraryDependencies;
 var generateFileListCache = streams8.generateFileListCache;
 var getAncestorFiles = streams7.getAncestorFiles;
+var getDependenciesWithStreams = streams4.getDependenciesWithStreams;
 var getFilePath = streams5.getFilePath;
 var getIntellijXML = streams6.getIntellijXML;
 var getJarLibraryXML = streams9.getJarLibraryXML;
+var getLibraryDependency = streams4.getLibraryDependency;
 var getLibraryJarPaths = streams8.getLibraryJarPaths;
+var getLibraryVariableDependency = streams4.getLibraryVariableDependency;
 var getLibraryXML = streams9.getLibraryXML;
 var getMavenAggregator = streams9.getMavenAggregator;
 var getMavenProject = streams9.getMavenProject;
@@ -568,7 +572,20 @@ function gatherMavenBomDependencies(module) {
 	}
 
 	var dependencyTextRegex = /dependencyManagement \{([\s\S]*?)\n\}/g;
+
 	var mavenBomRegex = /mavenBom\s*['"]([^:]*):([^:]*):([^'"]*)['"]/g;
+
+	var libraryDependencyRegex1 = /dependency\sgroup *: *['"]([^'"]*)['"],[\s*]name *: *['"]([^'"]*)['"], [^\n]*version *: *['"]([^'"]*)['"]/;
+	var libraryDependencyRegex2 = /dependency\s['"]([^'"]*):([^'"]*):([^'"]*)['"]/;
+	var libraryDependencyRegex3 = /dependency\sgroup *: *['"]([^'"]*)['"],[\s*]name *: *['"]([^'"]*)['"], [^\n]*version *: ([^'"]+)/;
+
+	var missingVersionDependencies = [];
+
+	for (var i = 0; i < module.libraryDependencies.length; i++) {
+		if (!module.libraryDependencies[i].libraryName && (module.libraryDependencies[i].version == null)) {
+			missingVersionDependencies.push(module.libraryDependencies[i]);
+		}
+	}
 
 	while ((dependencyTextResult = dependencyTextRegex.exec(buildGradleContents)) !== null) {
 		if (!module.bomDependencies) {
@@ -576,19 +593,59 @@ function gatherMavenBomDependencies(module) {
 		}
 
 		var dependencyText = dependencyTextResult[1];
+		var overriddenByDependencies = dependencyText.indexOf('overriddenByDependencies = false') == -1;
 
-		while (mavenBomResult = mavenBomRegex.exec(dependencyText)) {
-			var dependency = {
-				type: 'library',
-				group: mavenBomResult[1],
-				name: mavenBomResult[2],
-				version: mavenBomResult[3],
-				testScope: false,
-				overriddenByDependencies: dependencyText.indexOf('overriddenByDependencies = false') == -1
-			};
+		var bomDependencies = getDependenciesWithStreams(dependencyText, getBomDependency, mavenBomRegex);
 
-			module.bomDependencies.push(dependency);
+		for (var i = 0; i < bomDependencies.length; i++) {
+			bomDependencies[i].overriddenByDependencies = overriddenByDependencies;
 		}
+
+		Array.prototype.push.apply(module.bomDependencies, bomDependencies);
+
+		var getLibraryDependencies = highland.partial(getDependenciesWithStreams, dependencyText, getLibraryDependency);
+		var getLibraryVariableDependencies = highland.partial(getDependenciesWithStreams, dependencyText, highland.partial(getLibraryVariableDependency, buildGradleContents));
+
+		var libraryDependencies = [];
+
+		Array.prototype.push.apply(libraryDependencies, getLibraryDependencies(libraryDependencyRegex1));
+		Array.prototype.push.apply(libraryDependencies, getLibraryDependencies(libraryDependencyRegex2));
+		Array.prototype.push.apply(libraryDependencies, getLibraryVariableDependencies(libraryDependencyRegex3));
+
+		for (var i = 0; i < missingVersionDependencies.length; i++) {
+			for (var j = 0; j < libraryDependencies.length; j++) {
+				if ((missingVersionDependencies[i].group == libraryDependencies[j].group) && (missingVersionDependencies[i].name == libraryDependencies[j].name)) {
+					missingVersionDependencies[i].version = libraryDependencies[j].version;
+					missingVersionDependencies.splice(i--, 1);
+					break;
+				}
+			}
+		}
+	}
+
+	if (missingVersionDependencies.length == 0) {
+		return;
+	}
+
+	var parentBuildGradlePath = getFilePath(path.dirname(module.modulePath), 'build.gradle');
+
+	if (!isFile(parentBuildGradlePath)) {
+		return;
+	}
+
+	var parentModule = {
+		buildGradleContents: fs.readFileSync(parentBuildGradlePath).toString(),
+		libraryDependencies: module.libraryDependencies
+	};
+
+	gatherMavenBomDependencies(parentModule);
+
+	if (parentModule.bomDependencies) {
+		if (!module.bomDependencies) {
+			module.bomDependencies = [];
+		}
+
+		Array.prototype.push.apply(module.bomDependencies, parentModule.bomDependencies);
 	}
 };
 
@@ -602,7 +659,24 @@ function getAppServerProperty(propertyName) {
 	}
 
 	return getProperty('app.server.properties', propertyName);
-}
+};
+
+function getBomDependency(matchResult) {
+	if (matchResult == null) {
+		return null;
+	}
+
+	var dependency = {
+		type: 'library',
+		group: matchResult[1],
+		name: matchResult[2],
+		version: matchResult[3],
+		packaging: 'pom',
+		testScope: false
+	};
+
+	return dependency;
+};
 
 function getCatalinaHome(liferayHome) {
 	if (process.env.CATALINA_HOME) {
@@ -927,6 +1001,12 @@ function getUnloadModuleXML(unloadModuleElements) {
 };
 
 function hasLibraryPath(library) {
+	if (library.group == 'com.liferay.portal') {
+		if ((library.name == 'release.dxp.bom') || (library.name == 'release.portal.bom')) {
+			return true;
+		}
+	}
+
 	var libraryPaths = getLibraryJarPaths(library);
 
 	return libraryPaths.length != 0;

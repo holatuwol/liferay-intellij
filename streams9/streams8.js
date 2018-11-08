@@ -159,7 +159,7 @@ function generateFileListCache(cachePath) {
 }
 
 function getLibraryFolderPath(library) {
-	if (library.group == null) {
+	if ((library.group == null) || (library.version == null)) {
 		return null;
 	}
 
