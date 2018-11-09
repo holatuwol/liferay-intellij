@@ -63,6 +63,7 @@ function getLibraryVariableDependency(buildGradleContents, matchResult) {
 	var x = buildGradleContents.indexOf(variableDeclaration) + variableDeclaration.length;
 
 	if (x < variableDeclaration.length) {
+		console.log('missing', variableDeclaration);
 		return null;
 	}
 
@@ -105,9 +106,10 @@ function getModuleDependencies(folder, moduleDependencies) {
 	var dependencyTextRegex = /dependencies \{([\s\S]*?)\n\s*\}/g;
 	var dependencyTextResult = null;
 
-	var libraryDependencyRegex1 = /(?:test|compile|provided)[^\n]*\sgroup *: *['"]([^'"]*)['"],[\s*]name *: *['"]([^'"]*)['"](?:, [^\n]*version *: *['"]([^'"]*)['"])?/;
-	var libraryDependencyRegex2 = /(?:test|compile|provided)[^\n]*\s['"]([^'"]*):([^'"]*):([^'"]*)['"]/;
-	var libraryDependencyRegex3 = /(?:test|compile|provided)[^\n]*\sgroup *: *['"]([^'"]*)['"],[\s*]name *: *['"]([^'"]*)['"](?:, [^\n]*version *: ([^'"]+))?/;
+	var libraryDependencyRegex1 = /(?:test|compile|provided)[^\n]*\sgroup *: *['"]([^'"]*)['"],[\s*]name *: *['"]([^'"]*)['"], [^\n]*version *: *['"]([^'"]*)['"]/;
+	var libraryDependencyRegex2 = /(?:test|compile|provided)[^\n]*\sgroup *: *['"]([^'"]*)['"],[\s*]name *: *['"]([^'"]*)['"]$/;
+	var libraryDependencyRegex3 = /(?:test|compile|provided)[^\n]*\s['"]([^'"]*):([^'"]*):([^'"]*)['"]/;
+	var libraryDependencyRegex4 = /(?:test|compile|provided)[^\n]*\sgroup *: *['"]([^'"]*)['"],[\s*]name *: *['"]([^'"]*)['"], [^\n]*version *: ([^'"]+)/;
 	var projectDependencyRegex = /(?:test|compile|provided)[^\n]*\sproject\(['"]:(?:[^'"]*:)?([^'"]*)['"]/;
 
 	while ((dependencyTextResult = dependencyTextRegex.exec(buildGradleContents)) !== null) {
@@ -119,7 +121,8 @@ function getModuleDependencies(folder, moduleDependencies) {
 
 		Array.prototype.push.apply(moduleDependencies.libraryDependencies, getLibraryDependencies(libraryDependencyRegex1));
 		Array.prototype.push.apply(moduleDependencies.libraryDependencies, getLibraryDependencies(libraryDependencyRegex2));
-		Array.prototype.push.apply(moduleDependencies.libraryDependencies, getLibraryVariableDependencies(libraryDependencyRegex3));
+		Array.prototype.push.apply(moduleDependencies.libraryDependencies, getLibraryDependencies(libraryDependencyRegex3));
+		Array.prototype.push.apply(moduleDependencies.libraryDependencies, getLibraryVariableDependencies(libraryDependencyRegex4));
 
 		Array.prototype.push.apply(moduleDependencies.projectDependencies, getProjectDependencies(projectDependencyRegex));
 	}
