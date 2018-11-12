@@ -14,6 +14,10 @@ var isDirectory = streams2.isDirectory;
 var isFile = streams2.isFile;
 
 function getDependenciesWithWhileLoop(dependencyText, dependencyExtractor, dependencyRegex) {
+	if (!dependencyRegex) {
+		return [];
+	}
+
 	var dependencies = [];
 
 	while ((matchResult = dependencyRegex.exec(dependencyText)) !== null) {
@@ -28,6 +32,10 @@ function getDependenciesWithWhileLoop(dependencyText, dependencyExtractor, depen
 };
 
 function getDependenciesWithStreams(dependencyText, dependencyExtractor, dependencyRegex) {
+	if (!dependencyRegex) {
+		return [];
+	}
+
 	return dependencyText.split('\n')
 		.map(RegExp.prototype.exec.bind(dependencyRegex))
 		.map(dependencyExtractor)
@@ -82,7 +90,7 @@ function getLibraryVariableDependency(buildGradleContents, matchResult) {
 	return dependency;
 };
 
-function getModuleDependencies(folder, moduleDependencies) {
+function getModuleDependencies(folder, moduleDependencies, dependencyManagementEnabled) {
 	moduleDependencies = moduleDependencies || {};
 
 	var buildGradlePath = path.join(folder, 'build.gradle');
@@ -107,7 +115,7 @@ function getModuleDependencies(folder, moduleDependencies) {
 	var dependencyTextResult = null;
 
 	var libraryDependencyRegex1 = /(?:test|compile|provided)[^\n]*\sgroup *: *['"]([^'"]*)['"],[\s*]name *: *['"]([^'"]*)['"], [^\n]*version *: *['"]([^'"]*)['"]/;
-	var libraryDependencyRegex2 = /(?:test|compile|provided)[^\n]*\sgroup *: *['"]([^'"]*)['"],[\s*]name *: *['"]([^'"]*)['"]$/;
+	var libraryDependencyRegex2 = dependencyManagementEnabled ? /(?:test|compile|provided)[^\n]*\sgroup *: *['"]([^'"]*)['"],[\s*]name *: *['"]([^'"]*)['"]$/ : null;
 	var libraryDependencyRegex3 = /(?:test|compile|provided)[^\n]*\s['"]([^'"]*):([^'"]*):([^'"]*)['"]/;
 	var libraryDependencyRegex4 = /(?:test|compile|provided)[^\n]*\sgroup *: *['"]([^'"]*)['"],[\s*]name *: *['"]([^'"]*)['"], [^\n]*version *: ([^'"]+)/;
 	var projectDependencyRegex = /(?:test|compile|provided)[^\n]*\sproject\(['"]:(?:[^'"]*:)?([^'"]*)['"]/;
@@ -151,10 +159,10 @@ function getModuleDetails(folder) {
 	var moduleVersion = getModuleVersion(folder);
 	var moduleIncludeFolders = getModuleIncludeFolders(folder);
 	var moduleExcludeFolders = getModuleExcludeFolders(folder, moduleIncludeFolders);
-	var moduleDependencies = getModuleDependencies(folder);
+	var moduleDependencies = getModuleDependencies(folder, null, true);
 
 	var archetypeResourcesFolder = path.join(folder, 'src/main/resources/archetype-resources');
-	moduleDependencies = getModuleDependencies(archetypeResourcesFolder, moduleDependencies);
+	moduleDependencies = getModuleDependencies(archetypeResourcesFolder, moduleDependencies, false);
 
 	var moduleDetailsArray = [moduleOverview, moduleVersion, moduleIncludeFolders, moduleExcludeFolders, moduleDependencies];
 
