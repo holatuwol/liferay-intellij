@@ -145,6 +145,12 @@ function createProjectWorkspace(coreDetails, moduleDetails, pluginDetails, confi
 	coreDetails.forEach(checkForGitRoot);
 	moduleDetails.forEach(checkForGitRoot);
 
+	if (config.ic) {
+		coreDetails.forEach(clearWebroots);
+		moduleDetails.forEach(clearWebroots);
+		pluginDetails.forEach(clearWebroots);
+	}
+
 	moduleDetails.forEach(checkForGradleCache);
 	checkForGradleCache(getUserHome());
 	checkForGradleCache('../liferay-binaries-cache-2017');
@@ -364,6 +370,10 @@ function checkForGitRoot(module) {
 	var candidates = getAncestorFiles(module.modulePath, '.git');
 
 	candidates.forEach(Set.prototype.add.bind(gitRoots));
+};
+
+function clearWebroots(module) {
+	module.webrootFolders = [];
 };
 
 function completeBomCache(moduleDetails) {
