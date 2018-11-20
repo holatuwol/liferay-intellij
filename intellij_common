@@ -1,31 +1,37 @@
 #!/bin/bash
 
+cachefolder() {
+	timeecho "Building ${PWD} ls-files cache to speed up directory scanning"
+
+	if [ ! -e .git ]; then
+		find modules -type f -not -path '*/node_modules/*' > modules/git_ls_files_modules.txt
+
+		return 0
+	fi
+
+	git ls-files modules > modules/git_ls_files_modules.txt
+
+	for status in $(git status -s | cut -d' ' -f 2-); do
+		if [ -d ${status} ]; then
+			find ${status} -type f -not -path '*/node_modules/*' >> modules/git_ls_files_modules.txt
+		else
+			echo "${status}" >> modules/git_ls_files_modules.txt
+		fi
+	done
+}
+
 cachemodules() {
 	for folder in $@; do
 		if [ ! -d "${folder}" ] || [ ! -d "${folder}/modules" ]; then
 			continue
 		fi
 
-		timeecho "Building ${folder} ls-files cache to speed up directory scanning"
-
 		pushd "${folder}" > /dev/null
-
-		if [ -e "${folder}/.git" ]; then
-			git ls-files modules > modules/git_ls_files_modules.txt
-		else
-			find modules -type f > modules/git_ls_files_modules.txt
-		fi
-
+		cachefolder
 		popd > /dev/null
 	done
 
-	timeecho "Building ${PWD} ls-files cache to speed up directory scanning"
-
-	if [ -e .git ]; then
-		git ls-files modules > modules/git_ls_files_modules.txt
-	else
-		find modules -type f > modules/git_ls_files_modules.txt
-	fi
+	cachefolder
 }
 
 checknode() {
