@@ -130,16 +130,17 @@ function getModuleGroupName(module) {
 };
 
 function getModuleOrderEntryElement(module, dependency) {
-	var extraAttributes = '';
+	var elementXML = [
+		'<orderEntry type="module" module-name="',
+		dependency.name,
+		'" scope="',
+		isTestDependency(module, dependency) ? "TEST" : "PROVIDED",
+		'" ',
+		dependency.exported ? 'exported="" ' : '',
+		'/>'
+	];
 
-	if (isTestDependency(module, dependency)) {
-		extraAttributes = 'scope="TEST" ';
-	}
-	else if (dependency.exported) {
-		extraAttributes = 'exported="" ';
-	}
-
-	return '<orderEntry type="module" module-name="' + dependency.name + '" ' + extraAttributes + '/>';
+	return elementXML.join('');
 };
 
 function getModulesElement(moduleElements) {

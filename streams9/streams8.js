@@ -274,16 +274,17 @@ function getLibraryJarPaths(library) {
 };
 
 function getLibraryOrderEntryElement(module, dependency) {
-	var extraAttributes = '';
+	var elementXML = [
+		'<orderEntry type="library" name="',
+		dependency.libraryName,
+		'" level="project" scope="',
+		isTestDependency(module, dependency) ? "TEST" : "PROVIDED",
+		'" ',
+		dependency.exported ? 'exported="" ' : '',
+		'/>'
+	];
 
-	if (isTestDependency(module, dependency)) {
-		extraAttributes = 'scope="TEST" ';
-	}
-	else if (dependency.exported) {
-		extraAttributes = 'exported="" ';
-	}
-
-	return '<orderEntry type="library" name="' + dependency.libraryName + '" level="project" ' + extraAttributes + '/>';
+	return elementXML.join('');
 };
 
 function getLibraryRootElement(libraryPath) {
