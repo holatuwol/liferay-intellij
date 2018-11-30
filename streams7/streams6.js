@@ -44,13 +44,24 @@ function getFacetManagerXML(module) {
 	if (module.webrootFolders.length > 0) {
 		facetManagerXML = [
 			'<facet type="web" name="' + module.moduleName + '">',
-			'<configuration>',
+			'<configuration>'
+		];
+
+		if ('docroot' == module.webrootFolders[0]) {
+			facetManagerXML.push(
+				'<descriptors>',
+				'<deploymentDescriptor name="web.xml" url="file://$MODULE_DIR$/docroot/WEB-INF/web.xml" />',
+				'</descriptors>'
+			);
+		}
+
+		facetManagerXML.push(
 			'<webroots>',
 			'<root url="file://$MODULE_DIR$/' + module.webrootFolders[0] + '" relative="/" />',
 			'</webroots>',
 			'</configuration>',
 			'</facet>'
-		];
+		);
 	}
 
 	var springFolders = [
@@ -64,19 +75,19 @@ function getFacetManagerXML(module) {
 	var springXMLFiles = Array.prototype.concat.apply([], springFolders.map(highland.partial(getSpringFolders, module.modulePath)));
 
 	if (springXMLFiles.length > 0) {
-		facetManagerXML = facetManagerXML.concat([
+		facetManagerXML.push(
 			'<facet type="Spring" name="' + module.moduleName + '">',
 			'<configuration>',
 			'<fileset id="fileset" name="Spring Application Context" removed="false">'
-		]);
+		);
 
 		facetManagerXML = facetManagerXML.concat(springXMLFiles.map(getSpringFacetFileElement));
 
-		facetManagerXML = facetManagerXML.concat([
+		facetManagerXML.push(
 			'</fileset>',
 			'</configuration>',
 			'</facet>'
-		]);
+		);
 	}
 
 	return facetManagerXML.join('\n');
