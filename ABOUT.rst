@@ -61,6 +61,7 @@ Change Log
 
 This is a change log for when I started keeping track of the changes that were made.
 
+* **2018-11-20**: Make sure there aren't circular dependencies between ``modules/core`` and ``portal-kernel``
 * **2018-11-20**: Workaround for issue where ``git ls-files modules`` doesn't capture modules not yet in version control
 * **2018-11-12**: Allow passing ``--ic=true`` to indicate that you are using IntelliJ Community Edition (no web facet support)
 * **2018-11-08**: Parse BOM dependencies declared in parent ``build.gradle`` files
