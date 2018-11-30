@@ -135,20 +135,22 @@ function getModuleDependencies(folder, moduleDependencies, dependencyManagementE
 		Array.prototype.push.apply(moduleDependencies.projectDependencies, getProjectDependencies(projectDependencyRegex));
 	}
 
-	if (isDirectory(path.join(folder, 'src/test')) ||
-		isDirectory(path.join(folder, 'src/testIntegration'))) {
+	if (folder.indexOf('modules/core/') == -1) {
+		if (isDirectory(path.join(folder, 'src/test')) ||
+			isDirectory(path.join(folder, 'src/testIntegration'))) {
 
-		moduleDependencies.projectDependencies.push({
-			type: 'project',
-			name: 'portal-test'
-		});
-	}
+			moduleDependencies.projectDependencies.push({
+				type: 'project',
+				name: 'portal-test'
+			});
+		}
 
-	if (isDirectory(path.join(folder, 'src/testIntegration'))) {
-		moduleDependencies.projectDependencies.push({
-			type: 'project',
-			name: 'portal-test-integration'
-		});
+		if (isDirectory(path.join(folder, 'src/testIntegration'))) {
+			moduleDependencies.projectDependencies.push({
+				type: 'project',
+				name: 'portal-test-integration'
+			});
+		}
 	}
 
 	return moduleDependencies;

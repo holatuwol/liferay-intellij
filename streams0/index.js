@@ -188,11 +188,19 @@ function isPluginsSDK(otherSourceFolder) {
 	return getPluginSDKRoot(otherSourceFolder) != null;
 };
 
-function isPortalPreModule(folder) {
-	var markerFilePath = getFilePath(folder, '.lfrbuild-portal-pre');
+function isCorePortalPreModule(module) {
+	if (module.modulePath.indexOf('modules/core/') == -1) {
+		return false;
+	}
+
+	if (module.moduleName.indexOf('-compat') != -1) {
+		return false;
+	}
+
+	var markerFilePath = getFilePath(module.modulePath, '.lfrbuild-portal-pre');
 
 	if (portalModuleFileSet != null) {
-		return portalModuleFileSet.has(markerFilePath)
+		return portalModuleFileSet.has(markerFilePath);
 	}
 	else {
 		return isFile(markerFilePath);
@@ -277,11 +285,8 @@ function scanProject(portalSourceFolder, otherSourceFolders, config, callback) {
 
 	console.log('[' + new Date().toLocaleTimeString() + ']', 'Located', coreModuleFolders.length, 'modules folders in', portalSourceFolder);
 
-	var portalPreModules = coreModuleFolders.filter(isPortalPreModule).map(highland.ncurry(1, path.basename));
-
 	console.log('[' + new Date().toLocaleTimeString() + ']', 'Extracting metadata from module build files');
 
-	var coreDetails = coreFolders.map(getCoreDetails.bind(null, portalPreModules));
 	var moduleDetails = moduleFolders.map(getModuleDetails);
 
 	var moduleNames = new Set(moduleDetails.map(getModuleName));
@@ -289,6 +294,14 @@ function scanProject(portalSourceFolder, otherSourceFolders, config, callback) {
 	var coreModuleDetails = coreModuleFolders
 		.map(getModuleDetails)
 		.filter(highland.compose(highland.not, Set.prototype.has.bind(moduleNames), getModuleName));
+
+	console.log('[' + new Date().toLocaleTimeString() + ']', 'Extracting metadata from root level folder build files');
+
+	var corePortalPreModuleNames = coreModuleDetails.filter(isCorePortalPreModule).map(getModuleName);
+
+	var coreDetails = coreFolders.map(getCoreDetails.bind(null, corePortalPreModuleNames));
+
+	console.log('[' + new Date().toLocaleTimeString() + ']', 'Extracting metadata from legacy plugin build files');
 
 	var pluginDetails = pluginFolders.map(getPluginDetails);
 
