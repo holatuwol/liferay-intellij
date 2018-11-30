@@ -6,19 +6,21 @@ SCRIPT_FOLDER=$(dirname "$0")
 
 checknode
 setupsdk
-copylibs
-setuplibs
+
 cachemodules $@
 
-"$NODEJS" "${SCRIPT_FOLDER}/bin/pom.js" "$PWD" $@
+copylibs
+setuplibs
 
 if [ "" != "$(which mvn)" ]; then
+	"$NODEJS" "${SCRIPT_FOLDER}/bin/pom.js" "$PWD" $@
+
 	mvn  --fail-at-end dependency:sources
 	grep '<module>.*</module>' pom.xml | awk -F'[<>]' '{ print $3 "/pom.xml" }' | xargs rm
 	rm pom.xml
-
-	"$NODEJS" "${SCRIPT_FOLDER}/bin/run.js" "$PWD" "$@"
 fi
+
+"$NODEJS" "${SCRIPT_FOLDER}/bin/run.js" "$PWD" "$@"
 
 uncachemodules $@
 
