@@ -87,9 +87,11 @@ function createProjectObjectModels(coreDetails, moduleDetails, pluginDetails) {
 	var moduleVersions = coreDetails.reduce(setCoreBundleVersions, {});
 	moduleVersions = moduleDetails.reduce(setModuleBundleVersions, moduleVersions);
 
-	moduleDetails.forEach(highland.partial(fixLibraryDependencies, moduleVersions));
-	moduleDetails.forEach(highland.partial(fixProjectDependencies, moduleVersions, true));
-	moduleDetails.forEach(highland.partial(checkExportDependencies, moduleVersions));
+	var fixDetails = moduleDetails.concat(pluginDetails);
+
+	fixDetails.forEach(highland.partial(fixLibraryDependencies, moduleVersions));
+	fixDetails.forEach(highland.partial(fixProjectDependencies, moduleVersions, true));
+	fixDetails.forEach(highland.partial(checkExportDependencies, moduleVersions));
 
 	console.log('[' + new Date().toLocaleTimeString() + ']', 'Processing BOM dependencies');
 
@@ -178,9 +180,11 @@ function createProjectWorkspace(coreDetails, moduleDetails, pluginDetails, confi
 	var moduleVersions = coreDetails.reduce(setCoreBundleVersions, {});
 	moduleVersions = moduleDetails.reduce(setModuleBundleVersions, moduleVersions);
 
-	moduleDetails.forEach(highland.partial(fixLibraryDependencies, moduleVersions));
-	moduleDetails.forEach(highland.partial(fixProjectDependencies, moduleVersions, true));
-	moduleDetails.forEach(highland.partial(checkExportDependencies, moduleVersions));
+	var fixDetails = moduleDetails.concat(pluginDetails);
+
+	fixDetails.forEach(highland.partial(fixLibraryDependencies, moduleVersions));
+	fixDetails.forEach(highland.partial(fixProjectDependencies, moduleVersions, true));
+	fixDetails.forEach(highland.partial(checkExportDependencies, moduleVersions));
 
 	coreDetails.forEach(sortModuleAttributes);
 	moduleDetails.forEach(sortModuleAttributes);
@@ -1065,7 +1069,7 @@ function needsGradleCache(library) {
 	}
 
 	if (library.group.indexOf('com.liferay') == 0) {
-		return library.hasInitJsp;
+		return (library.name.indexOf('com.liferay') != 0) || library.hasInitJsp;
 	}
 
 	if (library.name.indexOf('com.liferay') == 0) {
