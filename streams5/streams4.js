@@ -18,6 +18,7 @@ function getDependenciesWithWhileLoop(dependencyText, dependencyExtractor, depen
 		return [];
 	}
 
+	var matchResult = null;
 	var dependencies = [];
 
 	while ((matchResult = dependencyRegex.exec(dependencyText)) !== null) {
@@ -44,7 +45,46 @@ function getDependenciesWithStreams(dependencyText, dependencyExtractor, depende
 		});
 };
 
-function getLibraryDependency(matchResult) {
+function getVariableValue(seenVariables, buildGradleContents, variableName) {
+	if (seenVariables.has(variableName)) {
+		return '${' + variableName + '}';
+	}
+
+	seenVariables.add(variableName);
+
+	var variableDeclaration = 'String ' + variableName + ' = "';
+
+	var x = buildGradleContents.indexOf(variableDeclaration) + variableDeclaration.length;
+
+	if (x < variableDeclaration.length) {
+		console.log('missing', variableDeclaration);
+		return null;
+	}
+
+	var y = buildGradleContents.indexOf('"', x);
+
+	var rawValue = buildGradleContents.substring(x, y);
+
+	return getStringInterpolatedValue(seenVariables, buildGradleContents, rawValue);
+};
+
+function getStringInterpolatedValue(seenVariables, buildGradleContents, rawValue) {
+	var finalValue = rawValue;
+
+	var matchResult = null;
+	var stringInterpolationRegex = /\$\{([^}]*)\}/g;
+
+	while ((matchResult = stringInterpolationRegex.exec(rawValue)) !== null) {
+		var variableName = matchResult[1];
+		var variableValue = getVariableValue(seenVariables, buildGradleContents, variableName);
+
+		finalValue = finalValue.replace(matchResult[0], variableValue);
+	}
+
+	return finalValue;
+}
+
+function getLibraryDependency(buildGradleContents, matchResult) {
 	if (matchResult == null) {
 		return null;
 	}
@@ -53,7 +93,7 @@ function getLibraryDependency(matchResult) {
 		type: 'library',
 		group: matchResult[1],
 		name: matchResult[2],
-		version: matchResult.length > 2 ? matchResult[3] : null,
+		version: (matchResult.length > 3) ? getStringInterpolatedValue(new Set(), buildGradleContents, matchResult[3]) : null,
 		testScope: matchResult[0].indexOf('test') == 0
 	};
 
@@ -66,18 +106,7 @@ function getLibraryVariableDependency(buildGradleContents, matchResult) {
 	}
 
 	var variableName = matchResult[3];
-	var variableDeclaration = 'String ' + variableName + ' = "';
-
-	var x = buildGradleContents.indexOf(variableDeclaration) + variableDeclaration.length;
-
-	if (x < variableDeclaration.length) {
-		console.log('missing', variableDeclaration);
-		return null;
-	}
-
-	var y = buildGradleContents.indexOf('"', x);
-
-	var variableValue = buildGradleContents.substring(x, y);
+	var variableValue = getVariableValue(new Set(), buildGradleContents, variableName);
 
 	var dependency = {
 		type: 'library',
@@ -114,16 +143,16 @@ function getModuleDependencies(folder, moduleDependencies, dependencyManagementE
 	var dependencyTextRegex = /dependencies \{([\s\S]*?)\n\s*\}/g;
 	var dependencyTextResult = null;
 
-	var libraryDependencyRegex1 = /(?:test|compile|provided)[^\n]*\sgroup *: *['"]([^'"]*)['"],[\s*]name *: *['"]([^'"]*)['"], [^\n]*version *: *['"]([^'"]*)['"]/;
-	var libraryDependencyRegex2 = dependencyManagementEnabled ? /(?:test|compile|provided)[^\n]*\sgroup *: *['"]([^'"]*)['"],[\s*]name *: *['"]([^'"]*)['"]$/ : null;
-	var libraryDependencyRegex3 = /(?:test|compile|provided)[^\n]*\s['"]([^'"]*):([^'"]*):([^'"]*)['"]/;
-	var libraryDependencyRegex4 = /(?:test|compile|provided)[^\n]*\sgroup *: *['"]([^'"]*)['"],[\s*]name *: *['"]([^'"]*)['"], [^\n]*version *: ([^'"]+)/;
-	var projectDependencyRegex = /(?:test|compile|provided)[^\n]*\sproject\(['"]:(?:[^'"]*:)?([^'"]*)['"]/;
+	var libraryDependencyRegex1 = /(?:test|compile|provided)[a-zA-Z]*[\s]*group *: *['"]([^'"]*)['"],[\s]*name *: *['"]([^'"]*)['"], [^\n]*version *: *['"]([^'"]*)['"]/;
+	var libraryDependencyRegex2 = dependencyManagementEnabled ? /(?:test|compile|provided)[a-zA-Z]*[\s]*group *: *['"]([^'"]*)['"],[\s*]name *: *['"]([^'"]*)['"]$/ : null;
+	var libraryDependencyRegex3 = /(?:test|compile|provided)[a-zA-Z]*\s*['"]([^'"]*):([^'"]*):([^'"]*)['"]/;
+	var libraryDependencyRegex4 = /(?:test|compile|provided)[a-zA-Z]*[\s]*group *: *['"]([^'"]*)['"],[\s]*name *: *['"]([^'"]*)['"], [^\n]*version *: ([^'"]+)/;
+	var projectDependencyRegex = /(?:test|compile|provided)[a-zA-Z]*[\s]*project\(['"]:(?:[^'"]*:)?([^'"]*)['"]/;
 
 	while ((dependencyTextResult = dependencyTextRegex.exec(buildGradleContents)) !== null) {
 		var dependencyText = dependencyTextResult[1];
 
-		var getLibraryDependencies = highland.partial(getDependenciesWithStreams, dependencyText, getLibraryDependency);
+		var getLibraryDependencies = highland.partial(getDependenciesWithStreams, dependencyText, highland.partial(getLibraryDependency, buildGradleContents));
 		var getLibraryVariableDependencies = highland.partial(getDependenciesWithStreams, dependencyText, highland.partial(getLibraryVariableDependency, buildGradleContents));
 		var getProjectDependencies = highland.partial(getDependenciesWithStreams, dependencyText, getProjectDependency);
 

@@ -87,7 +87,52 @@ And that's essentially the first use of a regular expression! All it does is cre
 Regular Expressions 2
 ~~~~~~~~~~~~~~~~~~~~~
 
-Now that we have the dependency text extracted from the ``build.gradle`` file, we should be able to arrive at an array of dependency details. In order to do that, we need to have a regular expression that keeps track of multiple matches.
+Now that we have the dependency text extracted from the ``build.gradle`` file, we should be able to arrive at an array of dependency details.
+
+First, we need to acknowledge that sometimes third-party library versions are defined using a variable, or defined with string interpolation. Therefore, we start with some utility functions. (Luckily, we don't have to deal with string concatentation, or we might have to write a full blown Gradle parser!)
+
+.. code-block:: javascript
+
+	function getVariableValue(seenVariables, buildGradleContents, variableName) {
+		if (seenVariables.has(variableName)) {
+			return '${' + variableName + '}';
+		}
+
+		seenVariables.add(variableName);
+
+		var variableDeclaration = 'String ' + variableName + ' = "';
+
+		var x = buildGradleContents.indexOf(variableDeclaration) + variableDeclaration.length;
+
+		if (x < variableDeclaration.length) {
+			console.log('missing', variableDeclaration);
+			return null;
+		}
+
+		var y = buildGradleContents.indexOf('"', x);
+
+		var rawValue = buildGradleContents.substring(x, y);
+
+		return getStringInterpolatedValue(seenVariables, buildGradleContents, rawValue);
+	};
+
+	function getStringInterpolatedValue(seenVariables, buildGradleContents, rawValue) {
+		var finalValue = rawValue;
+
+		var matchResult = null;
+		var stringInterpolationRegex = /\$\{([^}]*)\}/g;
+
+		while ((matchResult = stringInterpolationRegex.exec(rawValue)) !== null) {
+			var variableName = matchResult[1];
+			var variableValue = getVariableValue(seenVariables, buildGradleContents, variableName);
+
+			finalValue = finalValue.replace(matchResult[0], variableValue);
+		}
+
+		return finalValue;
+	}
+
+Now that we have that, we need to have a regular expression that keeps track of multiple matches.
 
 We start with a regular expression which can capture dependency information for libraries. Note that unlike Java where patterns and matchers are separate entities, the pattern and the matcher are essentially the same entity in Javascript. This means that you should not share the regular expression unless the regular expression will not track multiple matches within the same text.
 
@@ -97,15 +142,15 @@ In our case, though, we will want to keep tracking of multiple matches within th
 
 .. code-block:: javascript
 
-	var libraryDependencyRegex1 = /(?:test|compile|provided)[^\n]*\sgroup *: *['"]([^'"]*)['"], name *: *['"]([^'"]*)['"], [^\n]*version *: *['"]([^'"]*)['"]/;
-	var libraryDependencyRegex2 = /(?:test|compile|provided)[^\n]*\s['"]([^'"]*):([^'"]*):([^'"]*)['"]/;
-	var libraryDependencyRegex3 = /(?:test|compile|provided)[^\n]*\sgroup *: *['"]([^'"]*)['"],[\s*]name *: *['"]([^'"]*)['"], [^\n]*version *: ([^'"]+)/;
+	var libraryDependencyRegex1 = /(?:test|compile|provided)[a-zA-Z]*[\s]*group *: *['"]([^'"]*)['"],[\s]*name *: *['"]([^'"]*)['"], [^\n]*version *: *['"]([^'"]*)['"]/;
+	var libraryDependencyRegex2 = /(?:test|compile|provided)[a-zA-Z]*\s*['"]([^'"]*):([^'"]*):([^'"]*)['"]/;
+	var libraryDependencyRegex3 = /(?:test|compile|provided)[a-zA-Z]*[\s]*group *: *['"]([^'"]*)['"],[\s]*name *: *['"]([^'"]*)['"], [^\n]*version *: ([^'"]+)/;
 
 Now that we have a regular expression, we know that we can create an object representing a match from any match result provided it has three items and they are always in ``group``, ``name``, and ``version`` order. This allows us to create the following extraction function.
 
 .. code-block:: javascript
 
-	function getLibraryDependency(matchResult) {
+	function getLibraryDependency(buildGradleContents, matchResult) {
 		if (matchResult == null) {
 			return null;
 		}
@@ -114,7 +159,7 @@ Now that we have a regular expression, we know that we can create an object repr
 			type: 'library',
 			group: matchResult[1],
 			name: matchResult[2],
-			version: matchResult[3],
+			version: (matchResult.length > 3) ? getStringInterpolatedValue(new Set(), buildGradleContents, matchResult[3]) : null,
 			testScope: matchResult[0].indexOf('test') == 0
 		};
 
@@ -127,17 +172,7 @@ Now that we have a regular expression, we know that we can create an object repr
 		}
 
 		var variableName = matchResult[3];
-		var variableDeclaration = 'String ' + variableName + ' = "';
-
-		var x = buildGradleContents.indexOf(variableDeclaration) + variableDeclaration.length;
-
-		if (x < variableDeclaration.length) {
-			return null;
-		}
-
-		var y = buildGradleContents.indexOf('"', x);
-
-		var variableValue = buildGradleContents.substring(x, y);
+		var variableValue = getVariableValue(new Set(), buildGradleContents, variableName);
 
 		var dependency = {
 			type: 'library',
@@ -186,24 +221,24 @@ Update our ``getModuleDependencies`` function so that it uses this function in o
 		projectDependencies: []
 	};
 
-	var libraryDependencyRegex1 = /(?:test|compile|provided)[^\n]*\sgroup: ['"]([^'"]*)['"], name: ['"]([^'"]*)['"], [^\n]*version: ['"]([^'"]*)['"]/;
-	var libraryDependencyRegex2 = /(?:test|compile|provided)[^\n]*\s['"]([^'"]*):([^'"]*):([^'"]*)['"]/;
-	var libraryDependencyRegex3 = /(?:test|compile|provided)[^\n]*\sgroup *: *['"]([^'"]*)['"],[\s*]name *: *['"]([^'"]*)['"], [^\n]*version *: ([^'"]+)/;
+	var libraryDependencyRegex1 = /(?:test|compile|provided)[a-zA-Z]*[\s]*group *: *['"]([^'"]*)['"],[\s]*name *: *['"]([^'"]*)['"], [^\n]*version *: *['"]([^'"]*)['"]/;
+	var libraryDependencyRegex2 = /(?:test|compile|provided)[a-zA-Z]*\s*['"]([^'"]*):([^'"]*):([^'"]*)['"]/;
+	var libraryDependencyRegex3 = /(?:test|compile|provided)[a-zA-Z]*[\s]*group *: *['"]([^'"]*)['"],[\s]*name *: *['"]([^'"]*)['"], [^\n]*version *: ([^'"]+)/;
 
 	while ((dependencyTextResult = dependencyTextRegex.exec(buildGradleContents)) !== null) {
 		var dependencyText = dependencyTextResult[1];
 
 		Array.prototype.push.apply(
 			moduleDependencies.libraryDependencies,
-			getDependenciesWithWhileLoop(dependencyText, getLibraryDependency, libraryDependencyRegex1));
+			getDependenciesWithWhileLoop(dependencyText, getLibraryDependency.bind(null, buildGradleContents), libraryDependencyRegex1));
 
 		Array.prototype.push.apply(
 			moduleDependencies.libraryDependencies,
-			getDependenciesWithWhileLoop(dependencyText, getLibraryDependency, libraryDependencyRegex2));
+			getDependenciesWithWhileLoop(dependencyText, getLibraryDependency.bind(null, buildGradleContents), libraryDependencyRegex2));
 
 		Array.prototype.push.apply(
 			moduleDependencies.libraryDependencies,
-			getDependenciesWithWhileLoop(dependencyText, getLibraryVariableDependency.bind(null, buildGradleContents), libraryDependencyRegex3));
+			getDependenciesWithWhileLoop(dependencyText, getLibraryDependency.bind(null, buildGradleContents), libraryDependencyRegex3));
 	}
 
 	return moduleDependencies;
@@ -220,7 +255,7 @@ In order to shorten the method calls for readability, we could potentially use `
 
 .. code-block:: javascript
 
-	var getLibraryDependencies = getDependenciesWithWhileLoop.bind(null, dependencyText, getLibraryDependency);
+	var getLibraryDependencies = getDependenciesWithWhileLoop.bind(null, dependencyText, getLibraryDependency.bind(null, buildGradleContents));
 
 As shown above, the value of ``this`` doesn't actually matter in this case. When the value of ``this`` doesn't matter, binding to an arbitrary object such as ``null`` or ``undefined`` may be difficult to understand as explaining how the object should interpret ``this`` is somewhat confusing.
 
@@ -241,7 +276,8 @@ Then we make use of the exported function.
 
 .. code-block:: javascript
 
-	var getLibraryDependencies = highland.partial(getDependenciesWithWhileLoop, dependencyText, getLibraryDependency);
+	var getLibraryDependencies = highland.partial(getDependenciesWithWhileLoop, dependencyText, highland.partial(getLibraryDependency, buildGradleContents));
+	var getLibraryVariableDependencies = highland.partial(getDependenciesWithStreams, dependencyText, highland.partial(getLibraryVariableDependency, buildGradleContents));
 
 We can then call it from ``getModuleDependencies`` and have the appropriate return value.
 
@@ -249,7 +285,7 @@ We can then call it from ``getModuleDependencies`` and have the appropriate retu
 
 	Array.prototype.push.apply(moduleDependencies.libraryDependencies, getLibraryDependencies(libraryDependencyRegex1));
 	Array.prototype.push.apply(moduleDependencies.libraryDependencies, getLibraryDependencies(libraryDependencyRegex2));
-	Array.prototype.push.apply(moduleDependencies.libraryDependencies, getLibraryVariableDependencies(libraryDependencyRegex3));
+	Array.prototype.push.apply(moduleDependencies.libraryDependencies, getLibraryDependencies(libraryDependencyRegex3));
 
 Partial Function Application 2
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
