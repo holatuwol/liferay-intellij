@@ -119,6 +119,48 @@ function getLibraryVariableDependency(buildGradleContents, matchResult) {
 	return dependency;
 };
 
+function getDependencyText(buildGradleContents, nextStartPos) {
+	var marker = 'dependencies {';
+
+	var startPos = buildGradleContents.indexOf(marker, nextStartPos);
+
+	if (startPos == -1) {
+		return null;
+	}
+
+	var openCount = 1;
+	var endPos = -1;
+
+	for (var i = startPos + marker.length; i < buildGradleContents.length; i++) {
+		var ch = buildGradleContents[i];
+		switch (ch) {
+		case '{':
+			openCount++;
+			break;
+		case '}':
+			openCount--;
+			break;
+		}
+
+		if (openCount == 0) {
+			endPos = i;
+			break;
+		}
+	}
+
+	if (endPos == -1) {
+		return null;
+	}
+
+	var dependencyText = buildGradleContents.substring(startPos, endPos);
+
+	return {
+		'text': dependencyText,
+		'startPos': startPos,
+		'endPos': endPos
+	};
+};
+
 function getModuleDependencies(folder, moduleDependencies, dependencyManagementEnabled) {
 	moduleDependencies = moduleDependencies || {};
 
@@ -140,17 +182,19 @@ function getModuleDependencies(folder, moduleDependencies, dependencyManagementE
 
 	moduleDependencies.buildGradleContents = buildGradleContents;
 
-	var dependencyTextRegex = /dependencies \{([\s\S]*?)\n\s*\}/g;
-	var dependencyTextResult = null;
-
 	var libraryDependencyRegex1 = /(?:test|compile|provided)[a-zA-Z]*[\s]*group *: *['"]([^'"]*)['"],[\s]*name *: *['"]([^'"]*)['"], [^\n]*version *: *['"]([^'"]*)['"]/;
 	var libraryDependencyRegex2 = dependencyManagementEnabled ? /(?:test|compile|provided)[a-zA-Z]*[\s]*group *: *['"]([^'"]*)['"],[\s*]name *: *['"]([^'"]*)['"]$/ : null;
 	var libraryDependencyRegex3 = /(?:test|compile|provided)[a-zA-Z]*\s*['"]([^'"]*):([^'"]*):([^'"]*)['"]/;
 	var libraryDependencyRegex4 = /(?:test|compile|provided)[a-zA-Z]*[\s]*group *: *['"]([^'"]*)['"],[\s]*name *: *['"]([^'"]*)['"], [^\n]*version *: ([^'"]+)/;
 	var projectDependencyRegex = /(?:test|compile|provided)[a-zA-Z]*[\s]*project\(['"]:(?:[^'"]*:)?([^'"]*)['"]/;
 
-	while ((dependencyTextResult = dependencyTextRegex.exec(buildGradleContents)) !== null) {
-		var dependencyText = dependencyTextResult[1];
+	var nextStartPos = 0;
+	var dependencyTextResult = null;
+
+	while ((dependencyTextResult = getDependencyText(buildGradleContents, nextStartPos)) !== null) {
+		var dependencyText = dependencyTextResult.text;
+
+		nextStartPos = dependencyTextResult.endPos;
 
 		var getLibraryDependencies = highland.partial(getDependenciesWithStreams, dependencyText, highland.partial(getLibraryDependency, buildGradleContents));
 		var getLibraryVariableDependencies = highland.partial(getDependenciesWithStreams, dependencyText, highland.partial(getLibraryVariableDependency, buildGradleContents));

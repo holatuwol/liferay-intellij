@@ -62,15 +62,17 @@ Like in the case of ``readdir`` where we used the synchronous version ``readdirS
 Regular Expressions 1
 ~~~~~~~~~~~~~~~~~~~~~
 
-From here, we will want to extract the dependency text, which we can capture with a regular expression.
+From here, we will want to extract the dependency text, which we will detect with the provided ``getDependencyText`` which does everything in a loop in order to handle nested curly braces.
 
 .. code-block:: javascript
 
-	var dependencyTextRegex = /dependencies \{([\s\S]*)\n\s*\}/g;
+	var nextStartPos = 0;
 	var dependencyTextResult = null;
 
-	while ((dependencyTextResult = dependencyTextRegex.exec(buildGradleContents)) !== null) {
-		var dependencyText = dependencyTextResult[1];
+	while ((dependencyTextResult = getDependencyText(buildGradleContents, nextStartPos)) !== null) {
+		var dependencyText = dependencyTextResult.text;
+
+		nextStartPos = dependencyTextResult.endPos;
 
 		// continue dependency extraction here
 	}
