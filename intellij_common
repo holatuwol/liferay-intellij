@@ -11,7 +11,7 @@ cachefolder() {
 
 	git ls-files modules > modules/git_ls_files_modules.txt
 
-	if [ -f git-commit-portal ]; then
+	if [ -f git-commit-portal ] && [ -f git-commit-portal-private ]; then
 		git ls-tree -r $(cat git-commit-portal) --name-only -- modules >> modules/git_ls_files_modules.txt
 	fi
 

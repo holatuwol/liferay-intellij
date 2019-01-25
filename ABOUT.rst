@@ -61,6 +61,7 @@ Change Log
 
 This is a change log for when I started keeping track of the changes that were made.
 
+* **2019-01-25**: Fix handling of tags based on ee-7.0.x
 * **2019-01-16**: Fix parsing of dependencies when there are nested curly braces
 * **2018-12-03**: Handle string interpolation for library versions
 * **2018-11-20**: Make sure there aren't circular dependencies between ``modules/core`` and ``portal-kernel``
