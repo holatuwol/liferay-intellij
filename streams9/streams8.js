@@ -385,6 +385,10 @@ function getUserHome() {
 };
 
 function getVariableValue(library, variables, variableName) {
+	if (!variables) {
+		return null;
+	}
+
 	var variableValue = variables[variableName];
 
 	if (variableValue != null) {
