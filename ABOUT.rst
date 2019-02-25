@@ -61,6 +61,7 @@ Change Log
 
 This is a change log for when I started keeping track of the changes that were made.
 
+* **2019-02-25**: Fix handling of legacy plugins SDK folders (when debugging 6.1.x or 6.2.x plugins)
 * **2019-02-01**: If we fail to find the parent, just continue without resolving the variable value
 * **2019-01-25**: Fix handling of tags based on ee-7.0.x
 * **2019-01-16**: Fix parsing of dependencies when there are nested curly braces

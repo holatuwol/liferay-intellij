@@ -35,7 +35,9 @@ cachemodules() {
 		popd > /dev/null
 	done
 
-	cachefolder
+	if [ -d modules ]; then
+		cachefolder
+	fi
 }
 
 checknode() {

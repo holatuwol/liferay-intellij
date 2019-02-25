@@ -124,6 +124,20 @@ function getModuleGroupName(module) {
 		}
 	}
 
+	var ivyPaths = getAncestorFiles(module.modulePath, 'ivy-settings.xml');
+
+	if (ivyPaths.length > 0) {
+		var pos = ivyPaths[ivyPaths.length - 1].lastIndexOf('/');
+
+		if (pos != -1) {
+			var pluginTypeRoot = module.modulePath.substring(0, pos);
+			var sdkRoot = path.dirname(pluginTypeRoot);
+
+			var sdkRelativePath = module.modulePath.substring(sdkRoot.length + 1);
+			return path.dirname(sdkRelativePath);
+		}
+	}
+
 	console.warn('Unable to detect group for ' + module.modulePath);
 
 	return '';
