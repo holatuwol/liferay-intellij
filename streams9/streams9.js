@@ -254,10 +254,13 @@ function getGradleLibraryJars() {
 };
 
 function getJarLibraryTableXML(library) {
-	var libraryTableXML = [
-		'<library name="' + library.name + '">',
-		'<CLASSES>'
-	];
+	var libraryTableXML = ['<library name="' + library.name + '" type="repository">'];
+
+	if (library.name.indexOf(':') != -1) {
+		libraryTableXML.push('<properties maven-id="' + library.name + '" />');
+	};
+
+	libraryTableXML.push('<CLASSES>');
 
 	if (library.name == 'development') {
 		var libraryPath = getFilePath('lib', 'development');
