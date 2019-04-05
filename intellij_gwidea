@@ -14,7 +14,7 @@ gradlewidea() {
 		fi
 	done
 
-	GRADLE_OPTS='-Xms3g -Xmx3g -Dorg.gradle.workers.max=1'
+	GRADLE_OPTS='-Xms3g -Xmx3g'
 
 	if [[ 8 -gt $JAVA_VERSION ]]; then
 		GRADLE_OPTS="$GRADLE_OPTS -XX:MaxPermSize=512m"
@@ -25,9 +25,9 @@ gradlewidea() {
 	pushd modules > /dev/null
 
 	if [ "eclipse" == "$1" ]; then
-		cat ../.idea/projects.txt | tr '/' ':' | awk '{ print ":" $1 ":eclipse" }' | xargs ../gradlew --continue
+		cat ../.idea/projects.txt | tr '/' ':' | awk '{ print ":" $1 ":eclipse" }' | xargs ../gradlew --continue --parallel
 	else
-		cat ../.idea/projects.txt | tr '/' ':' | awk '{ print ":" $1 ":idea" }' | xargs ../gradlew --continue
+		cat ../.idea/projects.txt | tr '/' ':' | awk '{ print ":" $1 ":idea" }' | xargs ../gradlew --continue --parallel
 	fi
 
 	popd > /dev/null
