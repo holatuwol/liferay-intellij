@@ -6,6 +6,8 @@ gradlewidea() {
 		return 1
 	fi
 
+	ant compile jar install-portal-snapshots
+
 	cat /dev/null > .idea/projects.txt
 
 	for folder in $(git ls-files modules | grep build.gradle | grep -v gradleTest | grep -v archetype-resources | xargs -I {} dirname {}); do
