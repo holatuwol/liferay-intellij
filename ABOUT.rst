@@ -61,6 +61,7 @@ Change Log
 
 This is a change log for when I started keeping track of the changes that were made.
 
+* **2019-04-05**: Add a default RunManager configuration if one is not already setup
 * **2019-03-04**: Add a type attribute to libraries, in case IntelliJ doesn't load the library information otherwise
 * **2019-02-25**: Fix handling of legacy plugins SDK folders (when debugging 6.1.x or 6.2.x plugins)
 * **2019-02-01**: If we fail to find the parent, just continue without resolving the variable value

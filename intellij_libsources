@@ -25,3 +25,5 @@ fi
 uncachemodules $@
 
 ignoreiml
+
+enabledebug

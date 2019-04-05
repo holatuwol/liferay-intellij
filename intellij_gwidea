@@ -11,7 +11,7 @@ gradlewidea() {
 	cat /dev/null > .idea/projects.txt
 
 	for folder in $(git ls-files modules | grep build.gradle | grep -v gradleTest | grep -v archetype-resources | xargs -I {} dirname {}); do
-		if [ -d $folder/src/main/java ]; then
+		if [ -f $folder/.lfrbuild-portal ] && [ -d $folder/src/main/java ]; then
 			echo $folder | cut -d'/' -f 2- >> .idea/projects.txt
 		fi
 	done
@@ -47,3 +47,5 @@ copylibs
 setuplibs
 
 gradlewidea $@
+
+enabledebug

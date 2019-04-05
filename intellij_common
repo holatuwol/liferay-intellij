@@ -127,6 +127,21 @@ copylibs() {
 	done
 }
 
+enabledebug() {
+	if [ -f .idea/workspace.xml ] && [ "" != "$(grep -F RunManager .idea/workspace.xml)" ]; then
+		return 0
+	fi
+
+	local SCRIPT_ROOT="$(dirname "${BASH_SOURCE[0]}")"
+
+	if [ -d .idea/runConfigurations ]; then
+		return 0
+	fi
+
+	mkdir -p .idea/runConfigurations
+	cp -f ${SCRIPT_ROOT}/localhost_8000.xml .idea/runConfigurations/
+}
+
 ignoreiml() {
 	if [ -d .git ] || [ -f .git ]; then
 		git ls-files | grep '\(\.idea\|\.iml\)' | xargs git update-index --assume-unchanged

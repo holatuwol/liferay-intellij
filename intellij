@@ -17,3 +17,5 @@ setuplibs
 uncachemodules $@
 
 ignoreiml
+
+enabledebug
