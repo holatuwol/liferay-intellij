@@ -641,6 +641,10 @@ function gatherMavenBomDependencies(module) {
 		return;
 	}
 
+	if (!module.modulePath) {
+		return;
+	}
+
 	var parentBuildGradlePath = getFilePath(path.dirname(module.modulePath), 'build.gradle');
 
 	if (!isFile(parentBuildGradlePath)) {
