@@ -531,6 +531,8 @@ function fixMavenBomDependencies(module) {
 };
 
 function fixProjectDependencies(moduleVersions, addAsLibrary, module) {
+	module.unload = false;
+
 	var module = streams9.fixProjectDependencies(moduleVersions, addAsLibrary, module);
 
 	var bndPath = getFilePath(module.modulePath, 'bnd.bnd');
@@ -540,6 +542,23 @@ function fixProjectDependencies(moduleVersions, addAsLibrary, module) {
 	}
 
 	module.bndContent = fs.readFileSync(bndPath).toString();
+
+	if (isFile(getFilePath(module.modulePath, '.lfrbuild-portal-pre'))) {
+	}
+	else if (isFile(getFilePath(module.modulePath, '.lfrbuild-portal'))) {
+		var appBndPaths = getAncestorFiles(module.modulePath, 'app.bnd');
+
+		if (appBndPaths.length == 1) {
+			module.appBndContent = fs.readFileSync(appBndPaths[0]).toString();
+			module.unload = module.appBndContent.indexOf('Liferay-Releng-Bundle: false') != -1;
+		}
+		else {
+			module.unload = true;
+		}
+	}
+	else {
+		module.unload = true;
+	}
 
 	var fragmentHostRegex = /Fragment-Host: ([^\r\n;]+)/g;
 	matchResult = fragmentHostRegex.exec(module.bndContent);
@@ -1039,14 +1058,7 @@ function isTagLibraryFile(fileName) {
 };
 
 function isUnloadModule(module) {
-	if ((module.modulePath.indexOf('modules/') != 0) ||
-		isFile(getFilePath(module.modulePath, '.lfrbuild-portal')) ||
-		isFile(getFilePath(module.modulePath, '.lfrbuild-portal-pre'))) {
-
-		return false;
-	}
-
-	return true;
+	return module.unload;
 };
 
 function mkdirSync(path) {
