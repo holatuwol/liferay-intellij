@@ -545,7 +545,7 @@ function fixProjectDependencies(moduleVersions, addAsLibrary, module) {
 
 	if (isFile(getFilePath(module.modulePath, '.lfrbuild-portal-pre'))) {
 	}
-	else if (isFile(getFilePath(module.modulePath, '.lfrbuild-portal'))) {
+	else if (isFile(getFilePath(module.modulePath, '.lfrbuild-portal')) || isFile(getFilePath(module.modulePath, '.lfrbuild-portal-private'))) {
 		var appBndPaths = getAncestorFiles(module.modulePath, 'app.bnd');
 
 		if (appBndPaths.length == 1) {
