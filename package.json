@@ -2,8 +2,8 @@
   "name": "liferay-intellij",
   "version": "1.0.0",
   "repository": {
-    "type" : "git",
-    "url" : "https://github.com/holatuwol/liferay-intellij.git"
+    "type": "git",
+    "url": "https://github.com/holatuwol/liferay-intellij.git"
   },
   "description": "",
   "main": "streams0/index.js",
