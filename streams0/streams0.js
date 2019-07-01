@@ -543,7 +543,11 @@ function fixProjectDependencies(moduleVersions, addAsLibrary, module) {
 
 	module.bndContent = fs.readFileSync(bndPath).toString();
 
-	if (isFile(getFilePath(module.modulePath, '.lfrbuild-portal-pre'))) {
+	if (module.modulePath.indexOf('/core/') != -1) {
+	}
+	else if (module.modulePath.indexOf('/post-upgrade-fix/') != -1) {
+	}
+	else if (isFile(getFilePath(module.modulePath, '.lfrbuild-portal-pre'))) {
 	}
 	else if (isFile(getFilePath(module.modulePath, '.lfrbuild-portal')) || isFile(getFilePath(module.modulePath, '.lfrbuild-portal-private'))) {
 		var appBndPaths = getAncestorFiles(module.modulePath, 'app.bnd');

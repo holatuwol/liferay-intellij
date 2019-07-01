@@ -61,6 +61,7 @@ Change Log
 
 This is a change log for when I started keeping track of the changes that were made.
 
+* **2019-07-01**: When setting ``--unload=true``, include core and post-upgrade-fix folders
 * **2019-06-20**: When setting ``--unload=true``, include those with an ``.lfrbuild-portal-private`` marker file
 * **2019-06-19**: When setting ``--unload=true``, also ignore any module which won't be included in a release bundle
 * **2019-04-05**: Add a default RunManager configuration if one is not already setup
