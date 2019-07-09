@@ -183,7 +183,7 @@ setuplibs() {
 
 	timeecho 'Running ant setup-libs to initialize portal libraries'
 
-	ant setup-sdk setup-libs
+	ant setup-libs
 }
 
 setupsdk() {
