@@ -641,7 +641,7 @@ function gatherMavenBomDependencies(module) {
 		Array.prototype.push.apply(module.bomDependencies, bomDependencies);
 
 		var getLibraryDependencies = highland.partial(getDependenciesWithStreams, dependencyText, getLibraryDependency);
-		var getLibraryVariableDependencies = highland.partial(getDependenciesWithStreams, dependencyText, highland.partial(getLibraryVariableDependency, buildGradleContents));
+		var getLibraryVariableDependencies = highland.partial(getDependenciesWithStreams, dependencyText, highland.partial(getLibraryVariableDependency, module.modulePath));
 
 		var libraryDependencies = [];
 

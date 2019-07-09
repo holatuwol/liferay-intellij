@@ -13,6 +13,8 @@ var getModuleVersion = streams3.getModuleVersion;
 var isDirectory = streams2.isDirectory;
 var isFile = streams2.isFile;
 
+var buildGradleCache = {};
+
 function getDependenciesWithWhileLoop(dependencyText, dependencyExtractor, dependencyRegex) {
 	if (!dependencyRegex) {
 		return [];
@@ -45,30 +47,84 @@ function getDependenciesWithStreams(dependencyText, dependencyExtractor, depende
 		});
 };
 
-function getVariableValue(seenVariables, buildGradleContents, variableName) {
+function getBuildGradle(folder) {
+	var buildGradlePath = path.join(folder, 'build.gradle');
+
+	if (buildGradlePath in buildGradleCache) {
+		return buildGradleCache[buildGradlePath];
+	}
+
+	if (!isFile(buildGradlePath)) {
+		buildGradleCache[buildGradlePath] = null;
+
+		return null;
+	}
+
+	var buildGradleContents = fs.readFileSync(buildGradlePath).toString();
+
+	buildGradleCache[buildGradlePath] = buildGradleContents;
+
+	return buildGradleContents;
+}
+
+function getBuildExtGradle(folder) {
+	var buildExtGradlePath = path.join(folder, 'build-ext.gradle');
+
+	if (buildExtGradlePath in buildGradleCache) {
+		return buildGradleCache[buildExtGradlePath];
+	}
+
+	if (!isFile(buildExtGradlePath)) {
+		buildGradleCache[buildExtGradlePath] = null;
+
+		return null;
+	}
+
+	var buildGradleContents = fs.readFileSync(buildExtGradlePath).toString();
+
+	buildGradleCache[buildExtGradlePath] = buildGradleContents;
+
+	return buildGradleContents;
+}
+
+function getVariableValue(seenVariables, folder, variableName) {
 	if (seenVariables.has(variableName)) {
 		return '${' + variableName + '}';
 	}
 
-	seenVariables.add(variableName);
+	var variableDeclaration = new RegExp(variableName + '\\s*=\\s*"([^"]*)');
 
-	var variableDeclaration = 'String ' + variableName + ' = "';
+	var content = getBuildGradle(folder);
 
-	var x = buildGradleContents.indexOf(variableDeclaration) + variableDeclaration.length;
-
-	if (x < variableDeclaration.length) {
-		console.log('missing', variableDeclaration);
+	if (content == null) {
 		return null;
 	}
 
-	var y = buildGradleContents.indexOf('"', x);
+	content += '\n' + (getBuildExtGradle(folder) || '');
 
-	var rawValue = buildGradleContents.substring(x, y);
+	var variableMatcher = variableDeclaration.exec(content);
 
-	return getStringInterpolatedValue(seenVariables, buildGradleContents, rawValue);
+	var rawValue = null;
+
+	if (variableMatcher == null) {
+		rawValue = getVariableValue(seenVariables, path.dirname(folder), variableName);
+
+		if (rawValue == null) {
+			console.log('missing', variableName, 'from', folder);
+
+			return null;
+		}
+	}
+	else {
+		rawValue = variableMatcher[1];
+	}
+
+	seenVariables.add(variableName);
+
+	return getStringInterpolatedValue(seenVariables, folder, rawValue);
 };
 
-function getStringInterpolatedValue(seenVariables, buildGradleContents, rawValue) {
+function getStringInterpolatedValue(seenVariables, folder, rawValue) {
 	var finalValue = rawValue;
 
 	var matchResult = null;
@@ -76,7 +132,7 @@ function getStringInterpolatedValue(seenVariables, buildGradleContents, rawValue
 
 	while ((matchResult = stringInterpolationRegex.exec(rawValue)) !== null) {
 		var variableName = matchResult[1];
-		var variableValue = getVariableValue(seenVariables, buildGradleContents, variableName);
+		var variableValue = getVariableValue(seenVariables, folder, variableName);
 
 		finalValue = finalValue.replace(matchResult[0], variableValue);
 	}
@@ -84,7 +140,7 @@ function getStringInterpolatedValue(seenVariables, buildGradleContents, rawValue
 	return finalValue;
 }
 
-function getLibraryDependency(buildGradleContents, matchResult) {
+function getLibraryDependency(folder, matchResult) {
 	if (matchResult == null) {
 		return null;
 	}
@@ -93,20 +149,20 @@ function getLibraryDependency(buildGradleContents, matchResult) {
 		type: 'library',
 		group: matchResult[1],
 		name: matchResult[2],
-		version: (matchResult.length > 3) ? getStringInterpolatedValue(new Set(), buildGradleContents, matchResult[3]) : null,
+		version: (matchResult.length > 3) ? getStringInterpolatedValue(new Set(), folder, matchResult[3]) : null,
 		testScope: matchResult[0].indexOf('test') == 0
 	};
 
 	return dependency;
 };
 
-function getLibraryVariableDependency(buildGradleContents, matchResult) {
+function getLibraryVariableDependency(folder, matchResult) {
 	if (matchResult == null) {
 		return null;
 	}
 
 	var variableName = matchResult[3];
-	var variableValue = getVariableValue(new Set(), buildGradleContents, variableName);
+	var variableValue = getVariableValue(new Set(), folder, variableName);
 
 	var dependency = {
 		type: 'library',
@@ -164,9 +220,9 @@ function getDependencyText(buildGradleContents, nextStartPos) {
 function getModuleDependencies(folder, moduleDependencies, dependencyManagementEnabled) {
 	moduleDependencies = moduleDependencies || {};
 
-	var buildGradlePath = path.join(folder, 'build.gradle');
+	var buildGradleContents = getBuildGradle(folder);
 
-	if (!isFile(buildGradlePath)) {
+	if (buildGradleContents == null) {
 		return moduleDependencies;
 	}
 
@@ -177,8 +233,6 @@ function getModuleDependencies(folder, moduleDependencies, dependencyManagementE
 	if (!moduleDependencies.projectDependencies) {
 		moduleDependencies.projectDependencies = [];
 	}
-
-	var buildGradleContents = fs.readFileSync(buildGradlePath).toString();
 
 	moduleDependencies.buildGradleContents = buildGradleContents;
 
@@ -196,8 +250,8 @@ function getModuleDependencies(folder, moduleDependencies, dependencyManagementE
 
 		nextStartPos = dependencyTextResult.endPos;
 
-		var getLibraryDependencies = highland.partial(getDependenciesWithStreams, dependencyText, highland.partial(getLibraryDependency, buildGradleContents));
-		var getLibraryVariableDependencies = highland.partial(getDependenciesWithStreams, dependencyText, highland.partial(getLibraryVariableDependency, buildGradleContents));
+		var getLibraryDependencies = highland.partial(getDependenciesWithStreams, dependencyText, highland.partial(getLibraryDependency, folder));
+		var getLibraryVariableDependencies = highland.partial(getDependenciesWithStreams, dependencyText, highland.partial(getLibraryVariableDependency, folder));
 		var getProjectDependencies = highland.partial(getDependenciesWithStreams, dependencyText, getProjectDependency);
 
 		Array.prototype.push.apply(moduleDependencies.libraryDependencies, getLibraryDependencies(libraryDependencyRegex1));
