@@ -501,6 +501,10 @@ function getMavenDependencyElement(library) {
 		exclusions = ['glassfish:appserv-ext'];
 	}
 
+	if ((library.group == 'org.eclipse.platform') && (library.name == 'org.eclipse.equinox.console')) {
+		exclusions = ['org.apache.felix:org.apache.felix.gogo.runtime'];
+	}
+
 	if (exclusions != null) {
 		dependencyElement['exclusions'] = {
 			'exclusion': exclusions.map(getMavenExclusion)

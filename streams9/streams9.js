@@ -402,6 +402,26 @@ function getMavenDependencyElement(library) {
 		dependencyElement['type'] = 'pom';
 	}
 
+	var exclusions = null;
+
+	if ((library.group == 'easyconf') && (library.name == 'easyconf') && (library.version == '0.9.5')) {
+		exclusions = ['xdoclet:xdoclet', 'xdoclet:xdoclet-web-module', 'xpp3:xpp3_min'];
+	}
+
+	if ((library.group == 'net.open-esb.core') && (library.name == 'jbi_rt') && (library.version == '2.4.3')) {
+		exclusions = ['glassfish:appserv-ext'];
+	}
+
+	if ((library.group == 'org.eclipse.platform') && (library.name == 'org.eclipse.equinox.console')) {
+		exclusions = ['org.apache.felix:org.apache.felix.gogo.runtime'];
+	}
+
+	if (exclusions != null) {
+		dependencyElement['exclusions'] = {
+			'exclusion': exclusions.map(getMavenExclusion)
+		};
+	}
+
 	return dependencyElement;
 };
 
