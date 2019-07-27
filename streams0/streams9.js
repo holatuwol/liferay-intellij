@@ -404,6 +404,15 @@ function getJarLibraryXML(library) {
 	};
 };
 
+function getLatestCommitDate(branchName) {
+	try {
+		return child_process.execSync('git log -1 --pretty="%ci" upstream/' + branchName).toString().trim();
+	}
+	catch (e) {
+		return '1970-01-01 00:00:00 -0000';
+	}
+};
+
 function getLibraryTableXML(library) {
 	var libraryTableXML = [];
 
@@ -616,10 +625,26 @@ function getProjectRepositories() {
 	});
 
 	if (isDirectory('.git') || isFile('.git')) {
-		var passwordBranchName = '7.0.x-private';
+		var privateBranchNames = ['7.0.x-private', '7.1.x-private', '7.2.x-private', 'master-private'];
 		var privateRemoteName = child_process.execSync('git remote -v | grep -F "liferay/liferay-portal-ee" | cut -f 1 | head -1').toString().trim();
 
 		if (privateRemoteName) {
+			var privateBranchDates = privateBranchNames.map(getLatestCommitDate);
+			var privateBranchIndex = 0;
+
+			for (var i = 1; i < privateBranchNames.length; i++) {
+				if (privateBranchDates[i] > privateBranchDates[privateBranchIndex]) {
+					privateBranchIndex = i;
+				}
+			}
+
+			var passwordBranchName = privateBranchNames[privateBranchIndex];
+			var passwordBranchDate = privateBranchDates[privateBranchIndex];
+
+			passwordBranchDate = passwordBranchDate.substring(0, passwordBranchDate.indexOf(' '));
+
+			console.log('[' + new Date().toLocaleTimeString() + ']', 'Checking', privateRemoteName + '/' + passwordBranchName, ' (last fetched ' + passwordBranchDate + ') for Liferay private repository password');
+
 			var propertiesContent = null;
 
 			try {

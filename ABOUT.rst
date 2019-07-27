@@ -61,6 +61,7 @@ Change Log
 
 This is a change log for when I started keeping track of the changes that were made.
 
+* **2019-07-26**: Choose the most up-to-date private branch when trying to determine the Liferay private repository password
 * **2019-07-19**: Ignore ``org.eclipse.platform:org.eclipse.equinox.console`` dependency on ``org.apache.felix:org.apache.felix.gogo.runtime``
 * **2019-07-09**: Also check parent build files for variable values, due to applications like ``osb-lcs``.
 * **2019-07-01**: When setting ``--unload=true``, include core and post-upgrade-fix folders
