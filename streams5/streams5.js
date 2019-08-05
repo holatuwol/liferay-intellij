@@ -346,14 +346,14 @@ function getPluginPackageRequiredDeploymentContexts(folder) {
 			continue;
 		}
 
-		var pos = line.indexOf('\\') != -1;
+		var pos = contextLine.indexOf('\\');
 		foundRequiredDeploymentContext = pos != -1;
 
 		if (foundRequiredDeploymentContext) {
-			line = line.substring(0, pos);
+			contextLine = contextLine.substring(0, pos);
 		}
 
-		var contexts = line.trim().split(',');
+		var contexts = contextLine.trim().split(',');
 
 		for (var j = 0; j < contexts.length; j++) {
 			var context = contexts[j].trim();
