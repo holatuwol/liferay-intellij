@@ -111,7 +111,7 @@ function checkForMavenCache(obj) {
 };
 
 function generateFileListCache(cachePath) {
-	var args = ['.', '-name', '*.jar', '-o', '-name', '*.pom'];
+	var args = ['-L', '.', '-name', '*.jar', '-o', '-name', '*.pom'];
 
 	var options = {
 		'cwd': cachePath
@@ -123,7 +123,10 @@ function generateFileListCache(cachePath) {
 		fileList = execFileSync('find', args, options).toString().split('\n');
 	}
 	catch (e) {
+		console.error(e);
 	}
+
+	console.log('[' + new Date().toLocaleTimeString() + ']', 'Remembering', fileList.length, 'artifacts found in', cachePath);
 
 	fileList.sort();
 
