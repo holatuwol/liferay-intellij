@@ -136,7 +136,7 @@ function generateFileListCache(cachePath) {
 		var fileName = fileList[i];
 		var filePath = getFilePath(cachePath, fileName);
 
-		var folderName = fileName
+		var folderName = fileName;
 
 		var pos = folderName.lastIndexOf('/');
 

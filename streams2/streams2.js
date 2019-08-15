@@ -4,13 +4,13 @@ var path = require('path');
 
 function getFilePath(folderPath, fileName) {
 	if (folderPath == '.') {
-		return fileName;
+		return path.normalize(fileName);
 	}
 	else if (!folderPath || !fileName) {
 		return undefined;
 	}
 	else {
-		return path.join(folderPath, fileName).replace(/\\/g, '/');
+		return path.normalize(path.join(folderPath, fileName).replace(/\\/g, '/'));
 	}
 };
 
