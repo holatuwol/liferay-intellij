@@ -114,7 +114,8 @@ function generateFileListCache(cachePath) {
 	var args = ['-L', '.', '-name', '*.jar', '-o', '-name', '*.pom'];
 
 	var options = {
-		'cwd': cachePath
+		'cwd': cachePath,
+		'maxBuffer': 1024 * 1024 * 1024 * 4
 	};
 
 	var fileList = [];
