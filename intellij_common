@@ -3,25 +3,7 @@
 cachefolder() {
 	timeecho "Building ${PWD} ls-files cache to speed up directory scanning"
 
-	if [ ! -e .git ]; then
-		find modules -type f -not -path '*/node_modules/*' > modules/git_ls_files_modules.txt
-
-		return 0
-	fi
-
-	git ls-files modules > modules/git_ls_files_modules.txt
-
-	if [ -f git-commit-portal ] && [ -f git-commit-portal-private ]; then
-		git ls-tree -r $(cat git-commit-portal) --name-only -- modules >> modules/git_ls_files_modules.txt
-	fi
-
-	for status in $(git status -s | cut -d' ' -f 2-); do
-		if [ -d ${status} ]; then
-			find ${status} -type f -not -path '*/node_modules/*' >> modules/git_ls_files_modules.txt
-		else
-			echo "${status}" >> modules/git_ls_files_modules.txt
-		fi
-	done
+	find modules -type f -not -path '*/node_modules/*' > modules/git_ls_files_modules.txt
 }
 
 cachemodules() {
