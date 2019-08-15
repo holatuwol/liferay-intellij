@@ -61,7 +61,7 @@ Change Log
 
 This is a change log for when I started keeping track of the changes that were made.
 
-* **2019-08-15**: Increase maxBuffer to 4g in case the list of files in Gradle caches grows to that size
+* **2019-08-15**: Increase maxBuffer to 256m in case the list of files in Gradle caches grows to that size
 * **2019-08-15**: Follow symlinks, log errors if find fails, log debug information if find succeeds
 * **2019-08-15**: Always use find to build file listing cache to avoid overhead of git status
 * **2019-08-05**: For legacy plugins SDK, fix scanning for required deployment contexts

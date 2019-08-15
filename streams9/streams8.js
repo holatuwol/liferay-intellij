@@ -115,7 +115,7 @@ function generateFileListCache(cachePath) {
 
 	var options = {
 		'cwd': cachePath,
-		'maxBuffer': 1024 * 1024 * 1024 * 4
+		'maxBuffer': 1024 * 1024 * 256
 	};
 
 	var fileList = [];
