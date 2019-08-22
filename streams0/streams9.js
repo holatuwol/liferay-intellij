@@ -651,6 +651,7 @@ function getProjectRepositories() {
 				propertiesContent = child_process.execSync('git show ' + privateRemoteName + '/' + passwordBranchName + ':working.dir.properties');
 			}
 			catch (e) {
+				console.error(e);
 			}
 
 			if (!propertiesContent) {
@@ -658,6 +659,7 @@ function getProjectRepositories() {
 					propertiesContent = child_process.execSync('git show ' + passwordBranchName + ':working.dir.properties');
 				}
 				catch (e) {
+					console.error(e);
 				}
 			}
 

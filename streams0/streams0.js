@@ -472,6 +472,7 @@ function executeGradleFile(completionMessage, entries) {
 		execFileSync(executable, args, options);
 	}
 	catch (e) {
+		console.error(e);
 	}
 
 	generateFileListCache('');
@@ -1204,6 +1205,7 @@ function unzipBinary(liferayHome, catalinaHome, module) {
 		}
 	}
 	catch (e) {
+		console.error(e);
 	}
 };
 

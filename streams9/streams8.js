@@ -111,6 +111,10 @@ function checkForMavenCache(obj) {
 };
 
 function generateFileListCache(cachePath) {
+	if (!cachePath) {
+		return;
+	}
+
 	var args = ['-L', '.', '-name', '*.jar', '-o', '-name', '*.pom'];
 
 	var options = {
