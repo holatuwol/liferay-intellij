@@ -125,7 +125,7 @@ function generateFileListCache(cachePath) {
 	var fileList = [];
 
 	try {
-		fileList = execFileSync('/usr/bin/find', args, options).toString().split('\n');
+		fileList = execFileSync('find', args, options).toString().split('\n');
 	}
 	catch (e) {
 		console.error(e);
