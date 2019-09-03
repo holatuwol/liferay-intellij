@@ -4,7 +4,7 @@ var path = require('path');
 
 function getFilePath(folderPath, fileName) {
 	if (folderPath == '.') {
-		return path.normalize(fileName);
+		return path.normalize(fileName).replace(/\\/g, '/');
 	}
 	else if (!folderPath || !fileName) {
 		return undefined;
