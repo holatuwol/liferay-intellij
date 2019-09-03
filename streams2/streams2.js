@@ -10,7 +10,7 @@ function getFilePath(folderPath, fileName) {
 		return undefined;
 	}
 	else {
-		return path.normalize(path.join(folderPath, fileName).replace(/\\/g, '/'));
+		return path.normalize(path.join(folderPath, fileName)).replace(/\\/g, '/');
 	}
 };
 
