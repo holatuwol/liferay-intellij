@@ -5,6 +5,7 @@ var streams2 = require('../streams2/streams2');
 var streams3 = require('../streams4/streams3');
 var util = require('util');
 
+var getFilePath = streams2.getFilePath;
 var getModuleExcludeFolders = streams3.getModuleExcludeFolders;
 var getModuleIncludeFolders = streams3.getModuleIncludeFolders;
 var getModuleOverview = streams3.getModuleOverview;
@@ -48,7 +49,7 @@ function getDependenciesWithStreams(dependencyText, dependencyExtractor, depende
 };
 
 function getBuildGradle(folder) {
-	var buildGradlePath = path.join(folder, 'build.gradle');
+	var buildGradlePath = getFilePath(folder, 'build.gradle');
 
 	if (buildGradlePath in buildGradleCache) {
 		return buildGradleCache[buildGradlePath];
@@ -68,7 +69,7 @@ function getBuildGradle(folder) {
 }
 
 function getBuildExtGradle(folder) {
-	var buildExtGradlePath = path.join(folder, 'build-ext.gradle');
+	var buildExtGradlePath = getFilePath(folder, 'build-ext.gradle');
 
 	if (buildExtGradlePath in buildGradleCache) {
 		return buildGradleCache[buildExtGradlePath];
@@ -263,8 +264,8 @@ function getModuleDependencies(folder, moduleDependencies, dependencyManagementE
 	}
 
 	if (folder.indexOf('modules/core/') == -1) {
-		if (isDirectory(path.join(folder, 'src/test')) ||
-			isDirectory(path.join(folder, 'src/testIntegration'))) {
+		if (isDirectory(getFilePath(folder, 'src/test')) ||
+			isDirectory(getFilePath(folder, 'src/testIntegration'))) {
 
 			moduleDependencies.projectDependencies.push({
 				type: 'project',
@@ -272,7 +273,7 @@ function getModuleDependencies(folder, moduleDependencies, dependencyManagementE
 			});
 		}
 
-		if (isDirectory(path.join(folder, 'src/testIntegration'))) {
+		if (isDirectory(getFilePath(folder, 'src/testIntegration'))) {
 			moduleDependencies.projectDependencies.push({
 				type: 'project',
 				name: 'portal-test-integration'
@@ -290,7 +291,7 @@ function getModuleDetails(folder) {
 	var moduleExcludeFolders = getModuleExcludeFolders(folder, moduleIncludeFolders);
 	var moduleDependencies = getModuleDependencies(folder, null, true);
 
-	var archetypeResourcesFolder = path.join(folder, 'src/main/resources/archetype-resources');
+	var archetypeResourcesFolder = getFilePath(folder, 'src/main/resources/archetype-resources');
 	moduleDependencies = getModuleDependencies(archetypeResourcesFolder, moduleDependencies, false);
 
 	var moduleDetailsArray = [moduleOverview, moduleVersion, moduleIncludeFolders, moduleExcludeFolders, moduleDependencies];

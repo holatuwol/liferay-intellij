@@ -5,6 +5,7 @@ var streams2 = require('../streams2/streams2');
 var streams3 = require('./streams3');
 var util = require('util');
 
+var getFilePath = streams2.getFilePath;
 var getModuleExcludeFolders = streams3.getModuleExcludeFolders;
 var getModuleFolders = streams3.getModuleFolders;
 var getModuleIncludeFolders = streams3.getModuleIncludeFolders;
@@ -68,7 +69,7 @@ function getModuleDetails(folder) {
 	var moduleExcludeFolders = getModuleExcludeFolders(folder, moduleIncludeFolders);
 	var moduleDependencies = getModuleDependencies(folder);
 
-	var archetypeResourcesFolder = path.join(folder, 'src/main/resources/archetype-resources');
+	var archetypeResourcesFolder = getFilePath(folder, 'src/main/resources/archetype-resources');
 	moduleDependencies = getModuleDependencies(archetypeResourcesFolder, moduleDependencies);
 
 	var moduleDetailsArray = [moduleOverview, moduleIncludeFolders, moduleExcludeFolders, moduleDependencies];

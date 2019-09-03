@@ -46,7 +46,7 @@ Like in the case of ``readdir`` where we used the synchronous version ``readdirS
 	function getModuleDependencies(folder, moduleDependencies) {
 		moduleDependencies = moduleDependencies || {};
 
-		var buildGradlePath = path.join(folder, 'build.gradle');
+		var buildGradlePath = getFilePath(folder, 'build.gradle');
 
 		if (!isFile(buildGradlePath)) {
 			return moduleDependencies;
@@ -339,8 +339,8 @@ We can account for this with the following code.
 
 .. code-block:: javascript
 
-	if (isDirectory(path.join(folder, 'src/main/test')) ||
-		isDirectory(path.join(folder, 'src/main/testIntegration'))) {
+	if (isDirectory(getFilePath(folder, 'src/main/test')) ||
+		isDirectory(getFilePath(folder, 'src/main/testIntegration'))) {
 
 		moduleDependencies.projectDependencies.push({
 			type: 'project',
@@ -348,7 +348,7 @@ We can account for this with the following code.
 		});
 	}
 
-	if (isDirectory(path.join(folder, 'src/main/testIntegration'))) {
+	if (isDirectory(getFilePath(folder, 'src/main/testIntegration'))) {
 		moduleDependencies.projectDependencies.push({
 			type: 'project',
 			name: 'portal-test-integration'

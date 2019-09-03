@@ -453,13 +453,13 @@ function executeGradleFile(completionMessage, entries) {
 		'}'
 	]);
 
-	var buildGradleFolder = path.join(process.cwd(), 'tmp/ijbuild');
+	var buildGradleFolder = getFilePath(process.cwd(), 'tmp/ijbuild');
 
 	mkdirSync('tmp/ijbuild');
 
-	fs.writeFileSync(path.join(buildGradleFolder, 'build.gradle'), buildGradleContent.join('\n'));
+	fs.writeFileSync(getFilePath(buildGradleFolder, 'build.gradle'), buildGradleContent.join('\n'));
 
-	var executable = path.join(process.cwd(), 'gradlew');
+	var executable = getFilePath(process.cwd(), 'gradlew');
 
 	var args = ['completeGradleCache'];
 
@@ -797,7 +797,7 @@ function getGradleEntry(library) {
 
 function getGradleFile(entries) {
 	return {
-		name: path.join(process.cwd(), 'tmp/ijbuild/build.gradle'),
+		name: getFilePath(process.cwd(), 'tmp/ijbuild/build.gradle'),
 		content: buildGradleContent.join('\n')
 	};
 };
@@ -1172,12 +1172,12 @@ function unzipBinary(liferayHome, catalinaHome, module) {
 	}
 
 	var moduleBinaryPaths = [
-		path.join(liferayHome, 'osgi', 'core', module.bundleSymbolicName + '.jar'),
-		path.join(liferayHome, 'osgi', 'modules', module.bundleSymbolicName + '.jar'),
-		path.join(liferayHome, 'osgi', 'portal', module.bundleSymbolicName + '.jar'),
-		path.join(liferayHome, 'osgi', 'static', module.bundleSymbolicName + '.jar'),
-		path.join(catalinaHome, 'lib', 'ext', module.moduleName + '.jar'),
-		path.join(catalinaHome, 'webapps', 'ROOT', 'WEB-INF', 'lib', module.moduleName + '.jar')
+		getFilePath(liferayHome, 'osgi/core/' + module.bundleSymbolicName + '.jar'),
+		getFilePath(liferayHome, 'osgi/modules/' + module.bundleSymbolicName + '.jar'),
+		getFilePath(liferayHome, 'osgi/portal/' + module.bundleSymbolicName + '.jar'),
+		getFilePath(liferayHome, 'osgi/static/' + module.bundleSymbolicName + '.jar'),
+		getFilePath(catalinaHome, 'lib/ext/' + module.moduleName + '.jar'),
+		getFilePath(catalinaHome, 'webapps/ROOT/WEB-INF/lib/' + module.moduleName + '.jar')
 	].filter(isFile);
 
 	if (moduleBinaryPaths.length == 0) {
