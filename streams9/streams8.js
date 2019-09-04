@@ -38,6 +38,7 @@ var libraryCache = {};
 function createProjectWorkspace(coreDetails, moduleDetails) {
 	moduleDetails.forEach(checkForGradleCache);
 	checkForGradleCache(getUserHome());
+	checkForGradleCache('../liferay-binaries-cache-2020');
 	checkForGradleCache('../liferay-binaries-cache-2017');
 
 	for (gradleCache of gradleCaches) {

@@ -68,11 +68,12 @@ copylibs() {
 		return 0
 	fi
 
-	if [ -d ../liferay-binaries-cache-2017 ]; then
+	if [ -d ../liferay-binaries-cache-2017 ] && [ ! -d ../liferay-binaries-cache-2020 ]; then
 		return 0
 	fi
 
 	timeecho 'Missing clone of https://github.com/liferay/liferay-binaries-cache-2017'
+	timeecho 'Missing clone of https://github.com/liferay/liferay-binaries-cache-2020'
 
 	if [ "" == "$(which mvn)" ]; then
 		echo 'Maven is not available in the path, dependency libraries will be missing'

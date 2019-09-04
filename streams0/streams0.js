@@ -62,6 +62,7 @@ function createProjectObjectModels(coreDetails, moduleDetails, pluginDetails) {
 
 	moduleDetails.forEach(checkForGradleCache);
 	checkForGradleCache(getUserHome());
+	checkForGradleCache('../liferay-binaries-cache-2020');
 	checkForGradleCache('../liferay-binaries-cache-2017');
 
 	for (gradleCache of gradleCaches) {
@@ -155,6 +156,7 @@ function createProjectWorkspace(coreDetails, moduleDetails, pluginDetails, confi
 
 	moduleDetails.forEach(checkForGradleCache);
 	checkForGradleCache(getUserHome());
+	checkForGradleCache('../liferay-binaries-cache-2020');
 	checkForGradleCache('../liferay-binaries-cache-2017');
 
 	for (gradleCache of gradleCaches) {

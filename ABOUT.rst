@@ -61,6 +61,7 @@ Change Log
 
 This is a change log for when I started keeping track of the changes that were made.
 
+* **2019-09-04**: Check for `liferay-binaries-cache-2020 <https://github.com/liferay/liferay-binaries-cache-2020>`__ in addition to `liferay-binaries-cache-2017 <https://github.com/liferay/liferay-binaries-cache-2017>`__
 * **2019-09-03**: On Windows, make sure to replace ``\`` with ``/`` after path normalization
 * **2019-08-15**: Increase maxBuffer to 256m in case the list of files in Gradle caches grows to that size
 * **2019-08-15**: Follow symlinks, log errors if find fails, log debug information if find succeeds
