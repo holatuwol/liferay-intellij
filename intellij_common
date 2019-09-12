@@ -68,7 +68,7 @@ copylibs() {
 		return 0
 	fi
 
-	if [ -d ../liferay-binaries-cache-2017 ] && [ ! -d ../liferay-binaries-cache-2020 ]; then
+	if [ -d ../liferay-binaries-cache-2017 ] && [ -d ../liferay-binaries-cache-2020 ]; then
 		return 0
 	fi
 
