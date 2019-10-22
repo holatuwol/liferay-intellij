@@ -625,6 +625,14 @@ function getProjectRepositories() {
 		layout: 'default'
 	});
 
+	tempProjectRepositories.push({
+		id: 'jaspersoft-third-party',
+		name: 'Jaspersoft Third-Party',
+		scheme: 'http',
+		path: 'jaspersoft.jfrog.io/jaspersoft/third-party-ce-artifacts',
+		layout: 'default'
+	});
+
 	if (isDirectory('.git') || isFile('.git')) {
 		var privateBranchNames = ['7.0.x-private', '7.1.x-private', '7.2.x-private', 'master-private'];
 		var privateRemoteName = child_process.execSync('git remote -v | grep -F "liferay/liferay-portal-ee" | cut -f 1 | head -1').toString().trim();
@@ -643,7 +651,7 @@ function getProjectRepositories() {
 			var passwordBranchDate = privateBranchDates[privateBranchIndex];
 			passwordBranchDate = passwordBranchDate.substring(0, passwordBranchDate.indexOf(' '));
 
-			console.log('[' + new Date().toLocaleTimeString() + ']', 'Checking', privateRemoteName + '/' + passwordBranchName, ' (last fetched ' + passwordBranchDate + ') for Liferay private repository password');
+			console.log('[' + new Date().toLocaleTimeString() + ']', 'Checking', privateRemoteName + '/' + passwordBranchName, '(last fetched ' + passwordBranchDate + ') for Liferay private repository password');
 
 			var propertiesContent = null;
 
