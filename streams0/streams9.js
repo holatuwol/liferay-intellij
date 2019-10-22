@@ -641,7 +641,6 @@ function getProjectRepositories() {
 
 			var passwordBranchName = privateBranchNames[privateBranchIndex];
 			var passwordBranchDate = privateBranchDates[privateBranchIndex];
-
 			passwordBranchDate = passwordBranchDate.substring(0, passwordBranchDate.indexOf(' '));
 
 			console.log('[' + new Date().toLocaleTimeString() + ']', 'Checking', privateRemoteName + '/' + passwordBranchName, ' (last fetched ' + passwordBranchDate + ') for Liferay private repository password');

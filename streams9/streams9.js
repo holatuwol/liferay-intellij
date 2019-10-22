@@ -552,24 +552,42 @@ function getProjectRepositories() {
 
 			console.log('[' + new Date().toLocaleTimeString() + ']', 'Checking', privateRemoteName + '/' + passwordBranchName, ' (last fetched ' + passwordBranchDate + ') for Liferay private repository password');
 
-			var propertiesContent = child_process.execSync('git show ' + privateRemoteName + '/' + passwordBranchName + ':working.dir.properties');
+			var propertiesContent = null;
 
-			var repositoryMetadata = getRepositoryMetadata(propertiesContent);
-			var repositoryPath = repositoryMetadata['url'];
-
-			if (repositoryPath.indexOf('https://') == 0) {
-				repositoryPath = repositoryPath.substring(8);
+			try {
+				propertiesContent = child_process.execSync('git show ' + privateRemoteName + '/' + passwordBranchName + ':working.dir.properties');
+			}
+			catch (e) {
+				console.error(e);
 			}
 
-			tempProjectRepositories.push({
-				id: 'liferay-private',
-				name: 'Liferay Private',
-				scheme: 'https',
-				username: repositoryMetadata['username'],
-				password: repositoryMetadata['password'],
-				path: repositoryPath,
-				layout: 'default'
-			});
+			if (!propertiesContent) {
+				try {
+					propertiesContent = child_process.execSync('git show ' + passwordBranchName + ':working.dir.properties');
+				}
+				catch (e) {
+					console.error(e);
+				}
+			}
+
+			if (propertiesContent) {
+				var repositoryMetadata = getRepositoryMetadata(propertiesContent);
+				var repositoryPath = repositoryMetadata['url'];
+
+				if (repositoryPath.indexOf('https://') == 0) {
+					repositoryPath = repositoryPath.substring(8);
+				}
+
+				tempProjectRepositories.push({
+					id: 'liferay-private',
+					name: 'Liferay Private',
+					scheme: 'https',
+					username: repositoryMetadata['username'],
+					password: repositoryMetadata['password'],
+					path: repositoryPath,
+					layout: 'default'
+				});
+			}
 		}
 	}
 
