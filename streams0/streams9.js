@@ -716,7 +716,6 @@ function getProjectRepositoriesXMLEntry(repository) {
 
 function getRepositoryMetadata(propertiesContent) {
 	var keyPrefix = 'build.repository.private.';
-	var keySuffix = '[7.0.x-private]';
 
 	return propertiesContent.toString()
 		.split('\n')
@@ -724,13 +723,13 @@ function getRepositoryMetadata(propertiesContent) {
 			return x.trim();
 		})
 		.filter(function(x) {
-			return (x.indexOf(keyPrefix) == 0) && (x.indexOf(keySuffix) != -1);
+			return (x.indexOf(keyPrefix) == 0) && (x.indexOf('[') == -1);
 		})
 		.reduce(function(accumulator, next) {
 			var entry = next.split('=');
 			var key = entry[0].trim();
 
-			key = key.substring(keyPrefix.length, key.indexOf(keySuffix));
+			key = key.substring(keyPrefix.length);
 
 			accumulator[key] = entry[1].trim();
 			return accumulator;
