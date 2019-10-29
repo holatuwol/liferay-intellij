@@ -1042,14 +1042,42 @@ function getUnloadModuleElement(module) {
 };
 
 function getUnloadModuleXML(unloadModuleElements) {
-	var workspaceXML = [
-		'<?xml version="1.0" encoding="UTF-8"?>',
-		'<project version="4">',
-		'<component name="UnloadedModulesList">'
-	];
+	var workspaceXML = [];
 
+	if (fs.existsSync('.idea/workspace.xml')) {
+		workspaceXML = fs.readFileSync('.idea/workspace.xml').toString()
+			.split('\n')
+			.map(function(x) { return x.trim(); });
+
+		var x = -1;
+		var y = -1;
+
+		for (var i = 1; i < workspaceXML.length; i++) {
+			if (x > 0) {
+				if (workspaceXML[i] == '</component>') {
+					y = i;
+					break;
+				}
+			}
+			else if (workspaceXML[i] == '<component name="UnloadedModulesList">') {
+				x = i;
+			}
+		}
+
+
+		if (x != -1) {
+			workspaceXML.splice(x, y - x + 1);
+		}
+
+		workspaceXML.splice(workspaceXML.length - 1, 1);
+	}
+	else {
+		workspaceXML.push('<?xml version="1.0" encoding="UTF-8"?>');
+		workspaceXML.push('<project version="4">');
+	}
+
+	workspaceXML.push('<component name="UnloadedModulesList">');
 	workspaceXML = workspaceXML.concat(unloadModuleElements);
-
 	workspaceXML.push('</component>');
 	workspaceXML.push('</project>');
 
