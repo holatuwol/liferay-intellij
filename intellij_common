@@ -38,16 +38,12 @@ checknode() {
 
 	pushd "${SCRIPT_ROOT}" > /dev/null
 
-	checknodeversion
-
-	timeecho 'Running npm to update script dependencies'
-
-	npm install
+	checknodemodules
 
 	popd > /dev/null
 }
 
-checknodeversion() {
+checknodemodules() {
 	node --version > node.version.new
 
 	if [ -f node.version.old ]; then
@@ -61,6 +57,20 @@ checknodeversion() {
 	fi
 
 	mv node.version.new node.version.old
+
+	local NODE_VERSION=$(cat node.version.old | cut -d'.' -f 1 | sed 's/^v//g')
+
+	if [[ ${NODE_VERSION} -lt 8 ]]; then
+		timeecho 'Running npm install to update script dependencies'
+
+		npm install
+	else
+		timeecho 'Running npm ci to update script dependencies'
+
+		rm -f npm-shrinkwrap.json
+		npm ci
+		git checkout npm-shrinkwrap.json > /dev/null
+	fi
 }
 
 copylibs() {
