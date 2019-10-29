@@ -1,4 +1,3 @@
-var cheerio = require('cheerio');
 var child_process = require('child_process');
 var comparators = require('comparators').default;
 var fs = require('fs');
@@ -352,19 +351,35 @@ function checkBreakpoints(moduleDetails) {
 		return;
 	}
 
-	var workspaceXML = fs.readFileSync('.idea/workspace.xml');
+	var workspaceXML = fs.readFileSync('.idea/workspace.xml').toString();
 
-	var workspace = cheerio.load(workspaceXML);
-	var breakpoints = workspace('breakpoint-manager breakpoints url');
+	var x = workspaceXML.indexOf('<breakpoints>');
 
-	for (var i = 0; i < breakpoints.length; i++) {
-		var breakpointURL = workspace(breakpoints[i]).text().trim().substring('file://$PROJECT_DIR$/'.length);
+	if (x == -1) {
+		console.log('[' + new Date().toLocaleTimeString() + ']', 'No breakpoints found');
+		return;
+	}
+
+	var y = workspaceXML.indexOf('</breakpoints>') + '</breakpoints>'.length;
+
+	var breakpointsXML = workspaceXML.substring(x, y);
+
+	x = breakpointsXML.indexOf('<url>');
+
+	while (x != -1) {
+		y = breakpointsXML.indexOf('</url>', x);
+
+		var breakpointURL = breakpointsXML.substring(x + '<url>file://$PROJECT_DIR$/'.length, y);
 
 		for (var j = 0; j < moduleDetails.length; j++) {
 			if (breakpointURL.indexOf(moduleDetails[j].modulePath) == 0) {
+				console.log('[' + new Date().toLocaleTimeString() + ']', 'Moving', moduleDetails[j].modulePath, 'up in the list of modules');
+
 				moduleDetails[j].breakpointSort = 1;
 			}
 		}
+
+		x = breakpointsXML.indexOf('<url>', y + 6);
 	}
 };
 
