@@ -26,6 +26,7 @@ var getLibraryDependency = streams4.getLibraryDependency;
 var getLibraryJarPaths = streams8.getLibraryJarPaths;
 var getLibraryVariableDependency = streams4.getLibraryVariableDependency;
 var getLibraryXML = streams9.getLibraryXML;
+var getLiferayPrivateRepository = streams9.getLiferayPrivateRepository;
 var getMavenAggregator = streams9.getMavenAggregator;
 var getMavenProject = streams9.getMavenProject;
 var getModuleElement = streams7.getModuleElement;
@@ -195,8 +196,16 @@ function createProjectWorkspace(coreDetails, moduleDetails, pluginDetails, confi
 	lastLibraryCount = 0;
 	gradleCacheStable = false;
 
+	var gradleCacheModuleDetails = moduleDetails;
+	var gradleCachePluginDetails = pluginDetails;
+
+	if (getLiferayPrivateRepository() == null) {
+		gradleCacheModuleDetails = moduleDetails.filter(function(x) { return x.modulePath.indexOf('/dxp/') == -1; });
+		gradleCachePluginDetails = pluginDetails.filter(function(x) { return x.modulePath.indexOf('/dxp/') == -1; });
+	}
+
 	while (!gradleCacheStable) {
-		completeBomCache(moduleDetails);
+		completeBomCache(gradleCacheModuleDetails);
 
 		if (lastLibraryCount == 0) {
 			gradleCacheStable = true;
@@ -211,7 +220,7 @@ function createProjectWorkspace(coreDetails, moduleDetails, pluginDetails, confi
 	gradleCacheStable = false;
 
 	while (!gradleCacheStable) {
-		completeGradleCache(coreDetails, moduleDetails, pluginDetails);
+		completeGradleCache(coreDetails, gradleCacheModuleDetails, gradleCachePluginDetails);
 
 		if (lastLibraryCount == 0) {
 			gradleCacheStable = true;

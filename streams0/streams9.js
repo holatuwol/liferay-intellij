@@ -602,7 +602,19 @@ function getNewModuleRootManagerXML(module) {
 	return newModuleRootManagerXML.join('\n');
 };
 
+var liferayPrivateRepository = null;
+
 function getLiferayPrivateRepository() {
+	return null;
+
+	if (liferayPrivateRepository != null) {
+		if (liferayPrivateRepository.id) {
+			return liferayPrivateRepository;
+		}
+
+		return null;
+	}
+
 	var propertiesContent = null;
 
 	if (fs.existsSync('working.dir.properties')) {
@@ -647,6 +659,8 @@ function getLiferayPrivateRepository() {
 	}
 
 	if (propertiesContent == null) {
+		liferayPrivateRepository = {};
+
 		return null;
 	}
 
@@ -657,7 +671,7 @@ function getLiferayPrivateRepository() {
 		repositoryPath = repositoryPath.substring(8);
 	}
 
-	return {
+	liferayPrivateRepository = {
 		id: 'liferay-private',
 		name: 'Liferay Private',
 		scheme: 'https',
@@ -666,6 +680,8 @@ function getLiferayPrivateRepository() {
 		path: repositoryPath,
 		layout: 'default'
 	};
+
+	return liferayPrivateRepository;
 }
 
 function getProjectRepositories() {
@@ -863,6 +879,7 @@ exports.fixProjectDependencies = fixProjectDependencies;
 exports.gradleCaches = gradleCaches;
 exports.getJarLibraryXML = getJarLibraryXML;
 exports.getLibraryXML = getLibraryXML;
+exports.getLiferayPrivateRepository = getLiferayPrivateRepository;
 exports.getMavenAggregator = getMavenAggregator;
 exports.getMavenProject = getMavenProject;
 exports.getModuleXML = getModuleXML;

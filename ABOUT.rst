@@ -61,6 +61,7 @@ Change Log
 
 This is a change log for when I started keeping track of the changes that were made.
 
+* **2019-10-30**: If unable to get metadata for Liferay private Maven repository, exclude dependencies for private projects from attempt to complete Gradle cache
 * **2019-10-29**: Use ``npm ci`` so that it doesn't download the buggy version of ``domutils`` on OSX
 * **2019-10-21**: Working directory properties don't always have a suffix
 * **2019-10-21**: Add Jaspersoft third-party dependencies repository
