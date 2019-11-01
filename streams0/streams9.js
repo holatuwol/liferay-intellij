@@ -605,8 +605,6 @@ function getNewModuleRootManagerXML(module) {
 var liferayPrivateRepository = null;
 
 function getLiferayPrivateRepository() {
-	return null;
-
 	if (liferayPrivateRepository != null) {
 		if (liferayPrivateRepository.id) {
 			return liferayPrivateRepository;
