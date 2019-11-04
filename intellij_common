@@ -58,9 +58,14 @@ checknodemodules() {
 
 	mv node.version.new node.version.old
 
-	local NODE_VERSION=$(cat node.version.old | cut -d'.' -f 1 | sed 's/^v//g')
+	local NPM_MAJOR_VERSION=$(npm --version | cut -d'.' -f 1)
+	local NPM_MINOR_VERSION=$(npm --version | cut -d'.' -f 2)
 
-	if [[ ${NODE_VERSION} -lt 8 ]]; then
+	if [[ ${NPM_MAJOR_VERSION} -lt 5 ]]; then
+		timeecho 'Running npm install to update script dependencies'
+
+		npm install
+	elif [[ ${NPM_MAJOR_VERSION} -eq 5 ]] && [[ ${NPM_MINOR_VERSION} -lt 7 ]]; then
 		timeecho 'Running npm install to update script dependencies'
 
 		npm install
