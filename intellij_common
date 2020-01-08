@@ -25,12 +25,19 @@ cachemodules() {
 checknode() {
 	NODEJS=$(which nodejs 2> /dev/null)
 
-	if [ "" == "$NODEJS" ]; then
+	if [ "" == "${NODEJS}" ]; then
 		NODEJS=$(which node 2> /dev/null)
 	fi
 
-	if [ "" == "$NODEJS" ]; then
+	if [ "" == "${NODEJS}" ]; then
 		timeecho "Please install node.js"
+		exit 1
+	fi
+
+	local NPM=$(which npm 2> /dev/null)
+
+	if [ "" == "${NPM}" ]; then
+		timeecho "Please install npm"
 		exit 1
 	fi
 
@@ -97,7 +104,7 @@ copylibs() {
 
 	timeecho 'Retrieving dependency libraries using Maven'
 
-	"$NODEJS" "${SCRIPT_FOLDER}/bin/pom.js" "$PWD"
+	"${NODEJS}" "${SCRIPT_FOLDER}/bin/pom.js" "${PWD}"
 
 	mvn --fail-at-end dependency:go-offline
 	grep '<module>.*</module>' pom.xml | awk -F'[<>]' '{ print $3 "/pom.xml" }' | xargs rm
@@ -152,7 +159,7 @@ setantopts() {
 	ANT_OPTS='-Xms2g -Xmx2g'
 
 	if [[ 8 -gt $JAVA_VERSION ]]; then
-		ANT_OPTS="$ANT_OPTS -XX:MaxPermSize=1g"
+		ANT_OPTS="${ANT_OPTS} -XX:MaxPermSize=1g"
 	fi
 
 	export ANT_OPTS
@@ -173,7 +180,7 @@ setuplibs() {
 		fi
 	done
 
-	if [ "" == "$NEEDS_SETUP_LIBS" ]; then
+	if [ "" == "${NEEDS_SETUP_LIBS}" ]; then
 		return 0
 	fi
 
@@ -203,7 +210,7 @@ setupwork() {
 
 	local LOCAL_BRANCH=$(grep -o '`[^`]*`' "README.markdown" | cut -d'`' -f 2 | uniq)
 
-	if [ "" == "$LOCAL_BRANCH" ]; then
+	if [ "" == "${LOCAL_BRANCH}" ]; then
 		LOCAL_BRANCH=7.0.x
 	fi
 
