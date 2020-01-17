@@ -158,7 +158,7 @@ Even though we are generating many of them, the format for ``pom.xml`` files is 
 			<repository>
 				<id>default</id>
 				<name>Apache</name>
-				<url>http://repo.maven.apache.org/maven2</url>
+				<url>https://repo.maven.apache.org/maven2</url>
 				<layout>default</layout>
 			</repository>
 			<repository>
@@ -203,7 +203,7 @@ Perform operations on ``mavenProjectStream`` in the function ``createProjectObje
 			<repository>
 				<id>default</id>
 				<name>Apache</name>
-				<url>http://repo.maven.apache.org/maven2</url>
+				<url>https://repo.maven.apache.org/maven2</url>
 				<layout>default</layout>
 			</repository>
 			<repository>

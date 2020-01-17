@@ -519,7 +519,7 @@ function getProjectRepositories() {
 	tempProjectRepositories.push({
 		id: 'apache',
 		name: 'Apache',
-		scheme: 'http',
+		scheme: 'https',
 		path: 'repo.maven.apache.org/maven2',
 		layout: 'default'
 	});
