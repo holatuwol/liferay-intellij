@@ -446,6 +446,11 @@ function completeGradleCache(coreDetails, moduleDetails, pluginDetails) {
 };
 
 function executeGradleFile(completionMessage, entries) {
+	if (!isFile('gradlew')) {
+		gradleCacheStable = true;
+		return
+	}
+
 	if (entries.length == lastLibraryCount) {
 		gradleCacheStable = true;
 		console.log('[' + new Date().toLocaleTimeString() + ']', completionMessage);
