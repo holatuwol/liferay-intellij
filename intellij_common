@@ -99,6 +99,18 @@ copylibs() {
 		return 0
 	fi
 
+	if [ -d ../liferay-binaries-cache-2017 ] || [ -d ../liferay-binaries-cache-2020 ]; then
+		if [ -d ../liferay-binaries-cache-2017 ]; then
+			timeecho 'Missing clone of https://github.com/liferay/liferay-binaries-cache-2020'
+			timeecho 'Some dependency libraries may be missing if they are present in liferay-binaries-cache-2017 but not liferay-binaries-cache-2020'
+		else
+			timeecho 'Missing clone of https://github.com/liferay/liferay-binaries-cache-2017'
+			timeecho 'Some dependency libraries may be missing if they are present in liferay-binaries-cache-2020 but not liferay-binaries-cache-2017'
+		fi
+
+		return 0
+	fi
+
 	timeecho 'Missing clone of https://github.com/liferay/liferay-binaries-cache-2017'
 	timeecho 'Missing clone of https://github.com/liferay/liferay-binaries-cache-2020'
 
