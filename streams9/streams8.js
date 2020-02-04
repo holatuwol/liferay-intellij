@@ -116,17 +116,33 @@ function generateFileListCache(cachePath) {
 		return;
 	}
 
-	var args = ['-L', '.', '-name', '*.jar', '-o', '-name', '*.pom'];
-
-	var options = {
-		'cwd': cachePath,
-		'maxBuffer': 1024 * 1024 * 256
-	};
+	console.log('[' + new Date().toLocaleTimeString() + ']', 'Scanning', cachePath);
 
 	var fileList = [];
 
 	try {
-		fileList = execFileSync('find', args, options).toString().split('\n');
+		var gitAncestors = getAncestorFiles(cachePath, '.git');
+
+		if (gitAncestors.length > 0) {
+			var args = ['ls-files', '.'];
+
+			var options = {
+				'cwd': cachePath,
+				'maxBuffer': 1024 * 1024 * 256
+			};
+
+			fileList = execFileSync('git', args, options).toString().split('\n');
+		}
+		else {
+			var args = ['-L', '.', '-name', '*.jar', '-o', '-name', '*.pom'];
+
+			var options = {
+				'cwd': cachePath,
+				'maxBuffer': 1024 * 1024 * 256
+			};
+
+			fileList = execFileSync('find', args, options).toString().split('\n');
+		}
 	}
 	catch (e) {
 		console.error(e);
