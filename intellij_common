@@ -3,7 +3,12 @@
 cachefolder() {
 	timeecho "Building ${PWD} ls-files cache to speed up directory scanning"
 
-	find modules -type f -not -path '*/node_modules/*' > modules/git_ls_files_modules.txt
+	find modules -type f \
+		-not -path '*/build/*' \
+		-not -path '*/classes/*' \
+		-not -path '*/node_modules/*' \
+		-not -path '*/node_modules_cache/*' \
+		> modules/git_ls_files_modules.txt
 }
 
 cachemodules() {
