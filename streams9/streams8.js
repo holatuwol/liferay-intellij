@@ -111,6 +111,10 @@ function checkForMavenCache(obj) {
 	candidates.forEach(Set.prototype.add.bind(mavenCaches));
 };
 
+function addLeadingSlash(fileName) {
+	return './' + fileName;
+}
+
 function generateFileListCache(cachePath) {
 	if (!cachePath) {
 		return;
@@ -131,7 +135,7 @@ function generateFileListCache(cachePath) {
 				'maxBuffer': 1024 * 1024 * 256
 			};
 
-			fileList = execFileSync('git', args, options).toString().split('\n');
+			fileList = execFileSync('git', args, options).toString().split('\n').map(addLeadingSlash);
 		}
 		else {
 			var args = ['-L', '.', '-name', '*.jar', '-o', '-name', '*.pom'];

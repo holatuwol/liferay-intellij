@@ -103,7 +103,7 @@ copylibs() {
 	timeecho 'Missing clone of https://github.com/liferay/liferay-binaries-cache-2020'
 
 	if [ "" == "$(which mvn)" ]; then
-		echo 'Maven is not available in the path, dependency libraries will be missing'
+		timeecho 'Maven is not available in the path, dependency libraries will be missing'
 		return 1
 	fi
 
