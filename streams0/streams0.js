@@ -191,39 +191,43 @@ function createProjectWorkspace(coreDetails, moduleDetails, pluginDetails, confi
 	coreDetails.forEach(sortModuleAttributes);
 	moduleDetails.forEach(sortModuleAttributes);
 
-	console.log('[' + new Date().toLocaleTimeString() + ']', 'Processing BOM dependencies');
+	if (config['complete-cache']) {
+		console.log('[' + new Date().toLocaleTimeString() + ']', 'Processing BOM dependencies');
 
-	lastLibraryCount = 0;
-	gradleCacheStable = false;
+		lastLibraryCount = 0;
+		gradleCacheStable = false;
 
-	var gradleCacheModuleDetails = moduleDetails;
-	var gradleCachePluginDetails = pluginDetails;
+		var gradleCacheModuleDetails = moduleDetails;
+		var gradleCachePluginDetails = pluginDetails;
 
-	if (getLiferayPrivateRepository() == null) {
-		gradleCacheModuleDetails = moduleDetails.filter(function(x) { return x.modulePath.indexOf('/dxp/') == -1; });
-		gradleCachePluginDetails = pluginDetails.filter(function(x) { return x.modulePath.indexOf('/dxp/') == -1; });
-	}
+		if (getLiferayPrivateRepository() == null) {
+			gradleCacheModuleDetails = moduleDetails.filter(function(x) { return x.modulePath.indexOf('/dxp/') == -1; });
+			gradleCachePluginDetails = pluginDetails.filter(function(x) { return x.modulePath.indexOf('/dxp/') == -1; });
+		}
 
-	while (!gradleCacheStable) {
-		completeBomCache(gradleCacheModuleDetails);
+		while (!gradleCacheStable) {
+			completeBomCache(gradleCacheModuleDetails);
 
-		if (lastLibraryCount == 0) {
-			gradleCacheStable = true;
+			if (lastLibraryCount == 0) {
+				gradleCacheStable = true;
+			}
 		}
 	}
 
 	moduleDetails.forEach(fixMavenBomDependencies);
 
-	console.log('[' + new Date().toLocaleTimeString() + ']', 'Processing missing dependencies');
+	if (config['complete-cache']) {
+		console.log('[' + new Date().toLocaleTimeString() + ']', 'Processing missing dependencies');
 
-	lastLibraryCount = 0;
-	gradleCacheStable = false;
+		lastLibraryCount = 0;
+		gradleCacheStable = false;
 
-	while (!gradleCacheStable) {
-		completeGradleCache(coreDetails, gradleCacheModuleDetails, gradleCachePluginDetails);
+		while (!gradleCacheStable) {
+			completeGradleCache(coreDetails, gradleCacheModuleDetails, gradleCachePluginDetails);
 
-		if (lastLibraryCount == 0) {
-			gradleCacheStable = true;
+			if (lastLibraryCount == 0) {
+				gradleCacheStable = true;
+			}
 		}
 	}
 
