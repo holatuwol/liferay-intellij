@@ -663,6 +663,11 @@ function getLiferayPrivateRepository() {
 	}
 
 	var repositoryMetadata = getRepositoryMetadata(propertiesContent);
+
+	if (repositoryMetadata == null) {
+		return null;
+	}
+
 	var repositoryPath = repositoryMetadata['url'];
 
 	if (repositoryPath.indexOf('https://') == 0) {
@@ -755,6 +760,8 @@ function getRepositoryMetadata(propertiesContent) {
 			return (x.indexOf(keyPrefix) == 0) && (x.indexOf('[') == -1);
 		})
 		.reduce(function(accumulator, next) {
+			accumulator = accumulator || {};
+
 			var entry = next.split('=');
 			var key = entry[0].trim();
 
@@ -762,7 +769,7 @@ function getRepositoryMetadata(propertiesContent) {
 
 			accumulator[key] = entry[1].trim();
 			return accumulator;
-		}, {});
+		}, null);
 }
 
 function isDevelopmentLibrary(libraryName) {
