@@ -200,7 +200,7 @@ function getLibraryFolderPath(library) {
 
 		var mavenAbsolutePath = getFilePath(mavenCache, mavenRelativePath);
 
-		if (getLibraryJarCount(mavenAbsolutePath) > 0) {
+		if (getLibraryPomCount(mavenAbsolutePath) > 0) {
 			return mavenAbsolutePath;
 		}
 	}
@@ -563,6 +563,11 @@ function processPomDependencies(library) {
 
 	pom('project > dependencyManagement > dependencies').children()
 		.each(highland.partial(setDependencyVariables, pom, variables, library));
+
+	if (getLibraryJarCount(folderPath) == 0) {
+		pom('project > dependencyManagement > dependencies').children()
+			.each(highland.partial(setDependenciesAsJars, pom, variables, library));
+	}
 
 	pom('project > dependencies').children()
 		.each(highland.partial(setDependenciesAsJars, pom, variables, library));
