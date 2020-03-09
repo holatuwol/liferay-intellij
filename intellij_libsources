@@ -15,12 +15,16 @@ setuplibs
 if [ "" != "$(which mvn)" ]; then
 	"$NODEJS" "${SCRIPT_FOLDER}/bin/pom.js" "$PWD" $@
 
-	mvn  --fail-at-end dependency:sources
+	mvn --fail-at-end dependency:sources
 	grep '<module>.*</module>' pom.xml | awk -F'[<>]' '{ print $3 "/pom.xml" }' | xargs rm
 	rm pom.xml
 fi
 
-"$NODEJS" "${SCRIPT_FOLDER}/bin/run.js" "$PWD" "$@"
+if [ "" == "$(which mvn)" ]; then
+    "$NODEJS" "${SCRIPT_FOLDER}/bin/run.js" "$PWD" "$@"
+else
+    "$NODEJS" "${SCRIPT_FOLDER}/bin/run.js" "$PWD" --mvn-cache "$@"
+fi
 
 uncachemodules $@
 

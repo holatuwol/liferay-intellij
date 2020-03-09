@@ -57,7 +57,7 @@ function getLibraryFolderPath(library) {
 		return null;
 	}
 
-	var mavenRelativePath = library.group.split('.').concat([library.name, library.version]).join('/');
+	var mavenRelativePath = ['.'].concat(library.group.split('.')).concat([library.name, library.version]).join('/');
 
 	for (mavenCache of mavenCaches) {
 		var mavenAbsolutePath = getFilePath(mavenCache, mavenRelativePath);

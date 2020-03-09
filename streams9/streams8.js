@@ -191,7 +191,7 @@ function getLibraryFolderPath(library) {
 		return null;
 	}
 
-	var mavenRelativePath = library.group.split('.').concat(['.', library.name, library.version]).join('/');
+	var mavenRelativePath = ['.'].concat(library.group.split('.')).concat([library.name, library.version]).join('/');
 
 	for (mavenCache of mavenCaches) {
 		if (!fileListCache[mavenCache].has(mavenRelativePath)) {
@@ -240,6 +240,10 @@ function getLibraryFolderPath(library) {
 
 function getLibraryJarCount(path) {
 	return folderListCache[path].filter(isJar).length;
+};
+
+function getLibraryPomCount(path) {
+	return folderListCache[path].filter(isPom).length;
 };
 
 function getLibraryJarList(jarPaths) {
@@ -467,6 +471,10 @@ function isFirstOccurrence(value, index, array) {
 
 function isJar(path) {
 	return path.substring(path.length - 4) == '.jar';
+};
+
+function isPom(path) {
+	return path.substring(path.length - 4) == '.pom';
 };
 
 function isSameLibraryDependency(left, right) {

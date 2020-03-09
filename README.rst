@@ -122,6 +122,7 @@ Command Line Flags
 
 There are a few command-line flags that you can pass to ``ij`` in order tell it to do some extra processing.
 
+* ``--complete-cache``: download any dependencies not present in your local Maven and Gradle caches (prefer Maven, if available, since it will persist across builds)
 * ``--unload``: `unload modules <https://blog.jetbrains.com/idea/2017/06/intellij-idea-2017-2-eap-introduces-unloaded-modules/>`__ that aren't built as part of ``ant all`` to improve IntelliJ startup speed
 * ``--unzip``: unzip existing ``.jar`` files from a Liferay Tomcat bundle into the build folders of your project
 

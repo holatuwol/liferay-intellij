@@ -12,7 +12,11 @@ cachemodules $@
 copylibs
 setuplibs
 
-"$NODEJS" "${SCRIPT_FOLDER}/bin/run.js" "$PWD" "$@"
+if [ "" == "$(which mvn)" ]; then
+    "$NODEJS" "${SCRIPT_FOLDER}/bin/run.js" "$PWD" "$@"
+else
+    "$NODEJS" "${SCRIPT_FOLDER}/bin/run.js" "$PWD" --mvn-cache "$@"
+fi
 
 uncachemodules $@
 

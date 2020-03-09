@@ -61,6 +61,7 @@ Change Log
 
 This is a change log for when I started keeping track of the changes that were made.
 
+* **2020-03-10**: Fix Maven file cache checking, use Maven to populate cache if available, and document ``--complete-cache`` flag
 * **2020-02-05**: By default, don't attempt to complete the Gradle cache, since ``liferay-binaries-cache-*`` will probably be complete
 * **2020-02-04**: Use ``git ls-files`` for ``liferay-binaries-cache-*`` folders as it's more predictable
 * **2020-01-30**: Don't attempt to complete the gradle cache if there is no gradlew binary

@@ -474,7 +474,7 @@ function getMavenAggregator(modulePaths) {
 			'@xmlns:xsi': 'http://www.w3.org/2001/XMLSchema-instance',
 			'@xsi:schemaLocation': 'http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd',
 			modelVersion: '4.0.0',
-			groupId: 'com.liferay.dependencies',
+			group: 'com.liferay.dependencies',
 			artifactId: 'parent',
 			version: '1.0.0-SNAPSHOT',
 			packaging: 'pom',
@@ -497,7 +497,7 @@ function getMavenDependencyElement(library) {
 		'version': library.version
 	};
 
-	if ((library.group == 'org.jboss.shrinkwrap') && (library.name == 'shrinkwrap-depchain')) {
+	if (isKnownPomDependency(library)) {
 		dependencyElement['type'] = 'pom';
 	}
 
@@ -547,6 +547,13 @@ function getMavenProject(module) {
 		}
 	}
 
+	return {
+		name: getFilePath(module.modulePath, 'pom.xml'),
+		content: getMavenProjectXML(module.bundleSymbolicName, module.bundleVersion, dependencyObjects)
+	}
+};
+
+function getMavenProjectXML(bundleSymbolicName, bundleVersion, dependencyObjects) {
 	var project = {
 		project: {
 			'@xmlns': 'http://maven.apache.org/POM/4.0.0',
@@ -554,8 +561,8 @@ function getMavenProject(module) {
 			'@xsi:schemaLocation': 'http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd',
 			modelVersion: '4.0.0',
 			groupId: 'com.liferay',
-			artifactId: module.bundleSymbolicName,
-			version: module.bundleVersion,
+			artifactId: bundleSymbolicName,
+			version: bundleVersion,
 			packaging: 'pom',
 			dependencies: dependencyObjects,
 			repositories: {
@@ -564,10 +571,7 @@ function getMavenProject(module) {
 		}
 	};
 
-	return {
-		name: getFilePath(module.modulePath, 'pom.xml'),
-		content: xmlbuilder.create(project).end({pretty: true})
-	};
+	return xmlbuilder.create(project).end({pretty: true})
 };
 
 function getMavenSourcePath(mavenBinaryPath) {
@@ -776,6 +780,15 @@ function isDevelopmentLibrary(libraryName) {
 	return libraryName.indexOf('.jar') == libraryName.length - 4;
 };
 
+var knownPomDependencies = new Set();
+knownPomDependencies.add('org.apache.axis2:axis2');
+knownPomDependencies.add('org.apache.directory.api:apache-ldap-api');
+knownPomDependencies.add('org.jboss.shrinkwrap:shrinkwrap-depchain');
+
+function isKnownPomDependency(library) {
+	return knownPomDependencies.has(library.group + ':' + library.name);
+};
+
 function isKotlinJar(jarPath) {
 	return jarPath.indexOf('kotlin') != -1;
 };
@@ -886,7 +899,9 @@ exports.getJarLibraryXML = getJarLibraryXML;
 exports.getLibraryXML = getLibraryXML;
 exports.getLiferayPrivateRepository = getLiferayPrivateRepository;
 exports.getMavenAggregator = getMavenAggregator;
+exports.getMavenDependencyElement = getMavenDependencyElement;
 exports.getMavenProject = getMavenProject;
+exports.getMavenProjectXML = getMavenProjectXML;
 exports.getModuleXML = getModuleXML;
 exports.mavenCaches = mavenCaches;
 exports.getProjectRepositories = getProjectRepositories;
