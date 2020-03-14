@@ -11,7 +11,7 @@
     "cheerio": "0.22.0",
     "comparators": "2.0.3",
     "highland": "2.7.4",
-    "minimist": "1.2.0",
+    "minimist": "1.2.2",
     "xmlbuilder": "7.0.0"
   },
   "resolutions": {
