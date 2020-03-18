@@ -72,9 +72,13 @@ function getAncestorFiles(folder, filename) {
 function getModuleElement(module) {
 	var moduleIMLPath = getModuleIMLPath(module);
 
+	if ((moduleIMLPath.charAt(0) != '/') && (moduleIMLPath.indexOf(':') == -1)) {
+		moduleIMLPath = '$PROJECT_DIR$/' + moduleIMLPath;
+	}
+
 	return '<module ' +
-		'fileurl="file://$PROJECT_DIR$/' + moduleIMLPath + '" ' +
-		'filepath="$PROJECT_DIR$/' + moduleIMLPath + '" ' +
+		'fileurl="file://' + moduleIMLPath + '" ' +
+		'filepath="' + moduleIMLPath + '" ' +
 		'group="' + getModuleGroupName(module) + '" />'
 };
 
