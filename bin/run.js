@@ -8,7 +8,7 @@ var liferay_intellij = require('..');
 
 assert(process.argv.length > 2, 'No portal source folder specified');
 
-var argv = minimist(process.argv.slice(2), {boolean: ['complete-cache', 'ic', 'unload', 'unzip']});
+var argv = minimist(process.argv.slice(2), {boolean: ['complete-cache', 'ic', 'mvn-cache', 'unload', 'unzip']});
 
 var portalSourceFolder = argv._[0];
 
@@ -16,7 +16,7 @@ assert(isDirectory(portalSourceFolder), portalSourceFolder + ' is not a valid fo
 
 var otherSourceFolders = [];
 
-if (process.argv.length > 3) {
+if (argv._.length > 1) {
 	otherSourceFolders = argv._.slice(1, argv._.length);
 
 	for (var i = 0; i < otherSourceFolders.length; i++) {
