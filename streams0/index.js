@@ -189,10 +189,6 @@ function isPluginsSDK(otherSourceFolder) {
 };
 
 function isCorePortalPreModule(module) {
-	if (module.modulePath.indexOf('modules/core/') == -1) {
-		return false;
-	}
-
 	if (module.moduleName.indexOf('-compat') != -1) {
 		return false;
 	}
