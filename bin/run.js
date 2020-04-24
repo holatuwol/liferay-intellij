@@ -16,7 +16,7 @@ assert(isDirectory(portalSourceFolder), portalSourceFolder + ' is not a valid fo
 
 var otherSourceFolders = [];
 
-if (argv._.length > 1) {
+if (process.argv.length > 3) {
 	otherSourceFolders = argv._.slice(1, argv._.length);
 
 	for (var i = 0; i < otherSourceFolders.length; i++) {

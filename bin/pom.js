@@ -8,7 +8,7 @@ var liferay_intellij = require('..');
 
 assert(process.argv.length > 2, 'No portal source folder specified');
 
-var argv = minimist(process.argv.slice(2));
+var argv = minimist(process.argv.slice(2), {boolean: ['complete-cache', 'ic', 'mvn-cache', 'unload', 'unzip']});
 
 var portalSourceFolder = argv._[0];
 
@@ -24,4 +24,4 @@ if (process.argv.length > 3) {
 	}
 }
 
-liferay_intellij.prepareProject(portalSourceFolder, otherSourceFolders);
+liferay_intellij.prepareProject(portalSourceFolder, otherSourceFolders, argv);

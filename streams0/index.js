@@ -203,8 +203,8 @@ function isCorePortalPreModule(module) {
 	}
 };
 
-function prepareProject(portalSourceFolder, otherSourceFolders) {
-	scanProject(portalSourceFolder, otherSourceFolders, false, createProjectObjectModels);
+function prepareProject(portalSourceFolder, otherSourceFolders, config) {
+	scanProject(portalSourceFolder, otherSourceFolders, config, createProjectObjectModels);
 };
 
 function scanProject(portalSourceFolder, otherSourceFolders, config, callback) {
