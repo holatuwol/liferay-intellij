@@ -189,9 +189,9 @@
       }
     },
     "minimist": {
-      "version": "1.2.0",
-      "from": "minimist@1.2.0",
-      "resolved": "http://registry.npmjs.org/minimist/-/minimist-1.2.0.tgz"
+      "version": "1.2.3",
+      "from": "minimist@1.2.3",
+      "resolved": "http://registry.npmjs.org/minimist/-/minimist-1.2.3.tgz"
     },
     "xmlbuilder": {
       "version": "7.0.0",
