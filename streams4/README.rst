@@ -46,6 +46,14 @@ Like in the case of ``readdir`` where we used the synchronous version ``readdirS
 	function getModuleDependencies(folder, moduleDependencies) {
 		moduleDependencies = moduleDependencies || {};
 
+		if (!moduleDependencies.libraryDependencies) {
+			moduleDependencies.libraryDependencies = [];
+		}
+
+		if (!moduleDependencies.projectDependencies) {
+			moduleDependencies.projectDependencies = [];
+		}
+
 		var buildGradlePath = getFilePath(folder, 'build.gradle');
 
 		if (!isFile(buildGradlePath)) {
@@ -53,6 +61,8 @@ Like in the case of ``readdir`` where we used the synchronous version ``readdirS
 		}
 
 		var buildGradleContents = fs.readFileSync(buildGradlePath);
+
+		moduleDependencies.buildGradleContents = buildGradleContents;
 
 		// continue dependency extraction here
 

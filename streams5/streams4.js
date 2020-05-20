@@ -221,18 +221,18 @@ function getDependencyText(buildGradleContents, nextStartPos) {
 function getModuleDependencies(folder, moduleDependencies, dependencyManagementEnabled) {
 	moduleDependencies = moduleDependencies || {};
 
-	var buildGradleContents = getBuildGradle(folder);
-
-	if (buildGradleContents == null) {
-		return moduleDependencies;
-	}
-
 	if (!moduleDependencies.libraryDependencies) {
 		moduleDependencies.libraryDependencies = [];
 	}
 
 	if (!moduleDependencies.projectDependencies) {
 		moduleDependencies.projectDependencies = [];
+	}
+
+	var buildGradleContents = getBuildGradle(folder);
+
+	if (buildGradleContents == null) {
+		return moduleDependencies;
 	}
 
 	moduleDependencies.buildGradleContents = buildGradleContents;

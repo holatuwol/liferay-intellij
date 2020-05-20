@@ -937,8 +937,20 @@ function getLibraryModule(libraryName) {
 
 	libraryModule['libraryDependencies'] = dependencyPropertiesContent.toString()
 		.split('\n')
+		.filter(function(x) {
+			if (x.indexOf('#') == 0) {
+				return false;
+			}
+
+			if (x.indexOf('=') == -1) {
+				return false;
+			}
+
+			return true;
+		})
 		.map(function(x) {
-			var dependencyData = x.split('=')[1].split(':');
+			var propertyValue = x.split('=')[1];
+			var dependencyData = propertyValue.replace(/\\/g, '').split(':');
 
 			return {
 				type: 'library',
