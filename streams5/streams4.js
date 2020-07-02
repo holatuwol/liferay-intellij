@@ -93,6 +93,12 @@ function getVariableValue(seenVariables, folder, variableName) {
 		return '${' + variableName + '}';
 	}
 
+	var variableNameRegExp = new RegExp('^[a-zA-Z0-9]*$', 'g');
+
+	if (!variableNameRegExp.exec(variableName)) {
+		return null;
+	}
+
 	var variableDeclaration = new RegExp(variableName + '\\s*=\\s*"([^"]*)');
 
 	var content = getBuildGradle(folder);
