@@ -122,6 +122,7 @@ Command Line Flags
 
 There are a few command-line flags that you can pass to ``ij`` in order tell it to do some extra processing.
 
+* ``--barebone``: `unload modules <https://blog.jetbrains.com/idea/2017/06/intellij-idea-2017-2-eap-introduces-unloaded-modules/>`__ that aren't required by portal-impl to improve IntelliJ startup speed (must manually reload any module you actually use)
 * ``--complete-cache``: download any dependencies not present in your local Maven and Gradle caches (prefer Maven, if available, since it will persist across builds)
 * ``--ic``: do not add any web facets, so that the project is compatible with IntelliJ community edition
 * ``--unload``: `unload modules <https://blog.jetbrains.com/idea/2017/06/intellij-idea-2017-2-eap-introduces-unloaded-modules/>`__ that aren't built as part of ``ant all`` to improve IntelliJ startup speed

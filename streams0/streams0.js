@@ -252,7 +252,7 @@ function createProjectWorkspace(coreDetails, moduleDetails, pluginDetails, confi
 	var unloadModuleStream = null;
 	var unzipBinariesStream = null;
 
-	if (config.unload) {
+	if (config.unload || config.barebone) {
 		unloadModuleStream = detailsStream.observe();
 	}
 
@@ -305,7 +305,7 @@ function createProjectWorkspace(coreDetails, moduleDetails, pluginDetails, confi
 
 	if (unloadModuleStream != null) {
 		unloadModuleStream
-			.filter(isUnloadModule)
+			.filter(config.barebone ? isNonBareBoneModule : isUnloadModule)
 			.map(getUnloadModuleElement)
 			.sort()
 			.collect()
@@ -626,16 +626,19 @@ function fixProjectDependencies(moduleVersions, addAsLibrary, module) {
 	var bndPath = getFilePath(module.modulePath, 'bnd.bnd');
 
 	if (!isFile(bndPath)) {
+		module.unload = (module.modulePath.indexOf('modules/') == 0);
 		return module;
 	}
 
 	module.bndContent = fs.readFileSync(bndPath).toString();
 
 	if (module.modulePath.indexOf('/core/') != -1) {
+		module.barebone = true;
 	}
 	else if (module.modulePath.indexOf('/post-upgrade-fix/') != -1) {
 	}
 	else if (isFile(getFilePath(module.modulePath, '.lfrbuild-portal-pre'))) {
+		module.barebone = true;
 	}
 	else if (isFile(getFilePath(module.modulePath, '.lfrbuild-portal')) || isFile(getFilePath(module.modulePath, '.lfrbuild-portal-private'))) {
 		var appBndPaths = getAncestorFiles(module.modulePath, 'app.bnd');
@@ -1183,6 +1186,10 @@ function hasLibraryPath(library) {
 
 function hasTagLibrary(module) {
 	return isDirectory(getFilePath(module.modulePath, 'src')) && getTagLibraryPaths(module).length > 0;
+};
+
+function isNonBareBoneModule(module) {
+	return module.type != 'portal' && !module.barebone;
 };
 
 function isTagLibraryFile(fileName) {
