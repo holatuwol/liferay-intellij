@@ -15,7 +15,7 @@ setuplibs
 if [ "" == "$(which mvn)" ]; then
     "$NODEJS" "${SCRIPT_FOLDER}/bin/run.js" "$PWD" "$@"
 else
-    "$NODEJS" "${SCRIPT_FOLDER}/bin/run.js" "$PWD" --mvn-cache "$@"
+    "$NODEJS" "${SCRIPT_FOLDER}/bin/run.js" "$PWD" "$@" --mvn-cache=true
 fi
 
 uncachemodules $@
