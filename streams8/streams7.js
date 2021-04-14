@@ -76,14 +76,27 @@ function getModuleElement(module) {
 		moduleIMLPath = '$PROJECT_DIR$/' + moduleIMLPath;
 	}
 
-	return '<module ' +
+	var moduleElement = '<module ' +
 		'fileurl="file://' + moduleIMLPath + '" ' +
-		'filepath="' + moduleIMLPath + '" ' +
-		'group="' + getModuleGroupName(module) + '" />'
+		'filepath="' + moduleIMLPath + '" ';
+
+	var groupName = getModuleGroupName(module);
+
+	if (groupName) {
+		moduleElement += 'group="' + groupName + '" ';
+	}
+
+	moduleElement += '/>';
+
+	return moduleElement;
 };
 
 function getModuleGroupName(module) {
 	if (module.type == 'portal') {
+		if (module.modulePath == 'modules') {
+			return null;
+		}
+
 		return 'portal';
 	}
 

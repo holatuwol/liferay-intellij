@@ -61,6 +61,7 @@ Change Log
 
 This is a change log for when I started keeping track of the changes that were made.
 
+* **2021-04-14**: Add root level modules folder
 * **2020-08-27**: Add ``--barebone`` flag to only load ``portal-impl`` and its required modules so you can manually load everything else
 * **2020-04-24**: Fix error that occurs due to failure to pass command line arguments when building poms
 * **2020-03-10**: Fix Maven file cache checking, use Maven to populate cache if available, and document ``--complete-cache`` flag

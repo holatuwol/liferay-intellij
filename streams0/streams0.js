@@ -238,6 +238,23 @@ function createProjectWorkspace(coreDetails, moduleDetails, pluginDetails, confi
 	moduleDetails.forEach(getFileTreeDependencies);
 	moduleDetails.forEach(reorderLibraryDependencies);
 
+	moduleDetails.push({
+		modulePath: 'modules',
+		moduleName: 'modules',
+		type: 'portal',
+		webrootFolders: [],
+		sourceFolders: [],
+		resourceFolders: [],
+		testSourceFolders: [],
+		testResourceFolders: [],
+		excludeFolders: [],
+		projectDependencies: [],
+		libraryDependencies: [],
+		hasInitJsp: false,
+		unload: false,
+		bndContent: ''
+	});
+
 	var moduleStream = highland(moduleDetails);
 	var coreStream = highland(coreDetails);
 	var pluginStream = highland(pluginDetails);
