@@ -170,6 +170,30 @@ ignoreiml() {
 	fi
 }
 
+licensing() {
+	if [ ! -e .git ]; then
+		return 0
+	fi
+
+	if [ -d modules/apps/static/portal-license/portal-license-enterprise-app ]; then
+		return 0
+	fi
+
+	local APP_VERSION=$(grep build.portal.license.enterprise.app.module.version= build.properties | cut -d'=' -f 2)
+
+	if [ "" == "${APP_VERSION}" ]; then
+		return 0
+	fi
+
+	local APP_COMMIT=$(git log upstream/7.1.x --pretty='%H' --grep=" ${APP_VERSION} prep next$" -- modules/apps/static/portal-license/portal-license-enterprise-app/bnd.bnd)
+
+	if [ "" == "${APP_COMMIT}" ]; then
+		return 0
+	fi
+
+	git checkout ${APP_COMMIT} -- modules/apps/static/portal-license/portal-license-enterprise-app/
+}
+
 setantopts() {
 	JAVA_VERSION=$(java -version 2>&1 | head -1 | cut -d'"' -f 2 | cut -d'.' -f 2)
 
