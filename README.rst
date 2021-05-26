@@ -12,7 +12,7 @@ Setup Instructions
 
 To setup the script, please use the following steps.
 
-1. Install `NodeJS <https://nodejs.org/en/download/releases/>`__ (tested with NodeJS 0.12.x, 4.x, 6.x, and 8.x)
+1. Install `NodeJS <https://nodejs.org/en/download/releases/>`__ (tested with NodeJS 0.12.x, 4.x, 6.x, and 8.x), or use `Node Version Manager <https://github.com/nvm-sh/nvm>`__ to allow for multiple versions of NodeJS (needed if you need to work on legacy frontend code)
 
 2. Backup the ``.idea`` folder in your portal source in case you dislike the result (other than the ``.iml`` files it creates, the script writes its files here)
 
