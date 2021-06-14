@@ -26,12 +26,26 @@ function createProjectWorkspace(coreDetails, moduleDetails) {
 	detailsStream.done(function() {});
 };
 
-function getComponentXML(component) {
-	if (!component.content) {
-		return '';
+function getAttributeXML(component) {
+	var attributeXML = [];
+
+	for (key in component) {
+		if (key == 'content') {
+			continue;
+		}
+
+		attributeXML.push(' ');
+		attributeXML.push(key);
+		attributeXML.push('="');
+		attributeXML.push(component[key].replace(/"/g, '&quot;'))
+		attributeXML.push('"');
 	}
 
-	return '<component name="' + component.name + '">\n' + component.content + '\n</component>';
+	return attributeXML.join('');
+}
+
+function getComponentXML(component) {
+	return '<component' + getAttributeXML(component) + '>\n' + component.content + '\n</component>';
 };
 
 function getExcludeFolderElement(folder) {

@@ -586,6 +586,7 @@ function getModuleXML(module) {
 		components: [
 			{
 				name: 'NewModuleRootManager',
+				'inherit-compiler-output': 'true',
 				content: getNewModuleRootManagerXML(module)
 			},
 			{
