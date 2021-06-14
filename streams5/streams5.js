@@ -34,46 +34,30 @@ var getLibraryDependency = highland.partial(getCoreDependency, 'library');
 var getProjectDependency = highland.partial(getCoreDependency, 'project');
 
 var defaultDependencyNames = {
-	libraryNames: ['development', 'global'],
-	projectNames: ['portal-kernel', 'portal-service']
+	projectNames: ['portal-kernel', 'portal-service', 'registry-api']
 };
 
 var customDependencyNames = {
 	'portal-impl': {
-		libraryNames: ['development', 'global', 'portal'],
 		projectNames: ['portal-kernel', 'portal-service', 'portal-test', 'portal-test-integration', 'registry-api', 'util-bridges', 'util-java', 'util-taglib']
 	},
 	'portal-kernel': {
-		libraryNames: ['development', 'global'],
 		projectNames: ['registry-api', 'portal-test']
 	},
 	'portal-service': {
-		libraryNames: ['development', 'global'],
 		projectNames: ['registry-api']
 	},
 	'portal-web': {
-		libraryNames: ['development', 'global', 'portal'],
 		projectNames: ['portal-impl', 'portal-kernel', 'portal-service', 'registry-api', 'util-bridges', 'util-java', 'util-taglib']
 	},
-	'portal-test': {
-		libraryNames: ['development', 'global', 'portal'],
-		projectNames: ['portal-kernel', 'portal-service']
-	},
 	'portal-test-integration': {
-		libraryNames: ['development', 'global', 'portal'],
 		projectNames: ['portal-impl', 'portal-kernel', 'portal-service', 'portal-test', 'registry-api', 'util-java']
 	},
-	'util-bridges': {
-		libraryNames: ['development', 'global', 'portal'],
-		projectNames: ['portal-kernel', 'portal-service']
-	},
 	'util-java': {
-		libraryNames: ['development', 'global', 'portal'],
-		projectNames: ['portal-kernel', 'portal-service', 'portal-test']
+		projectNames: ['portal-kernel', 'portal-service', 'portal-test', 'registry-api']
 	},
 	'util-taglib': {
-		libraryNames: ['development', 'global', 'portal'],
-		projectNames: ['portal-kernel', 'portal-service', 'util-java']
+		projectNames: ['portal-kernel', 'portal-service', 'registry-api', 'util-java']
 	}
 };
 
@@ -103,7 +87,7 @@ function getCoreDependencies(portalPreModules, folder) {
 	}
 
 	return {
-		libraryDependencies: dependencyNames.libraryNames.map(getLibraryDependency),
+		libraryDependencies: ['development', 'global', 'portal'].map(getLibraryDependency),
 		projectDependencies: coreProjectDependencies.map(getProjectDependency)
 	};
 };
