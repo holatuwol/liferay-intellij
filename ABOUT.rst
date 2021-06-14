@@ -61,6 +61,7 @@ Change Log
 
 This is a change log for when I started keeping track of the changes that were made.
 
+* **2021-06-14**: Inherit project output folders, all core projects use global/development/portal libraries
 * **2021-04-20**: Make sure marketplace licensing code is accessible to intellij
 * **2021-04-14**: Add root level modules folder
 * **2020-08-27**: Add ``--barebone`` flag to only load ``portal-impl`` and its required modules so you can manually load everything else
