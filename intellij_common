@@ -185,7 +185,19 @@ licensing() {
 		return 0
 	fi
 
-	local APP_COMMIT=$(git log upstream/7.1.x --pretty='%H' --grep=" ${APP_VERSION} prep next$" -- modules/apps/static/portal-license/portal-license-enterprise-app/bnd.bnd)
+	local UPSTREAM_REMOTE=$(git remote -v | grep -F ':liferay/liferay-portal-ee' | awk '{ print $1 }')
+
+	if [ "" == "${UPSTREAM_REMOTE}" ]; then
+		return 0
+	fi
+
+	local UPSTREAM_BRANCH=$(git for-each-ref "refs/remotes/${UPSTREAM_REMOTE}/7.1.x")
+
+	if [ "" == "${UPSTREAM_BRANCH}" ]; then
+		return 0
+	fi
+
+	local APP_COMMIT=$(git log "${UPSTREAM_BRANCH}" --pretty='%H' --grep=" ${APP_VERSION} prep next$" -- modules/apps/static/portal-license/portal-license-enterprise-app/bnd.bnd)
 
 	if [ "" == "${APP_COMMIT}" ]; then
 		return 0
