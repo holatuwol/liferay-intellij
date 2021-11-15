@@ -268,16 +268,8 @@ function createProjectWorkspace(coreDetails, moduleDetails, pluginDetails, confi
 	var libraryFilesStream = detailsStream.observe();
 	var tagLibrariesStream = detailsStream.observe();
 
-	var unloadModuleStream = null;
-	var unzipBinariesStream = null;
-
-	if (config.unload || config.barebone) {
-		unloadModuleStream = detailsStream.observe();
-	}
-
-	if (config.unzip) {
-		unzipBinariesStream = detailsStream.observe();
-	}
+	var unloadModuleStream = (config.barebone || config.unload) ? detailsStream.observe() : highland([]);
+	var unzipBinariesStream = (config.unzip) ? detailsStream.observe() : null;
 
 	moduleFilesStream
 		.map(getModuleXML)
@@ -322,15 +314,13 @@ function createProjectWorkspace(coreDetails, moduleDetails, pluginDetails, confi
 		.map(getMiscXML)
 		.each(saveContent);
 
-	if (unloadModuleStream != null) {
-		unloadModuleStream
-			.filter(config.barebone ? isNonBareBoneModule : isUnloadModule)
-			.map(getUnloadModuleElement)
-			.sort()
-			.collect()
-			.map(getUnloadModuleXML)
-			.each(saveContent);
-	}
+	unloadModuleStream
+		.filter(config.barebone ? isNonBareBoneModule : isUnloadModule)
+		.map(getUnloadModuleElement)
+		.sort()
+		.collect()
+		.map(getUnloadModuleXML)
+		.each(saveContent);
 
 	if (unzipBinariesStream != null) {
 		var liferayHome = getLiferayHome();
@@ -1163,6 +1153,25 @@ function getUnloadModuleXML(unloadModuleElements) {
 					break;
 				}
 			}
+			else if (workspaceXML[i] == '<component name="AutomaticModuleUnloader">') {
+				x = i;
+			}
+		}
+
+		if (x != -1) {
+			workspaceXML.splice(x, y - x + 1);
+		}
+
+		x = -1;
+		y = -1;
+
+		for (var i = 1; i < workspaceXML.length; i++) {
+			if (x > 0) {
+				if (workspaceXML[i] == '</component>') {
+					y = i;
+					break;
+				}
+			}
 			else if (workspaceXML[i] == '<component name="UnloadedModulesList">') {
 				x = i;
 			}
@@ -1180,9 +1189,12 @@ function getUnloadModuleXML(unloadModuleElements) {
 		workspaceXML.push('<project version="4">');
 	}
 
-	workspaceXML.push('<component name="UnloadedModulesList">');
-	workspaceXML = workspaceXML.concat(unloadModuleElements);
-	workspaceXML.push('</component>');
+	if (unloadModuleElements.length > 0) {
+		workspaceXML.push('<component name="UnloadedModulesList">');
+		workspaceXML = workspaceXML.concat(unloadModuleElements);
+		workspaceXML.push('</component>');
+	}
+
 	workspaceXML.push('</project>');
 
 	return {
