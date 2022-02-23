@@ -187,7 +187,7 @@ function generateFileListCache(cachePath) {
 }
 
 function getLibraryFolderPath(library) {
-	if ((library.group == null) || (library.version == null)) {
+	if ((library.group == null) || (library.version == null) || (library.name == null) || (library.name.indexOf('com.liferay.') == 0)) {
 		return null;
 	}
 
@@ -217,22 +217,6 @@ function getLibraryFolderPath(library) {
 		if (fileListCache[mavenCache].has(mavenRelativePath)) {
 			return getFilePath(mavenCache, mavenRelativePath);
 		}
-	}
-
-	if (library.group != 'com.liferay') {
-		return null;
-	}
-
-	// Check for a snapshot release
-
-	var artifactNameRelativePath = ['.', library.group, library.name, library.version + '-SNAPSHOT'].join('/');
-
-	for (gradleCache of gradleCaches) {
-		if (!fileListCache[gradleCache].has(artifactNameRelativePath)) {
-			continue;
-		}
-
-		return getFilePath(gradleCache, artifactNameRelativePath);
 	}
 
 	return null;
