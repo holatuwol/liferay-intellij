@@ -42,7 +42,7 @@ var customDependencyNames = {
 	'portal-service': {
 		projectNames: ['registry-api']
 	},
-	'portal-web': {
+	'portal-web-docroot': {
 		projectNames: ['portal-impl', 'portal-kernel', 'portal-service', 'registry-api', 'util-bridges', 'util-java', 'util-taglib']
 	},
 	'portal-test-integration': {
@@ -290,7 +290,7 @@ function getPluginPackageProjectDependencies(folder) {
 	var hookJspPath = getFilePath(folder, 'docroot/META-INF/custom_jsps');
 
 	if (isDirectory(hookJspPath)) {
-		dependencyNames.push('portal-web');
+		dependencyNames.push('portal-web-docroot');
 	}
 
 	return dependencyNames.concat(getPluginPackageRequiredDeploymentContexts(folder));

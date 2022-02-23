@@ -834,14 +834,14 @@ function setCoreBundleVersions(accumulator, module) {
 		projectGroup: 'com.liferay.portal',
 		projectName: module.moduleName,
 		version: bundleVersion,
-		hasInitJsp: (module.moduleName == 'portal-web')
+		hasInitJsp: (module.moduleName == 'portal-web-docroot')
 	};
 
 	accumulator[module.moduleName] = {
 		bundleGroup: 'com.liferay.portal',
 		bundleName: bundleName,
 		version: bundleVersion,
-		hasInitJsp: (module.moduleName == 'portal-web')
+		hasInitJsp: (module.moduleName == 'portal-web-docroot')
 	};
 
 	return accumulator;

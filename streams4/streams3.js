@@ -115,8 +115,16 @@ function getModuleIncludeFolders(folder) {
 };
 
 function getModuleOverview(folder) {
+	var moduleName = path.basename(folder);
+	var modulePath = folder.replace(/\\/g, '/')
+
+
+	if ((moduleName == 'portal-web') && (modulePath == 'portal-web')) {
+		moduleName = 'portal-web-docroot';
+	}
+
 	return {
-		moduleName: path.basename(folder),
+		moduleName: moduleName,
 		modulePath: folder.replace(/\\/g, '/')
 	};
 };
