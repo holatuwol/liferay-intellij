@@ -61,6 +61,7 @@ Change Log
 
 This is a change log for when I started keeping track of the changes that were made.
 
+* **2021-03-07**: Expand ``release.portal.api`` dependency so that the debugger isn't confused by the classes
 * **2021-11-15**: If not setting ``--barebone`` or ``--unload``, empty out unloaded modules
 * **2021-06-14**: Inherit project output folders, all core projects use global/development/portal libraries
 * **2021-04-20**: Make sure marketplace licensing code is accessible to intellij

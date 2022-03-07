@@ -223,6 +223,36 @@ function fixLibraryDependencies(moduleVersions, module) {
 
 		var dependencyName = dependency.name;
 
+		if (dependencyName == 'release.portal.api') {
+			module.libraryDependencies.splice(i, 1);
+
+			var releasePortalAPI = ['portal-impl', 'portal-kernel', 'portal-test', 'support-tomcat', 'util-bridges', 'util-java', 'util-slf4j', 'util-taglib', 'required-dependencies'];
+
+			for (moduleName in moduleVersions) {
+				if (moduleName.indexOf('-api') == moduleName.length - 3) {
+					releasePortalAPI.push(moduleName);
+				}
+			}
+
+			releasePortalAPI.reduce(function(accumulator, projectName) {
+				for (var i = 0; i < accumulator.length; i++) {
+					if (accumulator[i].name == projectName) {
+						return accumulator;
+					}
+				}
+
+				accumulator.push({
+					type: 'project',
+					name: projectName,
+					testScope: dependency.testScope
+				});
+
+				return accumulator;
+			}, module.projectDependencies);
+
+			continue;
+		}
+
 		if (!(dependencyName in moduleVersions)) {
 			continue;
 		}
