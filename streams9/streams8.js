@@ -127,7 +127,7 @@ function generateFileListCache(cachePath) {
 	try {
 		var gitAncestors = getAncestorFiles(cachePath, '.git');
 
-		if (gitAncestors.length > 0) {
+		if ((gitAncestors.length > 0) && (cachePath.indexOf('/liferay-binaries-cache-') != -1)) {
 			var args = ['ls-files', '.'];
 
 			var options = {
