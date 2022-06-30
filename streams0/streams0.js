@@ -436,6 +436,7 @@ function completeBomCache(moduleDetails) {
 		.filter(keyExistsInObject('group'))
 		.doto(setLibraryName)
 		.filter(highland.compose(highland.not, hasLibraryPath))
+		.filter(keyExistsInObject('version'))
 		.map(getGradleEntry)
 		.collect()
 		.each(highland.partial(executeGradleFile, 'BOM dependencies have been downloaded'));
@@ -456,6 +457,7 @@ function completeLibraryCache(useMaven, coreDetails, moduleDetails, pluginDetail
 		.filter(keyExistsInObject('group'))
 		.doto(setLibraryName)
 		.filter(highland.compose(highland.not, hasLibraryPath))
+		.filter(keyExistsInObject('version'))
 		.filter(needsCacheEntry);
 
 	if (useMaven) {

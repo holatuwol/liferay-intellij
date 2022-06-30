@@ -468,7 +468,7 @@ function isSameLibraryDependency(left, right) {
 };
 
 function keyExistsInObject(key, object) {
-	return object && key in object;
+	return object && key in object && object[key] != null;
 };
 
 function processPomDependencies(library) {

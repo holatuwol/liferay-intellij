@@ -137,6 +137,7 @@ function createProjectWorkspace(coreDetails, moduleDetails, pluginDetails) {
 	libraryFilesStream
 		.filter(keyExistsInObject('group'))
 		.doto(setLibraryName)
+		.filter(keyExistsInObject('version'))
 		.map(getLibraryXML)
 		.each(saveContent);
 
@@ -569,6 +570,8 @@ function getMavenProject(module) {
 	if (module.libraryDependencies) {
 		var libraryDependencies = module.libraryDependencies
 			.filter(keyExistsInObject('group'))
+			.filter(keyExistsInObject('version'))
+
 
 		if (libraryDependencies.length > 0) {
 			dependencyObjects = {
@@ -706,7 +709,11 @@ function getLiferayPrivateRepository() {
 	var repositoryPath = repositoryMetadata['url'];
 
 	if (repositoryPath.indexOf('https://') == 0) {
-		repositoryPath = repositoryPath.substring(8);
+		repositoryPath = repositoryPath.substring('https://'.length);
+	}
+
+	if (repositoryPath.indexOf('repository-cdn.liferay.com/') == 0) {
+		repositoryPath = 'repository.liferay.com/' + repositoryPath.substring('repository-cdn.liferay.com/'.length);
 	}
 
 	liferayPrivateRepository = {
@@ -741,7 +748,7 @@ function getProjectRepositories() {
 		id: 'liferay-public',
 		name: 'Liferay Public',
 		scheme: 'https',
-		path: 'repository-cdn.liferay.com/nexus/content/repositories/public',
+		path: 'repository.liferay.com/nexus/content/repositories/public',
 		layout: 'default'
 	});
 

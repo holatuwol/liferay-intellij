@@ -61,6 +61,7 @@ Change Log
 
 This is a change log for when I started keeping track of the changes that were made.
 
+* **2022-06-29**: Ignore libraries where we weren't able to detect a version
 * **2022-03-15**: Add Gradle cache found at the project root as a search location for libraries
 * **2022-03-07**: Expand ``release.portal.api`` dependency so that the debugger isn't confused by the classes
 * **2021-11-15**: If not setting ``--barebone`` or ``--unload``, empty out unloaded modules
