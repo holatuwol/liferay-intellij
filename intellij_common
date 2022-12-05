@@ -90,6 +90,14 @@ checknodemodules() {
 	fi
 }
 
+mavenjar() {
+	local GROUP_FOLDER=$(echo ${1} | tr '.' '/')
+
+	if [ ! -f ${HOME}/.m2/repository/${GROUP_FOLDER}/${2}/${3}/${2}-${3}.jar ]; then
+		mvn -DgroupId=${1} -DartifactId=${2} -Dversion=${3} dependency:get
+	fi
+}
+
 copylibs() {
 	if [ ! -d modules ]; then
 		return 0
@@ -97,6 +105,10 @@ copylibs() {
 
 	if [ -d ../liferay-binaries-cache-2017 ] && [ -d ../liferay-binaries-cache-2020 ]; then
 		return 0
+	fi
+
+	if [ "" != "$(which mvn)" ]; then
+		mavenjar org.jacoco org.jacoco.agent 0.8.4
 	fi
 
 	if [ -d ../liferay-binaries-cache-2017 ] || [ -d ../liferay-binaries-cache-2020 ]; then
