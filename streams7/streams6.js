@@ -1,5 +1,6 @@
 var fs = require('fs');
 var highland = require('highland');
+var path = require('path');
 var streams2 = require('../streams2/streams2');
 var streams3 = require('../streams4/streams3');
 var streams5 = require('../streams6/streams5');
@@ -254,7 +255,7 @@ function saveContent(file) {
 		}
 	}
 
-	fs.writeFileSync(file.name, splitContent.join('\n'));
+	fs.writeFileSync(path.resolve(file.name), splitContent.join('\n'));
 };
 
 exports.createProjectWorkspace = createProjectWorkspace;
