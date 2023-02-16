@@ -173,7 +173,12 @@ enabledebug() {
 	fi
 
 	mkdir -p .idea/runConfigurations
-	cp -f ${SCRIPT_ROOT}/localhost_8000.xml .idea/runConfigurations/
+
+	if [ "" != "$(grep -F webroots portal-web/portal-web-docroot.iml)" ]; then
+		cp -f ${SCRIPT_ROOT}/localhost_8000_iu.xml .idea/runConfigurations/localhost_8000.xml
+	else
+		cp -f ${SCRIPT_ROOT}/localhost_8000_ic.xml .idea/runConfigurations/localhost_8000.xml
+	fi
 }
 
 ignoreiml() {

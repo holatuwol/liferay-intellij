@@ -61,6 +61,7 @@ Change Log
 
 This is a change log for when I started keeping track of the changes that were made.
 
+* **2022-02-15**: JSR debug configuration is only available for ultimate edition, so copy a regular remote debug configuration for community edition
 * **2022-12-05**: Make sure org.jacoco.agent is installed in Maven cache
 * **2022-10-02**: Add learn-resources as another resources root
 * **2022-06-29**: Ignore libraries where we weren't able to detect a version
