@@ -79,8 +79,20 @@ function getModuleVersion(folder) {
 
 		var packageJson = JSON.parse(packageJsonContent);
 
+		var bundleName = null;
+
+		if (packageJson.liferayTheme) {
+			bundleName = packageJson.liferayTheme.distName;
+		}
+
+		if (!bundleName) {
+			bundleName = packageJson.name;
+		}
+
+		bundleName = bundleName.substring(bundleName.lastIndexOf('/') + 1);
+
 		return {
-			bundleSymbolicName: packageJson.name,
+			bundleSymbolicName: bundleName,
 			bundleVersion: packageJson.version
 		};
 	}

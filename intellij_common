@@ -103,12 +103,12 @@ copylibs() {
 		return 0
 	fi
 
-	if [ -d ../liferay-binaries-cache-2017 ] && [ -d ../liferay-binaries-cache-2020 ]; then
-		return 0
-	fi
-
 	if [ "" != "$(which mvn)" ]; then
 		mavenjar org.jacoco org.jacoco.agent 0.8.4
+	fi
+
+	if [ -d ../liferay-binaries-cache-2017 ] && [ -d ../liferay-binaries-cache-2020 ]; then
+		return 0
 	fi
 
 	if [ -d ../liferay-binaries-cache-2017 ] || [ -d ../liferay-binaries-cache-2020 ]; then

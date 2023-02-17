@@ -983,7 +983,7 @@ function getLibraryModule(libraryName) {
 function getLibraryModules() {
 	var libraryNames = ['development', 'global', 'portal'];
 
-	return libraryNames.map(getLibraryModule);
+	return libraryNames.filter(function(name) { return isDirectory(getFilePath('lib', name)) }).map(getLibraryModule);
 };
 
 function getLiferayHome() {
