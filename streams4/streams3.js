@@ -11,7 +11,7 @@ var isRepoModePull = streams2.isRepoModePull;
 var isSymbolicLink = streams2.isSymbolicLink;
 
 var sourceFolders = ['docroot/WEB-INF/service', 'docroot/WEB-INF/src', 'src/main/java', 'src/main/resources/archetype-resources/src/main/java'];
-var resourceFolders = ['src/main/resources', 'src/main/resources/archetype-resources/src/main/resources'];
+var resourceFolders = ['src/main/resources', 'src/main/resources/META-INF/resources', 'src/main/resources/archetype-resources/src/main/resources'];
 var testSourceFolders = ['src/test/java', 'src/testIntegration/java', 'test/integration', 'test/unit'];
 var testResourceFolders = ['src/test/resources', 'src/testIntegration/resources'];
 var webrootFolders = ['src/main/resources/META-INF/resources'];
