@@ -235,12 +235,12 @@ setantopts() {
 	export ANT_OPTS
 }
 
-setuplibs() {
-	rm -rf .idea/libraries
-
-	if [ ! -f build.xml ]; then
+setupsdk() {
+	if [ ! -f build.xml ] || [ ! -d modules ]; then
 		return 0
 	fi
+
+	rm -rf .idea/libraries
 
 	local NEEDS_SETUP_LIBS=
 
@@ -250,19 +250,7 @@ setuplibs() {
 		fi
 	done
 
-	if [ "" == "${NEEDS_SETUP_LIBS}" ]; then
-		return 0
-	fi
-
-	setantopts
-
-	timeecho 'Running ant setup-libs to initialize portal libraries'
-
-	ant setup-libs
-}
-
-setupsdk() {
-	if [ ! -f build.xml ] || [ ! -d modules ] || [ -d tools/sdk ]; then
+	if [ -d tools/sdk ] && [ "" == "${NEEDS_SETUP_LIBS}" ]; then
 		return 0
 	fi
 

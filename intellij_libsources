@@ -10,7 +10,6 @@ setupsdk
 cachemodules $@
 
 copylibs
-setuplibs
 
 if [ "" != "$(which mvn)" ]; then
 	"$NODEJS" "${SCRIPT_FOLDER}/bin/pom.js" "$PWD" $@

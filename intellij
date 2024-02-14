@@ -11,7 +11,6 @@ licensing
 cachemodules $@
 
 copylibs
-setuplibs
 
 if [ "" == "$(which mvn)" ]; then
     "$NODEJS" "${SCRIPT_FOLDER}/bin/run.js" "$PWD" "$@"
