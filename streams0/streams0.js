@@ -650,6 +650,9 @@ function fixProjectDependencies(moduleVersions, addAsLibrary, module) {
 	}
 	else if (module.modulePath.indexOf('/post-upgrade-fix/') != -1) {
 	}
+	else if (isFile(getFilePath(module.modulePath, '.lfrbuild-app-server-lib'))) {
+		module.barebone = true;
+	}
 	else if (isFile(getFilePath(module.modulePath, '.lfrbuild-portal-pre'))) {
 		module.barebone = true;
 	}
@@ -1028,8 +1031,8 @@ function getMiscXML(resourceElements) {
 	var languageLevelName = 'JDK_' + languageLevel.replace('.', '_');
 
 	var projectRootManager = '<component name="ProjectRootManager" version="2" languageLevel="' +
-		languageLevelName + '" default="false" assert-keyword="true" jdk-15="true" ' +
-			'project-jdk-name="1.8" project-jdk-type="JavaSDK" />';
+		languageLevelName + '" default="false" assert-keyword="true" ' +
+			'project-jdk-name="' + languageLevel + '" project-jdk-type="JavaSDK" />';
 
 	miscXMLContent.push(projectRootManager);
 	miscXMLContent.push('</project>');

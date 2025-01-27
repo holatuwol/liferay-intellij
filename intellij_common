@@ -258,7 +258,7 @@ setupsdk() {
 
 	timeecho 'Running ant setup-sdk to initialize gradle configuration'
 
-	ant setup-sdk
+	ant setup-sdk setup-libs
 }
 
 setupwork() {

@@ -61,6 +61,7 @@ Change Log
 
 This is a change log for when I started keeping track of the changes that were made.
 
+* **2025-01-27**: Add support for newer JDK versions, check for ``.lfrbuild-app-server-lib`` marker files
 * **2024-02-14**: Also detect ``api`` dependencies and add them to the class path
 * **2023-08-02**: Add ``/src/main/resources/META-INF/resources`` as a resources root so newer versions of IntelliJ without web facets know what to do with them
 * **2023-02-16**: Fix handling of deleted lib/global folder and themes that have '@liferay/' as the prefix for the package name

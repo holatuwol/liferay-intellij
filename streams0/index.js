@@ -167,10 +167,6 @@ function isModuleFolder(moduleFileSet, moduleFolderSet, folder) {
 		return false;
 	}
 
-	if (!moduleFolderSet.has(getFilePath(folder, 'src'))) {
-		return false;
-	}
-
 	return true;
 };
 
@@ -187,6 +183,21 @@ function isPluginFolder(moduleFileSet, moduleFolderSet, folder) {
 function isPluginsSDK(otherSourceFolder) {
 	return getPluginSDKRoot(otherSourceFolder) != null;
 };
+
+function isAppServerLibModule(module) {
+	if (module.moduleName.indexOf('-compat') != -1) {
+		return false;
+	}
+
+	var markerFilePath = getFilePath(module.modulePath, '.lfrbuild-app-server-lib');
+
+	if (portalModuleFileSet != null) {
+		return portalModuleFileSet.has(markerFilePath);
+	}
+	else {
+		return isFile(markerFilePath);
+	}
+}
 
 function isCorePortalPreModule(module) {
 	if (module.moduleName.indexOf('-compat') != -1) {
@@ -293,9 +304,14 @@ function scanProject(portalSourceFolder, otherSourceFolders, config, callback) {
 
 	console.log('[' + new Date().toLocaleTimeString() + ']', 'Extracting metadata from root level folder build files');
 
+	var appServerLibModuleNames = coreModuleDetails.filter(isAppServerLibModule).map(getModuleName);
+	for (var i = 0; i < coreModuleFolders.length; i++) {
+		console.log(coreModuleFolders[i]);
+	}
+
 	var corePortalPreModuleNames = coreModuleDetails.filter(isCorePortalPreModule).map(getModuleName);
 
-	var coreDetails = coreFolders.map(getCoreDetails.bind(null, corePortalPreModuleNames));
+	var coreDetails = coreFolders.map(getCoreDetails.bind(null, corePortalPreModuleNames, appServerLibModuleNames));
 
 	console.log('[' + new Date().toLocaleTimeString() + ']', 'Extracting metadata from legacy plugin build files');
 

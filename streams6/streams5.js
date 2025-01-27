@@ -68,7 +68,7 @@ function getCoreDependency(dependencyType, dependencyName) {
 	};
 };
 
-function getCoreDependencies(corePortalPreModuleNames, folder) {
+function getCoreDependencies(corePortalPreModuleNames, appServerLibModuleNames, folder) {
 	var dependencyNames = defaultDependencyNames;
 
 	if (folder in customDependencyNames) {
@@ -77,7 +77,10 @@ function getCoreDependencies(corePortalPreModuleNames, folder) {
 
 	var coreProjectDependencies = dependencyNames.projectNames.filter(isDirectory);
 
-	if (folder == 'portal-kernel') {
+	if (folder == 'portal-impl') {
+		coreProjectDependencies = coreProjectDependencies.concat(appServerLibModuleNames);
+	}
+	else if (folder == 'portal-kernel') {
 		coreProjectDependencies = coreProjectDependencies.concat(corePortalPreModuleNames);
 	}
 
@@ -87,11 +90,11 @@ function getCoreDependencies(corePortalPreModuleNames, folder) {
 	};
 };
 
-function getCoreDetails(corePortalPreModuleNames, folder) {
+function getCoreDetails(corePortalPreModuleNames, appServerLibModuleNames, folder) {
 	var moduleOverview = getModuleOverview(folder);
 	var moduleIncludeFolders = getCoreIncludeFolders(folder);
 	var moduleExcludeFolders = getModuleExcludeFolders(folder, moduleIncludeFolders);
-	var moduleDependencies = getCoreDependencies(corePortalPreModuleNames, folder);
+	var moduleDependencies = getCoreDependencies(corePortalPreModuleNames, appServerLibModuleNames, folder);
 
 	var moduleDetailsArray = [moduleOverview, moduleIncludeFolders, moduleExcludeFolders, moduleDependencies];
 

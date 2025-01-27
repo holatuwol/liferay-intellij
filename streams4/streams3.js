@@ -165,6 +165,10 @@ function getModuleVersion(folder) {
 			bundleName = packageJson.name;
 		}
 
+		if (!bundleName) {
+			return {};
+		}
+
 		bundleName = bundleName.substring(bundleName.lastIndexOf('/') + 1);
 
 		return {
