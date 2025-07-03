@@ -46,6 +46,14 @@ checknode() {
 		exit 1
 	fi
 
+	if [ ! -d ${HOME}/.npm ]; then
+		timeecho "Please install nvm"
+		exit 1
+	fi
+
+	export NVM_DIR="${HOME}/.nvm"
+	source "${NVM_DIR}/nvm.sh"
+
 	local SCRIPT_ROOT="$(dirname "${BASH_SOURCE[0]}")"
 
 	pushd "${SCRIPT_ROOT}" > /dev/null
@@ -56,7 +64,10 @@ checknode() {
 }
 
 checknodemodules() {
-	node --version > node.version.new
+	nvm current > node.version.new
+
+	nvm install
+	nvm use
 
 	if [ -f node.version.old ]; then
 		if [ "$(cat node.version.old)" != "$(cat node.version.new)" ]; then
