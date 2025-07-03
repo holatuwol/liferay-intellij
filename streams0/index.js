@@ -305,9 +305,6 @@ function scanProject(portalSourceFolder, otherSourceFolders, config, callback) {
 	console.log('[' + new Date().toLocaleTimeString() + ']', 'Extracting metadata from root level folder build files');
 
 	var appServerLibModuleNames = coreModuleDetails.filter(isAppServerLibModule).map(getModuleName);
-	for (var i = 0; i < coreModuleFolders.length; i++) {
-		console.log(coreModuleFolders[i]);
-	}
 
 	var corePortalPreModuleNames = coreModuleDetails.filter(isCorePortalPreModule).map(getModuleName);
 

@@ -61,6 +61,7 @@ Change Log
 
 This is a change log for when I started keeping track of the changes that were made.
 
+* **2025-07-03**: Treat the megajars the same way as the BOMs for dependency management purposes
 * **2025-07-02**: Add support for even newer JDK versions, update debugger configuration for newer IntelliJ
 * **2025-01-27**: Add support for newer JDK versions, check for ``.lfrbuild-app-server-lib`` marker files
 * **2024-02-14**: Also detect ``api`` dependencies and add them to the class path

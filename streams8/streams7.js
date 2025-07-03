@@ -91,6 +91,55 @@ function getModuleElement(module) {
 	return moduleElement;
 };
 
+function getLiferayWorkspaceModuleGroup(module, gradlePropertiesPaths) {
+	if (gradlePropertiesPaths.length == 0) {
+		return null;
+	}
+
+	for (var i = 0; i < gradlePropertiesPaths.length && moduleRelativePath == null; i++) {
+		var gradlePropertiesContent = fs.readFileSync(gradlePropertiesPaths[i]);
+
+		var projectPrefixRegex = /project.path.prefix=:(.*)/g;
+		var matchResult = projectPrefixRegex.exec(gradlePropertiesContent);
+
+		if (matchResult) {
+			return matchResult[1].split(':').join('/');
+		}
+	}
+
+	var modulesRoot = path.dirname(gradlePropertiesPaths[gradlePropertiesPaths.length - 1]);
+
+	if (path.basename(modulesRoot) == 'liferay') {
+		modulesRoot = path.dirname(modulesRoot);
+	}
+
+	var modulesRootParent = path.dirname(modulesRoot);
+
+	var moduleRelativePath = module.modulePath.substring(modulesRootParent.length + 1);
+
+	var moduleGroup = path.dirname(moduleRelativePath);
+
+	return moduleGroup;
+}
+
+function getLiferayPluginsSDKModuleGroup(module, ivySettingsPaths) {
+	if (ivySettingsPaths.length == 0) {
+		return null;
+	}
+
+	var pos = ivySettingsPaths[ivySettingsPaths.length - 1].lastIndexOf('/');
+
+	if (pos == -1) {
+		return null;
+	}
+
+	var pluginTypeRoot = module.modulePath.substring(0, pos);
+	var sdkRoot = path.dirname(pluginTypeRoot);
+
+	var sdkRelativePath = module.modulePath.substring(sdkRoot.length + 1);
+	return path.dirname(sdkRelativePath);
+}
+
 function getModuleGroupName(module) {
 	if (module.modulePath == 'modules') {
 		return null;
@@ -100,62 +149,29 @@ function getModuleGroupName(module) {
 		return 'portal';
 	}
 
-	var pos = module.modulePath.indexOf('modules/') == 0 ? 0 : module.modulePath.indexOf('/modules/');
-
-	if (pos != -1) {
-		var modulesRoot = module.modulePath.substring(0, pos);
-
-		if (modulesRoot == '') {
-			return path.dirname(module.modulePath);
-		}
-
-		var modulesRootParent = path.dirname(modulesRoot);
-		var moduleRelativePath = module.modulePath.substring(modulesRootParent.length + 1);
-		return path.dirname(moduleRelativePath);
+	if (module.modulePath.indexOf('modules/') == 0) {
+		return path.dirname(module.modulePath);
 	}
 
-	var gradlePropertiesPaths = getAncestorFiles(module.modulePath, 'gradle.properties');
+	var moduleGroup = getLiferayWorkspaceModuleGroup(module, getAncestorFiles(module.modulePath, 'gradle.properties'));
 
-	for (var i = 0; i < gradlePropertiesPaths.length; i++) {
-		var gradlePropertiesContent = fs.readFileSync(gradlePropertiesPaths[i]);
-
-		var projectPrefixRegex = /project.path.prefix=:(.*)/g;
-		var matchResult = projectPrefixRegex.exec(gradlePropertiesContent);
-
-		if (matchResult) {
-			return 'subrepo/' + matchResult[1].split(':').join('/');
-		}
+	if (moduleGroup != null) {
+		return moduleGroup;
 	}
 
-	var gradlePaths = getAncestorFiles(module.modulePath, 'gradlew');
+	moduleGroup = getLiferayWorkspaceModuleGroup(module, getAncestorFiles(module.modulePath, 'liferay/gradle.properties'));
 
-	if (gradlePaths.length > 0) {
-		var pos = gradlePaths[gradlePaths.length - 1].lastIndexOf('/');
-
-		if (pos != -1) {
-			var modulesRoot = module.modulePath.substring(0, pos);
-
-			var modulesRootParent = path.dirname(modulesRoot);
-			var moduleRelativePath = module.modulePath.substring(modulesRootParent.length + 1);
-			return path.dirname(moduleRelativePath);
-		}
+	if (moduleGroup != null) {
+		return moduleGroup;
 	}
 
-	var ivyPaths = getAncestorFiles(module.modulePath, 'ivy-settings.xml');
+	moduleGroup = getLiferayPluginsSDKModuleGroup(module, getAncestorFiles(module.modulePath, 'ivy-settings.xml'));
 
-	if (ivyPaths.length > 0) {
-		var pos = ivyPaths[ivyPaths.length - 1].lastIndexOf('/');
-
-		if (pos != -1) {
-			var pluginTypeRoot = module.modulePath.substring(0, pos);
-			var sdkRoot = path.dirname(pluginTypeRoot);
-
-			var sdkRelativePath = module.modulePath.substring(sdkRoot.length + 1);
-			return path.dirname(sdkRelativePath);
-		}
+	if (moduleGroup != null) {
+		return moduleGroup;
 	}
 
-	console.warn('Unable to detect group for ' + module.modulePath);
+	console.warn('Unable to auto-detect IntelliJ module group for ' + module.modulePath);
 
 	return '';
 };

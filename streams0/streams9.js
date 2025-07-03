@@ -207,6 +207,26 @@ function checkExportDependencies(moduleVersions, module) {
 	}
 };
 
+function isMegaJarDependency(dependency) {
+	var dependencyGroup = dependency.group;
+
+	if (!dependencyGroup || (dependencyGroup.indexOf('com.liferay') != 0)) {
+		return false;
+	}
+
+	var dependencyName = dependency.name;
+
+	if ((dependencyName == 'release.dxp.bom') || (dependencyName == 'release.portal.bom')) {
+		return true;
+	}
+
+	if ((dependencyName == 'release.dxp.api') || (dependencyName == 'release.portal.api')) {
+		return true;
+	}
+
+	return false;
+}
+
 function fixLibraryDependencies(moduleVersions, module) {
 	if (!('libraryDependencies' in module)) {
 		module.libraryDependencies = [];
@@ -222,15 +242,13 @@ function fixLibraryDependencies(moduleVersions, module) {
 			continue;
 		}
 
-		var dependencyName = dependency.name;
-
-		if (dependencyName == 'release.portal.api') {
+		if (isMegaJarDependency(dependency)) {
 			module.libraryDependencies.splice(i, 1);
 
 			var releasePortalAPI = ['portal-impl', 'portal-kernel', 'portal-test', 'support-tomcat', 'util-bridges', 'util-java', 'util-slf4j', 'util-taglib', 'required-dependencies'];
 
 			for (moduleName in moduleVersions) {
-				if (moduleName.indexOf('-api') == moduleName.length - 3) {
+				if ((moduleName.indexOf('-api') != -1) || (moduleName.indexOf('-spi') != -1)) {
 					releasePortalAPI.push(moduleName);
 				}
 			}
@@ -253,6 +271,8 @@ function fixLibraryDependencies(moduleVersions, module) {
 
 			continue;
 		}
+
+		var dependencyName = dependency.name;
 
 		if (!(dependencyName in moduleVersions)) {
 			continue;

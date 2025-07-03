@@ -1211,10 +1211,8 @@ function getUnloadModuleXML(unloadModuleElements) {
 };
 
 function hasLibraryPath(library) {
-	if (library.group == 'com.liferay.portal') {
-		if ((library.name == 'release.dxp.bom') || (library.name == 'release.portal.bom')) {
-			return true;
-		}
+	if (streams9.isMegaJarDependency(library)) {
+		return true;
 	}
 
 	var libraryPaths = getLibraryJarPaths(library);
