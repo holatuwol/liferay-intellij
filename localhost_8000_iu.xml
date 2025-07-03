@@ -1,15 +1,11 @@
-<component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="localhost:8000" type="#com.intellij.j2ee.web.jsr45.JSR45ConfigurationFactory" factoryName="Remote" APPLICATION_SERVER_NAME="Generic" ALTERNATIVE_JRE_ENABLED="false">
-    <option name="PORT" value="8080" />
-    <option name="LOCAL" value="false" />
-    <option name="OPEN_IN_BROWSER" value="false" />
-    <option name="OPEN_IN_BROWSER_URL" value="http://localhost:8080" />
-    <server-settings>
-      <option name="JSP_PACKAGE" value="org.apache.jsp" />
-      <option name="VM_OPTS" value="" />
-      <option name="USE_WEBSPHERE51_LINEMAPPING_MODEL" value="false" />
-      <option name="LOCAL_PORT" value="8080" />
-    </server-settings>
+<component name="RunManager">
+  <configuration name="localhost:8000" type="Remote" nameIsGenerated="true">
+    <option name="USE_SOCKET_TRANSPORT" value="true" />
+    <option name="SERVER_MODE" value="false" />
+    <option name="SHMEM_ADDRESS" />
+    <option name="HOST" value="localhost" />
+    <option name="PORT" value="8000" />
+    <option name="AUTO_RESTART" value="false" />
     <RunnerSettings RunnerId="Debug">
       <option name="DEBUG_PORT" value="8000" />
       <option name="LOCAL" value="false" />

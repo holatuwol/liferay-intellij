@@ -126,6 +126,17 @@ copylibs() {
 	timeecho 'Missing clone of https://github.com/liferay/liferay-binaries-cache-2017'
 	timeecho 'Missing clone of https://github.com/liferay/liferay-binaries-cache-2020'
 
+	if [ -f .git ] || [ -d .git ]; then
+		timeecho 'Please clone these repositories (or create a symbolic link to the clone of these repositories) and run this script again'
+
+		echo ''
+		echo 'cd ..'
+		echo 'git clone git@github.com:liferay/liferay-binaries-cache-2017.git'
+		echo 'git clone git@github.com:liferay/liferay-binaries-cache-2020.git'
+
+		return 1
+	fi
+
 	if [ "" == "$(which mvn)" ]; then
 		timeecho 'Maven is not available in the path, dependency libraries will be missing'
 		return 1
@@ -224,11 +235,11 @@ licensing() {
 }
 
 setantopts() {
-	JAVA_VERSION=$(java -version 2>&1 | head -1 | cut -d'"' -f 2 | cut -d'.' -f 2)
+	local JAVA_VERSION=$(java -version 2>&1 | head -1 | cut -d'"' -f 2)
 
 	ANT_OPTS='-Xms2g -Xmx2g'
 
-	if [[ 8 -gt $JAVA_VERSION ]]; then
+	if [ "1" == "$(echo "${JAVA_VERSION}" | cut -d'.' -f 1)" ] && [[ 8 -gt $(echo "${JAVA_VERSION}" | cut -d'.' -f 2) ]]; then
 		ANT_OPTS="${ANT_OPTS} -XX:MaxPermSize=1g"
 	fi
 

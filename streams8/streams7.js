@@ -92,11 +92,11 @@ function getModuleElement(module) {
 };
 
 function getModuleGroupName(module) {
-	if (module.type == 'portal') {
-		if (module.modulePath == 'modules') {
-			return null;
-		}
+	if (module.modulePath == 'modules') {
+		return null;
+	}
 
+	if (module.type == 'portal') {
 		return 'portal';
 	}
 

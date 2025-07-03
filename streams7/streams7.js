@@ -53,6 +53,10 @@ function getAncestorFiles(folder, filename) {
 };
 
 function getModuleGroupName(module) {
+	if (module.modulePath == 'modules') {
+		return null;
+	}
+
 	if (module.type == 'portal') {
 		return 'portal';
 	}

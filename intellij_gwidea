@@ -43,8 +43,9 @@ if [ ! -d modules ]; then
 fi
 
 setupsdk
-copylibs
 
-gradlewidea $@
+if copylibs; then
+	gradlewidea $@
 
-enabledebug
+	enabledebug
+fi
