@@ -46,7 +46,7 @@ checknode() {
 		exit 1
 	fi
 
-	if [ ! -d ${HOME}/.npm ]; then
+	if [ ! -d ${HOME}/.nvm ]; then
 		timeecho "Please install nvm"
 		exit 1
 	fi
