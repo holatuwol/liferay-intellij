@@ -194,7 +194,7 @@ function createProjectWorkspace(coreDetails, moduleDetails, pluginDetails, confi
 	coreDetails.forEach(sortModuleAttributes);
 	moduleDetails.forEach(sortModuleAttributes);
 
-	if (config['complete-cache']) {
+	if (!config['no-complete-cache']) {
 		console.log('[' + new Date().toLocaleTimeString() + ']', 'Processing BOM dependencies');
 
 		lastLibraryCount = 0;
@@ -214,7 +214,7 @@ function createProjectWorkspace(coreDetails, moduleDetails, pluginDetails, confi
 
 	moduleDetails.forEach(fixMavenBomDependencies);
 
-	if (config['complete-cache']) {
+	if (!config['no-complete-cache']) {
 		console.log('[' + new Date().toLocaleTimeString() + ']', 'Processing missing dependencies');
 
 		lastLibraryCount = 0;
