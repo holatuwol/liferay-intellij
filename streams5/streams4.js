@@ -243,11 +243,11 @@ function getModuleDependencies(folder, moduleDependencies, dependencyManagementE
 
 	moduleDependencies.buildGradleContents = buildGradleContents;
 
-	var libraryDependencyRegex1 = /(?:test|api|compile|provided)[a-zA-Z]*[\s]*group *: *['"]([^'"]*)['"],[\s]*name *: *['"]([^'"]*)['"], [^\n]*version *: *['"]([^'"]*)['"]/;
-	var libraryDependencyRegex2 = dependencyManagementEnabled ? /(?:test|api|compile|provided)[a-zA-Z]*[\s]*group *: *['"]([^'"]*)['"],[\s*]name *: *['"]([^'"]*)['"]$/ : null;
-	var libraryDependencyRegex3 = /(?:test|api|compile|provided)[a-zA-Z]*\s*['"]([^'"]*):([^'"]*):([^'"]*)['"]/;
-	var libraryDependencyRegex4 = /(?:test|api|compile|provided)[a-zA-Z]*[\s]*group *: *['"]([^'"]*)['"],[\s]*name *: *['"]([^'"]*)['"], [^\n]*version *: ([^'"]+)/;
-	var projectDependencyRegex = /(?:test|api|compile|provided)[a-zA-Z]*[\s]*project\(['"]:(?:[^'"]*:)?([^'"]*)['"]/;
+	var libraryDependencyRegex1 = /(?:test|api|compile|provided|implementation)[a-zA-Z]*[\s]+group *: *['"]([^'"]*)['"],[\s]*name *: *['"]([^'"]*)['"],[^\n]*version *: *['"]([^'"]*)['"]/;
+	var libraryDependencyRegex2 = dependencyManagementEnabled ? /(?:test|api|compile|provided|implementation)[a-zA-Z]*[\s]+group *: *['"]([^'"]*)['"],[\s*]name *: *['"]([^'"]*)['"]$/ : null;
+	var libraryDependencyRegex3 = /(?:test|api|compile|provided|implementation)[a-zA-Z]*\s+['"]([^'":\n]*):([^'":\n]*):([^'":\n]*)['"]/;
+	var libraryDependencyRegex4 = /(?:test|api|compile|provided|implementation)[a-zA-Z]*[\s]+group *: *['"]([^'"]*)['"],[\s]*name *: *['"]([^'"]*)['"],[^\n]*version *: ([^'"]+)/;
+	var projectDependencyRegex = /(?:test|api|compile|provided|implementation)[a-zA-Z]*[\s]+project\(['"]:(?:[^'"]*:)?([^'"]*)['"]/;
 
 	var nextStartPos = 0;
 	var dependencyTextResult = null;

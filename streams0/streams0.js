@@ -500,8 +500,7 @@ function executeGradleFile(completionMessage, entries) {
 
 	buildGradleContent = buildGradleContent.concat([
 		'task completeLibraryCache(type: Exec) {',
-		'\tconfigurations.compile.files',
-		'\tcommandLine "echo", ""',
+		'\tcommandLine "echo", configurations.runtimeClasspath.files.join(" ")',
 		'}'
 	]);
 
@@ -713,9 +712,9 @@ function gatherMavenBomDependencies(module) {
 
 	var mavenBomRegex = /mavenBom\s*['"]([^:]*):([^:]*):([^'"]*)['"]/g;
 
-	var libraryDependencyRegex1 = /dependency\sgroup *: *['"]([^'"]*)['"],[\s*]name *: *['"]([^'"]*)['"], [^\n]*version *: *['"]([^'"]*)['"]/;
+	var libraryDependencyRegex1 = /dependency\sgroup *: *['"]([^'"]*)['"],[^\n]*name *: *['"]([^'"]*)['"],[^\n]*version *: *['"]([^'"]*)['"]/;
 	var libraryDependencyRegex2 = /dependency\s['"]([^'"]*):([^'"]*):([^'"]*)['"]/;
-	var libraryDependencyRegex3 = /dependency\sgroup *: *['"]([^'"]*)['"],[\s*]name *: *['"]([^'"]*)['"], [^\n]*version *: ([^'"]+)/;
+	var libraryDependencyRegex3 = /dependency\sgroup *: *['"]([^'"]*)['"],[^\n]*name *: *['"]([^'"]*)['"],[^\n]*version *: ([^'"]+)/;
 
 	var missingVersionDependencies = [];
 
@@ -892,7 +891,7 @@ function getFileTreeDependencies(module) {
 };
 
 function getGradleEntry(library) {
-	return '\tcompile group: "' + library['group'] + '", name: "' + library['name'] + '", version: "' + library['version'] + '"';
+	return '\truntimeOnly group: "' + library['group'] + '", name: "' + library['name'] + '", version: "' + library['version'] + '"';
 };
 
 function getGradleFile(entries) {
