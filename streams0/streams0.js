@@ -1260,6 +1260,10 @@ function needsCacheEntry(library) {
 		return false;
 	}
 
+	if (library.name == 'javafaker') {
+		return false;
+	}
+
 	return true;
 };
 
