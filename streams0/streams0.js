@@ -26,7 +26,6 @@ var getLibraryDependency = streams4.getLibraryDependency;
 var getLibraryJarPaths = streams8.getLibraryJarPaths;
 var getLibraryVariableDependency = streams4.getLibraryVariableDependency;
 var getLibraryXML = streams9.getLibraryXML;
-var getLiferayPrivateRepository = streams9.getLiferayPrivateRepository;
 var getMavenAggregator = streams9.getMavenAggregator;
 var getMavenDependencyElement = streams9.getMavenDependencyElement;
 var getMavenProject = streams9.getMavenProject;
@@ -203,11 +202,6 @@ function createProjectWorkspace(coreDetails, moduleDetails, pluginDetails, confi
 
 		var gradleCacheModuleDetails = moduleDetails;
 		var gradleCachePluginDetails = pluginDetails;
-
-		if (getLiferayPrivateRepository() == null) {
-			gradleCacheModuleDetails = moduleDetails.filter(function(x) { return x.modulePath.indexOf('/dxp/') == -1; });
-			gradleCachePluginDetails = pluginDetails.filter(function(x) { return x.modulePath.indexOf('/dxp/') == -1; });
-		}
 
 		while (!libraryCacheStable) {
 			completeBomCache(gradleCacheModuleDetails);

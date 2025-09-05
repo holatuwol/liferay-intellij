@@ -660,95 +660,6 @@ function getNewModuleRootManagerXML(module) {
 	return newModuleRootManagerXML.join('\n');
 };
 
-var liferayPrivateRepository = null;
-
-function getLiferayPrivateRepository() {
-	if (liferayPrivateRepository != null) {
-		if (liferayPrivateRepository.id) {
-			return liferayPrivateRepository;
-		}
-
-		return null;
-	}
-
-	var propertiesContent = null;
-
-	if (fs.existsSync('working.dir.properties')) {
-		propertiesContent = fs.readFileSync('working.dir.properties').toString();
-	}
-	else {
-		var privateRemoteName = child_process.execSync('git remote -v | grep -F "liferay/liferay-portal-ee" | cut -f 1 | head -1').toString().trim();
-
-		if (privateRemoteName) {
-			var privateBranchNames = ['7.0.x-private', '7.1.x-private', '7.2.x-private', 'master-private'];
-			var privateBranchDates = privateBranchNames.map(getLatestCommitDate.bind(null, privateRemoteName));
-			var privateBranchIndex = 0;
-
-			for (var i = 1; i < privateBranchNames.length; i++) {
-				if (privateBranchDates[i] > privateBranchDates[privateBranchIndex]) {
-					privateBranchIndex = i;
-				}
-			}
-
-			var passwordBranchName = privateBranchNames[privateBranchIndex];
-			var passwordBranchDate = privateBranchDates[privateBranchIndex];
-			passwordBranchDate = passwordBranchDate.substring(0, passwordBranchDate.indexOf(' '));
-
-			console.log('[' + new Date().toLocaleTimeString() + ']', 'Checking', privateRemoteName + '/' + passwordBranchName, '(last fetched ' + passwordBranchDate + ') for Liferay private Maven repository metadata');
-
-			try {
-				propertiesContent = child_process.execSync('git show ' + privateRemoteName + '/' + passwordBranchName + ':working.dir.properties');
-			}
-			catch (e) {
-				console.error(e);
-			}
-
-			if (!propertiesContent) {
-				try {
-					propertiesContent = child_process.execSync('git show ' + passwordBranchName + ':working.dir.properties');
-				}
-				catch (e) {
-					console.error(e);
-				}
-			}
-		}
-	}
-
-	if (propertiesContent == null) {
-		liferayPrivateRepository = {};
-
-		return null;
-	}
-
-	var repositoryMetadata = getRepositoryMetadata(propertiesContent);
-
-	if (repositoryMetadata == null) {
-		return null;
-	}
-
-	var repositoryPath = repositoryMetadata['url'];
-
-	if (repositoryPath.indexOf('https://') == 0) {
-		repositoryPath = repositoryPath.substring('https://'.length);
-	}
-
-	if (repositoryPath.indexOf('repository-cdn.liferay.com/') == 0) {
-		repositoryPath = 'repository.liferay.com/' + repositoryPath.substring('repository-cdn.liferay.com/'.length);
-	}
-
-	liferayPrivateRepository = {
-		id: 'liferay-private',
-		name: 'Liferay Private',
-		scheme: 'https',
-		username: repositoryMetadata['username'],
-		password: repositoryMetadata['password'],
-		path: repositoryPath,
-		layout: 'default'
-	};
-
-	return liferayPrivateRepository;
-}
-
 function getProjectRepositories() {
 	if (projectRepositories.length > 0) {
 		return projectRepositories;
@@ -775,18 +686,18 @@ function getProjectRepositories() {
 	tempProjectRepositories.push({
 		id: 'jaspersoft-third-party',
 		name: 'Jaspersoft Third-Party',
-		scheme: 'http',
+		scheme: 'https',
 		path: 'jaspersoft.jfrog.io/jaspersoft/third-party-ce-artifacts',
 		layout: 'default'
 	});
 
-	if (isDirectory('.git') || isFile('.git')) {
-		var privateRepository = getLiferayPrivateRepository();
-
-		if (privateRepository != null) {
-			tempProjectRepositories.push(privateRepository);
-		}
-	}
+	tempProjectRepositories.push({
+		id: 'wso2-third-party',
+		name: 'WSO2 Third-Party',
+		scheme: 'https',
+		path: 'maven.wso2.org/nexus/content/repositories/releases',
+		layout: 'default'
+	});
 
 	projectRepositories = tempProjectRepositories;
 
@@ -955,7 +866,6 @@ exports.fixProjectDependencies = fixProjectDependencies;
 exports.gradleCaches = gradleCaches;
 exports.getJarLibraryXML = getJarLibraryXML;
 exports.getLibraryXML = getLibraryXML;
-exports.getLiferayPrivateRepository = getLiferayPrivateRepository;
 exports.getMavenAggregator = getMavenAggregator;
 exports.getMavenDependencyElement = getMavenDependencyElement;
 exports.getMavenProject = getMavenProject;
@@ -963,6 +873,7 @@ exports.getMavenProjectXML = getMavenProjectXML;
 exports.getModuleXML = getModuleXML;
 exports.mavenCaches = mavenCaches;
 exports.getProjectRepositories = getProjectRepositories;
+exports.isMegaJarDependency = isMegaJarDependency;
 exports.setCoreBundleVersions = setCoreBundleVersions;
 exports.setModuleBundleVersions = setModuleBundleVersions;
 exports.sortModuleAttributes = sortModuleAttributes;
