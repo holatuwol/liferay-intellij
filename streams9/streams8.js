@@ -187,7 +187,9 @@ function generateFileListCache(cachePath) {
 }
 
 function getLibraryFolderPath(library) {
-	if ((library.group == null) || (library.version == null) || (library.name == null) || (library.name.indexOf('com.liferay.') == 0)) {
+	if ((library.group == null) || (library.version == null) || (library.name == null) ||
+		(library.name.indexOf('com.liferay.') == 0 && library.name.indexOf('com.liferay.jakarta.') == -1)) {
+
 		return null;
 	}
 
@@ -635,7 +637,7 @@ function setDependenciesAsJars(pom, variables, library, index, node) {
 	var artifactId = artifactInfo[1];
 	var version = artifactInfo[2];
 
-	if (groupId.indexOf('com.liferay') == 0) {
+	if (groupId.indexOf('com.liferay') == 0 && groupId.indexOf('com.liferay.jakarta') == -1) {
 		return;
 	}
 

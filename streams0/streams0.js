@@ -1252,11 +1252,11 @@ function needsCacheEntry(library) {
 		return false;
 	}
 
-	if (library.group.indexOf('com.liferay') == 0) {
+	if (library.group.indexOf('com.liferay') == 0 && library.group.indexOf('com.liferay.jakarta') == -1) {
 		return (library.name.indexOf('com.liferay') != 0) || library.hasInitJsp;
 	}
 
-	if (library.name.indexOf('com.liferay') == 0) {
+	if (library.name.indexOf('com.liferay') == 0 && library.name.indexOf('com.liferay.jakarta') == -1) {
 		return false;
 	}
 
