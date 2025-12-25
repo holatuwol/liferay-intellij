@@ -6,12 +6,10 @@ var streams2 = require('../streams2/streams2');
 var streams5 = require('../streams6/streams5');
 var streams6 = require('../streams7/streams6');
 
-var getExcludeFolderElement = streams6.getExcludeFolderElement;
 var getFacetManagerXML = streams6.getFacetManagerXML;
 var getFilePath = streams5.getFilePath;
 var getModuleIMLPath = streams6.getModuleIMLPath;
 var getIntellijXML = streams6.getIntellijXML;
-var getSourceFolderElement = streams6.getSourceFolderElement;
 var isDirectory = streams2.isDirectory;
 var isFile = streams2.isFile;
 var saveContent = streams6.saveContent;

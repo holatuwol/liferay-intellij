@@ -52,9 +52,6 @@ var gitRoots = new Set();
 var gradleCaches = streams9.gradleCaches;
 var mavenCaches = streams9.mavenCaches;
 
-var lastLibraryCount = 0;
-var libraryCacheStable = false;
-
 function createProjectObjectModels(coreDetails, moduleDetails, pluginDetails, config) {
 	console.log('[' + new Date().toLocaleTimeString() + ']', 'Checking for Git roots, Gradle caches, and Maven caches');
 
@@ -67,13 +64,13 @@ function createProjectObjectModels(coreDetails, moduleDetails, pluginDetails, co
 	checkForGradleCache('../liferay-binaries-cache-2017');
 	checkForGradleCache('.');
 
-	for (gradleCache of gradleCaches) {
+	for (var gradleCache of gradleCaches) {
 		generateFileListCache(gradleCache);
 	}
 
 	checkForMavenCache(getUserHome());
 
-	for (mavenCache of mavenCaches) {
+	for (var mavenCache of mavenCaches) {
 		generateFileListCache(mavenCache);
 	}
 
@@ -98,31 +95,13 @@ function createProjectObjectModels(coreDetails, moduleDetails, pluginDetails, co
 
 	console.log('[' + new Date().toLocaleTimeString() + ']', 'Processing BOM dependencies');
 
-	lastLibraryCount = 0;
-	libraryCacheStable = false;
-
-	while (!libraryCacheStable) {
-		completeBomCache(moduleDetails);
-
-		if (lastLibraryCount == 0) {
-			libraryCacheStable = true;
-		}
-	}
+	completeBomCache(moduleDetails);
 
 	moduleDetails.forEach(fixMavenBomDependencies);
 
 	console.log('[' + new Date().toLocaleTimeString() + ']', 'Processing missing dependencies');
 
-	lastLibraryCount = 0;
-	libraryCacheStable = false;
-
-	while (!libraryCacheStable) {
-		completeLibraryCache(config['mvn-cache'], coreDetails, moduleDetails, pluginDetails);
-
-		if (lastLibraryCount == 0) {
-			libraryCacheStable = true;
-		}
-	}
+	completeLibraryCache(config['mvn-cache'], coreDetails, moduleDetails, pluginDetails);
 
 	console.log('[' + new Date().toLocaleTimeString() + ']', 'Generating Maven project');
 
@@ -162,13 +141,13 @@ function createProjectWorkspace(coreDetails, moduleDetails, pluginDetails, confi
 	checkForGradleCache('../liferay-binaries-cache-2017');
 	checkForGradleCache('.');
 
-	for (gradleCache of gradleCaches) {
+	for (var gradleCache of gradleCaches) {
 		generateFileListCache(gradleCache);
 	}
 
 	checkForMavenCache(getUserHome());
 
-	for (mavenCache of mavenCaches) {
+	for (var mavenCache of mavenCaches) {
 		generateFileListCache(mavenCache);
 	}
 
@@ -197,19 +176,10 @@ function createProjectWorkspace(coreDetails, moduleDetails, pluginDetails, confi
 	if (!config['no-complete-cache']) {
 		console.log('[' + new Date().toLocaleTimeString() + ']', 'Processing BOM dependencies');
 
-		lastLibraryCount = 0;
-		libraryCacheStable = false;
-
 		var gradleCacheModuleDetails = moduleDetails;
 		var gradleCachePluginDetails = pluginDetails;
 
-		while (!libraryCacheStable) {
-			completeBomCache(gradleCacheModuleDetails);
-
-			if (lastLibraryCount == 0) {
-				libraryCacheStable = true;
-			}
-		}
+		completeBomCache(gradleCacheModuleDetails);
 	}
 
 	moduleDetails.forEach(fixMavenBomDependencies);
@@ -217,16 +187,7 @@ function createProjectWorkspace(coreDetails, moduleDetails, pluginDetails, confi
 	if (!config['no-complete-cache']) {
 		console.log('[' + new Date().toLocaleTimeString() + ']', 'Processing missing dependencies');
 
-		lastLibraryCount = 0;
-		libraryCacheStable = false;
-
-		while (!libraryCacheStable) {
-			completeLibraryCache(config['mvn-cache'], coreDetails, gradleCacheModuleDetails, gradleCachePluginDetails);
-
-			if (lastLibraryCount == 0) {
-				libraryCacheStable = true;
-			}
-		}
+		completeLibraryCache(config['mvn-cache'], coreDetails, gradleCacheModuleDetails, gradleCachePluginDetails);
 	}
 
 	console.log('[' + new Date().toLocaleTimeString() + ']', 'Generating IntelliJ workspace');
@@ -343,7 +304,7 @@ function addGitVersionControlSystem() {
 		'<component name="VcsDirectoryMappings">'
 	];
 
-	for (gitRoot of gitRoots) {
+	for (var gitRoot of gitRoots) {
 		var vcsRootPath = path.dirname(gitRoot);
 
 		vcsRootPath = (vcsRootPath == '.') ? '$PROJECT_DIR$' : '$PROJECT_DIR$/' + vcsRootPath;
@@ -431,7 +392,6 @@ function completeBomCache(moduleDetails) {
 		.doto(setLibraryName)
 		.filter(highland.compose(highland.not, hasLibraryPath))
 		.filter(keyExistsInObject('version'))
-		.map(getGradleEntry)
 		.collect()
 		.each(highland.partial(executeGradleFile, 'BOM dependencies have been downloaded'));
 };
@@ -450,125 +410,136 @@ function completeLibraryCache(useMaven, coreDetails, moduleDetails, pluginDetail
 		.uniqBy(isSameLibraryDependency)
 		.filter(keyExistsInObject('group'))
 		.doto(setLibraryName)
-		.filter(highland.compose(highland.not, hasLibraryPath))
 		.filter(keyExistsInObject('version'))
-		.filter(needsCacheEntry);
+		.filter(needsCacheEntry)
+		.filter(highland.compose(highland.not, hasLibraryPath));
 
 	if (useMaven) {
-		completeCacheStream.map(getMavenDependencyElement)
-			.collect()
+		completeCacheStream.collect()
 			.each(highland.partial(executeMavenFile, 'Missing dependencies have been downloaded'));
 	}
 	else {
-		completeCacheStream.map(getGradleEntry)
-			.collect()
+		completeCacheStream.collect()
 			.each(highland.partial(executeGradleFile, 'Missing dependencies have been downloaded'));
 	}
 };
 
-function executeGradleFile(completionMessage, entries) {
+function executeGradleFile(completionMessage, libraries) {
 	if (!isFile('gradlew')) {
-		libraryCacheStable = true;
 		return
 	}
 
-	if (entries.length == lastLibraryCount) {
-		libraryCacheStable = true;
-		console.log('[' + new Date().toLocaleTimeString() + ']', completionMessage);
-		return;
+	if (libraries.length == 0) {
+		return
 	}
 
-	lastLibraryCount = entries.length;
+	var lastLibraryCount = 0;
 
-	console.log('[' + new Date().toLocaleTimeString() + ']', 'Attempting to download', lastLibraryCount, 'dependencies');
+	while ((libraries.length > 0) && (libraries.length != lastLibraryCount)) {
+		lastLibraryCount = libraries.length;
 
-	var gradleRepositoriesBlock = getProjectRepositories().reduce(getGradleRepositoriesBlock, []);
+		console.log('[' + new Date().toLocaleTimeString() + ']', 'Attempting to download', lastLibraryCount, (lastLibraryCount == 1) ? 'dependency' : 'dependencies');
 
-	var buildGradleContent = [
-		'apply plugin: "java"'
-	];
+		var gradleRepositoriesBlock = getProjectRepositories().reduce(getGradleRepositoriesBlock, []);
 
-	buildGradleContent.push('buildscript {');
-	buildGradleContent = buildGradleContent.concat(gradleRepositoriesBlock);
-	buildGradleContent.push('}');
+		var buildGradleContent = [
+			'apply plugin: "java"'
+		];
 
-	buildGradleContent.push('dependencies {');
-	buildGradleContent = buildGradleContent.concat(entries);
-	buildGradleContent.push('}');
+		buildGradleContent.push('buildscript {');
+		buildGradleContent = buildGradleContent.concat(gradleRepositoriesBlock);
+		buildGradleContent.push('}');
 
-	buildGradleContent = buildGradleContent.concat(gradleRepositoriesBlock);
+		buildGradleContent.push('dependencies {');
+		buildGradleContent = buildGradleContent.concat(libraries.map(getGradleEntry));
+		buildGradleContent.push('}');
 
-	buildGradleContent = buildGradleContent.concat([
-		'task completeLibraryCache(type: Exec) {',
-		'\tcommandLine "echo", configurations.runtimeClasspath.files.join(" ")',
-		'}'
-	]);
+		buildGradleContent = buildGradleContent.concat(gradleRepositoriesBlock);
 
-	var completeCacheFolder = getFilePath(process.cwd(), 'tmp/ijbuild');
+		buildGradleContent = buildGradleContent.concat([
+			'task completeLibraryCache(type: Exec) {',
+			'\tcommandLine "echo", configurations.runtimeClasspath.files.size(), "files downloaded"',
+			'}'
+		]);
 
-	mkdirSync('tmp/ijbuild');
+		var completeCacheFolder = getFilePath(process.cwd(), 'tmp/ijbuild');
 
-	fs.writeFileSync(getFilePath(completeCacheFolder, 'build.gradle'), buildGradleContent.join('\n'));
+		mkdirSync('tmp/ijbuild');
 
-	var executable = getFilePath(process.cwd(), 'gradlew');
+		fs.writeFileSync(getFilePath(completeCacheFolder, 'build.gradle'), buildGradleContent.join('\n'));
 
-	var args = ['completeLibraryCache'];
+		var executable = getFilePath(process.cwd(), 'gradlew');
 
-	var options = {
-		'cwd': completeCacheFolder,
-		'stdio': [0,1,2]
-	};
+		var args = ['completeLibraryCache'];
 
-	try {
-		execFileSync(executable, args, options);
+		var options = {
+			'cwd': completeCacheFolder,
+			'stdio': [0,1,2],
+		};
+
+		try {
+			execFileSync(executable, args, options);
+		}
+		catch (e) {
+			console.error(e);
+		}
+
+		generateFileListCache('.gradle/caches/modules-2/files-2.1');
+
+		for (var library of libraries) {
+			delete library['jarPaths'];
+		}
+
+		libraries = libraries.filter(highland.compose(highland.not, hasLibraryPath));
 	}
-	catch (e) {
-		console.error(e);
-	}
 
-	generateFileListCache('');
+	console.log('[' + new Date().toLocaleTimeString() + ']', completionMessage, '-', libraries.length, 'entries remaining');
 };
 
-function executeMavenFile(completionMessage, entries) {
-	if (entries.length == lastLibraryCount) {
-		libraryCacheStable = true;
-		console.log('[' + new Date().toLocaleTimeString() + ']', completionMessage);
-		return;
+function executeMavenFile(completionMessage, libraries) {
+	if (libraries.length == 0) {
+		return
 	}
 
-	lastLibraryCount = entries.length;
+	var lastLibraryCount = 0;
 
-	console.log('[' + new Date().toLocaleTimeString() + ']', 'Attempting to download', lastLibraryCount, 'dependencies');
+	while ((libraries.length > 0) && (libraries.length != lastLibraryCount)) {
+		console.log('[' + new Date().toLocaleTimeString() + ']', 'Attempting to download', lastLibraryCount, (lastLibraryCount == 1) ? 'dependency' : 'dependencies');
 
-	var dependencyObjects = {
-		dependency: entries
-	};
+		var dependencyObjects = {
+			dependency: libraries.map(getMavenDependencyElement)
+		};
 
-	var mavenCacheContent = getMavenProjectXML('complete-library-cache', '1.0.0-SNAPSHOT', dependencyObjects);
+		var mavenCacheContent = getMavenProjectXML('complete-library-cache', '1.0.0-SNAPSHOT', dependencyObjects);
 
-	var completeCacheFolder = getFilePath(process.cwd(), 'tmp/ijbuild');
+		var completeCacheFolder = getFilePath(process.cwd(), 'tmp/ijbuild');
 
-	mkdirSync('tmp/ijbuild');
+		mkdirSync('tmp/ijbuild');
 
-	fs.writeFileSync(getFilePath(completeCacheFolder, 'pom.xml'), mavenCacheContent);
+		fs.writeFileSync(getFilePath(completeCacheFolder, 'pom.xml'), mavenCacheContent);
 
-	var args = ['--fail-at-end', 'dependency:go-offline'];
+		var args = ['--fail-at-end', 'dependency:go-offline'];
 
-	var options = {
-		'cwd': completeCacheFolder,
-		'stdio': [0,1,2]
-	};
+		var options = {
+			'cwd': completeCacheFolder,
+			'stdio': [0,1,2]
+		};
 
-	try {
-		execFileSync('mvn', args, options);
+		try {
+			execFileSync('mvn', args, options);
+		}
+		catch (e) {
+			console.error(e);
+		}
+
+		for (var mavenCache of mavenCaches) {
+			generateFileListCache(mavenCache);
+		}
+
+		libraries = libraries.filter(highland.compose(highland.not, hasLibraryPath));
 	}
-	catch (e) {
-		console.error(e);
-	}
 
-	for (mavenCache of mavenCaches) {
-		generateFileListCache(mavenCache);
-	}
+	console.log('[' + new Date().toLocaleTimeString() + ']', completionMessage);
 };
 
 function fixMavenBomDependencies(module) {
@@ -597,7 +568,7 @@ function fixMavenBomDependencies(module) {
 			continue;
 		}
 
-		for (key in library.variables) {
+		for (var key in library.variables) {
 			var colonIndex = key.indexOf(':');
 
 			if (colonIndex == -1) {
@@ -892,13 +863,6 @@ function getFileTreeDependencies(module) {
 
 function getGradleEntry(library) {
 	return '\truntimeOnly group: "' + library['group'] + '", name: "' + library['name'] + '", version: "' + library['version'] + '"';
-};
-
-function getGradleFile(entries) {
-	return {
-		name: getFilePath(process.cwd(), 'tmp/ijbuild/build.gradle'),
-		content: buildGradleContent.join('\n')
-	};
 };
 
 function getGradleRepositoriesBlock(currentValue, repository) {

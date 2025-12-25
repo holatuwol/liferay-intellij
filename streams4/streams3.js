@@ -7,7 +7,6 @@ var getFilePath = streams2.getFilePath;
 var isDirectory = streams2.isDirectory;
 var isFile = streams2.isFile;
 var isHidden = streams2.isHidden;
-var isRepoModePull = streams2.isRepoModePull;
 var isSymbolicLink = streams2.isSymbolicLink;
 
 var sourceFolders = ['docroot/WEB-INF/service', 'docroot/WEB-INF/src', 'src/main/java', 'src/main/resources/archetype-resources/src/main/java'];
@@ -82,7 +81,7 @@ function getModuleExcludeFolders(folder, moduleIncludeFolders) {
 		moduleExcludeFolders.push('node_modules');
 	}
 
-	for (key in moduleIncludeFolders) {
+	for (var key in moduleIncludeFolders) {
 		if (moduleIncludeFolders.hasOwnProperty(key)) {
 			moduleIncludeFolders[key].reduce(updateExcludeFolders, moduleExcludeFolders);
 		}

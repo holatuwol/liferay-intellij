@@ -418,7 +418,7 @@ Let's declare a function ``getModuleExcludeFolders`` which by default includes a
 			moduleExcludeFolders.push('dist');
 		}
 
-		for (key in moduleIncludeFolders) {
+		for (var key in moduleIncludeFolders) {
 			if (moduleIncludeFolders.hasOwnProperty(key)) {
 				// do something with moduleIncludeFolders[key]
 			}

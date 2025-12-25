@@ -30,7 +30,7 @@ function createProjectWorkspace(coreDetails, moduleDetails) {
 function getAttributeXML(component) {
 	var attributeXML = [];
 
-	for (key in component) {
+	for (var key in component) {
 		if (key == 'content') {
 			continue;
 		}

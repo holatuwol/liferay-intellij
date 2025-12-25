@@ -4,8 +4,6 @@ var comparators = require('comparators').default;
 var fs = require('fs');
 var highland = require('highland');
 var os = require('os');
-var streams2 = require('../streams2/streams2');
-var streams4 = require('../streams5/streams4');
 var streams5 = require('../streams6/streams5');
 var streams6 = require('../streams7/streams6');
 var streams7 = require('../streams8/streams7');
@@ -13,16 +11,12 @@ var streams7 = require('../streams8/streams7');
 var execFileSync = child_process.execFileSync;
 var getAncestorFiles = streams7.getAncestorFiles;
 var getComponentXML = streams6.getComponentXML;
-var getDependenciesWithWhileLoop = streams4.getDependenciesWithWhileLoop;
-var getExcludeFolderElement = streams6.getExcludeFolderElement;
 var getFacetManagerXML = streams6.getFacetManagerXML;
 var getFilePath = streams5.getFilePath;
 var getIntellijXML = streams6.getIntellijXML;
 var getModuleElement = streams7.getModuleElement;
 var getModulesElement = streams7.getModulesElement;
 var getModuleIMLPath = streams6.getModuleIMLPath;
-var getOrderEntryElement = streams7.getOrderEntryElement;
-var getSourceFolderElement = streams6.getSourceFolderElement;
 var getWorkspaceModulesXML = streams7.getWorkspaceModulesXML;
 var isTestDependency = streams7.isTestDependency;
 var saveContent = streams6.saveContent;
@@ -41,13 +35,13 @@ function createProjectWorkspace(coreDetails, moduleDetails) {
 	checkForGradleCache('../liferay-binaries-cache-2020');
 	checkForGradleCache('../liferay-binaries-cache-2017');
 
-	for (gradleCache of gradleCaches) {
+	for (var gradleCache of gradleCaches) {
 		generateFileListCache(gradleCache);
 	}
 
 	checkForMavenCache(getUserHome());
 
-	for (mavenCache of mavenCaches) {
+	for (var mavenCache of mavenCaches) {
 		generateFileListCache(mavenCache);
 	}
 
@@ -97,6 +91,8 @@ function checkForGradleCache(obj) {
 	var candidates = getAncestorFiles(modulePath, '.gradle/caches/modules-2/files-2.1');
 
 	candidates.forEach(Set.prototype.add.bind(gradleCaches));
+
+	return candidates;
 };
 
 function checkForMavenCache(obj) {
@@ -125,17 +121,19 @@ function generateFileListCache(cachePath) {
 	var fileList = [];
 
 	try {
-		var gitAncestors = getAncestorFiles(cachePath, '.git');
+		if (cachePath.indexOf('/liferay-binaries-cache-') != -1) {
+			var gitAncestors = getAncestorFiles(cachePath, '.git');
 
-		if ((gitAncestors.length > 0) && (cachePath.indexOf('/liferay-binaries-cache-') != -1)) {
-			var args = ['ls-files', '.'];
+			if (gitAncestors.length > 0) {
+				var args = ['ls-files', '.'];
 
-			var options = {
-				'cwd': cachePath,
-				'maxBuffer': 1024 * 1024 * 256
-			};
+				var options = {
+					'cwd': cachePath,
+					'maxBuffer': 1024 * 1024 * 256
+				};
 
-			fileList = execFileSync('git', args, options).toString().split('\n').map(addLeadingSlash);
+				fileList = execFileSync('git', args, options).toString().split('\n').map(addLeadingSlash);
+			}
 		}
 		else {
 			var args = ['-L', '.', '-name', '*.jar', '-o', '-name', '*.pom'];
@@ -195,7 +193,7 @@ function getLibraryFolderPath(library) {
 
 	var mavenRelativePath = ['.'].concat(library.group.split('.')).concat([library.name, library.version]).join('/');
 
-	for (mavenCache of mavenCaches) {
+	for (var mavenCache of mavenCaches) {
 		if (!fileListCache[mavenCache].has(mavenRelativePath)) {
 			continue;
 		}
@@ -209,13 +207,13 @@ function getLibraryFolderPath(library) {
 
 	var gradleRelativePath = ['.', library.group, library.name, library.version].join('/');
 
-	for (gradleCache of gradleCaches) {
+	for (var gradleCache of gradleCaches) {
 		if (fileListCache[gradleCache].has(gradleRelativePath)) {
 			return getFilePath(gradleCache, gradleRelativePath);
 		}
 	}
 
-	for (mavenCache of mavenCaches) {
+	for (var mavenCache of mavenCaches) {
 		if (fileListCache[mavenCache].has(mavenRelativePath)) {
 			return getFilePath(mavenCache, mavenRelativePath);
 		}
@@ -235,8 +233,8 @@ function getLibraryPomCount(path) {
 function getLibraryJarList(jarPaths) {
 	var jarList = [];
 
-	for (group in jarPaths) {
-		for (name in jarPaths[group]) {
+	for (var group in jarPaths) {
+		for (var name in jarPaths[group]) {
 			Array.prototype.push.apply(jarList, jarPaths[group][name]['jarList']);
 		}
 	}
@@ -260,11 +258,11 @@ function getLibraryJarPaths(library) {
 	if (folderPath == null) {
 		folderPath = getLibraryFolderPath(library);
 
-		library['folderPath'] = folderPath;
-	}
+		if (folderPath == null) {
+			return [];
+		}
 
-	if (folderPath == null) {
-		return [];
+		library['folderPath'] = folderPath;
 	}
 
 	var jarName = library.name + '-' + library.version + '.jar';
@@ -479,11 +477,11 @@ function processPomDependencies(library) {
 	if (folderPath == null) {
 		folderPath = getLibraryFolderPath(library);
 
-		library['folderPath'] = folderPath;
-	}
+		if (folderPath == null) {
+			return;
+		}
 
-	if (folderPath == null) {
-		return;
+		library['folderPath'] = folderPath;
 	}
 
 	// First, read the pom.xml
@@ -517,7 +515,7 @@ function processPomDependencies(library) {
 
 		var newLibrary = initializeLibrary(newGroupId, library.name, library.version);
 
-		for (key in newLibrary) {
+		for (var key in newLibrary) {
 			library[key] = newLibrary[key];
 		}
 
@@ -646,8 +644,8 @@ function setDependenciesAsJars(pom, variables, library, index, node) {
 	var jarPaths = library['jarPaths'];
 	var dependencyJarPaths = dependencyLibrary['jarPaths'];
 
-	for (group in dependencyJarPaths) {
-		for (name in dependencyJarPaths[group]) {
+	for (var group in dependencyJarPaths) {
+		for (var name in dependencyJarPaths[group]) {
 			setDependencyJarList(jarPaths, group, name, dependencyJarPaths[group][name]);
 		}
 	}
@@ -704,7 +702,7 @@ function setDependencyVariables(pom, variables, library, index, node) {
 	if (version && type && (type == 'pom')) {
 		var dependencyLibrary = initializeLibrary(groupId, artifactId, version);
 
-		for (variableName in dependencyLibrary['variables']) {
+		for (var variableName in dependencyLibrary['variables']) {
 			if ((variableName.indexOf(':') != -1) && !(variableName in library['variables'])) {
 				library['variables'][variableName] = dependencyLibrary['variables'][variableName];
 			}

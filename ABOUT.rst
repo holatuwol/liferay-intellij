@@ -61,6 +61,7 @@ Change Log
 
 This is a change log for when I started keeping track of the changes that were made.
 
+* **2025-12-25**: Fix dependency download retry loop so that you only have to run the `ij` command once
 * **2025-09-26**: Fix ``com.liferay.jakarta.*`` library descriptors
 * **2025-09-05**: Make completing the cache the default behavior, and change the flag to ``--no-complete-cache``
 * **2025-07-03**: Treat the megajars the same way as the BOMs for dependency management purposes

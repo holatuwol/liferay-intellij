@@ -12,9 +12,7 @@ var xmlbuilder = require('xmlbuilder');
 var checkForGradleCache = streams8.checkForGradleCache;
 var checkForMavenCache = streams8.checkForMavenCache;
 var generateFileListCache = streams8.generateFileListCache;
-var getAncestorFiles = streams7.getAncestorFiles;
 var getComponentXML = streams6.getComponentXML;
-var getExcludeFolderElement = streams6.getExcludeFolderElement;
 var getFacetManagerXML = streams6.getFacetManagerXML;
 var getFilePath = streams5.getFilePath;
 var getIntellijXML = streams6.getIntellijXML;
@@ -24,12 +22,10 @@ var getLibraryRootElement = streams8.getLibraryRootElement;
 var getModuleElement = streams7.getModuleElement;
 var getModulesElement = streams7.getModulesElement;
 var getModuleIMLPath = streams6.getModuleIMLPath;
-var getSourceFolderElement = streams6.getSourceFolderElement;
 var getUserHome = streams8.getUserHome;
 var getWorkspaceModulesXML = streams7.getWorkspaceModulesXML;
 var isDirectory = streams2.isDirectory;
 var isFile = streams2.isFile;
-var isFirstOccurrence = streams8.isFirstOccurrence;
 var isJar = streams8.isJar;
 var isSameLibraryDependency = streams8.isSameLibraryDependency;
 var keyExistsInObject = highland.ncurry(2, streams8.keyExistsInObject);
@@ -72,13 +68,13 @@ function createProjectWorkspace(coreDetails, moduleDetails, pluginDetails) {
 	checkForGradleCache('../liferay-binaries-cache-2020');
 	checkForGradleCache('../liferay-binaries-cache-2017');
 
-	for (gradleCache of gradleCaches) {
+	for (var gradleCache of gradleCaches) {
 		generateFileListCache(gradleCache);
 	}
 
 	checkForMavenCache(getUserHome());
 
-	for (mavenCache of mavenCaches) {
+	for (var mavenCache of mavenCaches) {
 		generateFileListCache(mavenCache);
 	}
 
@@ -247,7 +243,7 @@ function fixLibraryDependencies(moduleVersions, module) {
 
 			var releasePortalAPI = ['portal-impl', 'portal-kernel', 'portal-test', 'support-tomcat', 'util-bridges', 'util-java', 'util-slf4j', 'util-taglib', 'required-dependencies'];
 
-			for (moduleName in moduleVersions) {
+			for (var moduleName in moduleVersions) {
 				if ((moduleName.indexOf('-api') != -1) || (moduleName.indexOf('-spi') != -1)) {
 					releasePortalAPI.push(moduleName);
 				}
