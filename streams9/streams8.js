@@ -185,9 +185,11 @@ function generateFileListCache(cachePath) {
 }
 
 function getLibraryFolderPath(library) {
-	if ((library.group == null) || (library.version == null) || (library.name == null) ||
-		(library.name.indexOf('com.liferay.') == 0 && library.name.indexOf('com.liferay.jakarta.') == -1)) {
+	if ('folderPath' in library) {
+		return library['folderPath'];
+	}
 
+	if ((library.group == null) || (library.version == null) || (library.name == null)) {
 		return null;
 	}
 
@@ -201,6 +203,8 @@ function getLibraryFolderPath(library) {
 		var mavenAbsolutePath = getFilePath(mavenCache, mavenRelativePath);
 
 		if (getLibraryPomCount(mavenAbsolutePath) > 0) {
+			library['folderPath'] = mavenAbsolutePath;
+
 			return mavenAbsolutePath;
 		}
 	}
@@ -215,7 +219,11 @@ function getLibraryFolderPath(library) {
 
 	for (var mavenCache of mavenCaches) {
 		if (fileListCache[mavenCache].has(mavenRelativePath)) {
-			return getFilePath(mavenCache, mavenRelativePath);
+			var mavenAbsolutePath = getFilePath(mavenCache, mavenRelativePath);
+
+			library['folderPath'] = mavenAbsolutePath;
+
+			return mavenAbsolutePath;
 		}
 	}
 
@@ -253,16 +261,10 @@ function getLibraryJarPaths(library) {
 		return getLibraryJarList(jarPaths);
 	}
 
-	var folderPath = library['folderPath'];
+	var folderPath = getLibraryFolderPath(library);
 
-	if (folderPath == null) {
-		folderPath = getLibraryFolderPath(library);
-
-		if (folderPath == null) {
-			return [];
-		}
-
-		library['folderPath'] = folderPath;
+	if (!folderPath) {
+		return [];
 	}
 
 	var jarName = library.name + '-' + library.version + '.jar';
@@ -472,16 +474,10 @@ function keyExistsInObject(key, object) {
 };
 
 function processPomDependencies(library) {
-	var folderPath = library['folderPath'];
+	var folderPath = getLibraryFolderPath(library);
 
-	if (folderPath == null) {
-		folderPath = getLibraryFolderPath(library);
-
-		if (folderPath == null) {
-			return;
-		}
-
-		library['folderPath'] = folderPath;
+	if (!folderPath) {
+		return;
 	}
 
 	// First, read the pom.xml
@@ -634,10 +630,6 @@ function setDependenciesAsJars(pom, variables, library, index, node) {
 	var groupId = artifactInfo[0];
 	var artifactId = artifactInfo[1];
 	var version = artifactInfo[2];
-
-	if (groupId.indexOf('com.liferay') == 0 && groupId.indexOf('com.liferay.jakarta') == -1) {
-		return;
-	}
 
 	var dependencyLibrary = initializeLibrary(groupId, artifactId, version);
 

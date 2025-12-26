@@ -1216,15 +1216,11 @@ function needsCacheEntry(library) {
 		return false;
 	}
 
-	if (library.group.indexOf('com.liferay') == 0 && library.group.indexOf('com.liferay.jakarta') == -1) {
-		return (library.name.indexOf('com.liferay') != 0) || library.hasInitJsp;
-	}
-
-	if (library.name.indexOf('com.liferay') == 0 && library.name.indexOf('com.liferay.jakarta') == -1) {
+	if (library.version == 'default') {
 		return false;
 	}
 
-	if (library.name == 'javafaker') {
+	if (library.group == 'com.liferay.osb.koroneiki' && library.name == 'com.liferay.osb.koroneiki.client') {
 		return false;
 	}
 
