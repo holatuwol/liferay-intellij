@@ -378,6 +378,18 @@ function clearWebroots(module) {
 	module.webrootFolders = [];
 };
 
+function isValidVersion(library) {
+	if (!keyExistsInObject('version', library)) {
+		return false;
+	}
+	
+	if (library['version'] === 'latest.version') {
+		return false;
+	}
+	
+	return true;
+};
+
 function completeBomCache(moduleDetails) {
 	var moduleStream = highland(moduleDetails);
 
@@ -391,7 +403,7 @@ function completeBomCache(moduleDetails) {
 		.filter(keyExistsInObject('group'))
 		.doto(setLibraryName)
 		.filter(highland.compose(highland.not, hasLibraryPath))
-		.filter(keyExistsInObject('version'))
+		.filter(isValidVersion)
 		.collect()
 		.each(highland.partial(executeGradleFile, 'BOM dependencies have been downloaded'));
 };
@@ -410,7 +422,7 @@ function completeLibraryCache(useMaven, coreDetails, moduleDetails, pluginDetail
 		.uniqBy(isSameLibraryDependency)
 		.filter(keyExistsInObject('group'))
 		.doto(setLibraryName)
-		.filter(keyExistsInObject('version'))
+		.filter(isValidVersion)
 		.filter(needsCacheEntry)
 		.filter(highland.compose(highland.not, hasLibraryPath));
 
@@ -1220,7 +1232,7 @@ function needsCacheEntry(library) {
 		return false;
 	}
 
-	if (library.group == 'com.liferay.osb.koroneiki' && library.name == 'com.liferay.osb.koroneiki.client') {
+	if (library.group == 'com.liferay.osb.koroneiki') {
 		return false;
 	}
 

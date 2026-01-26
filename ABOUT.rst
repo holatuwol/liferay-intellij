@@ -61,6 +61,7 @@ Change Log
 
 This is a change log for when I started keeping track of the changes that were made.
 
+* **2026-01-26**: When completing the Maven/Gradle cache, exclude all `com.liferay.osb.koroneiki` artifacts and any that have `latest.version` as their version, not just the client
 * **2025-12-26**: Download any `com.liferay` dependencies we could not map to a project, unless it's known there's no project (like the Koroneiki client)
 * **2025-12-25**: Fix dependency download retry loop so that you only have to run the `ij` command once
 * **2025-09-26**: Fix ``com.liferay.jakarta.*`` library descriptors
