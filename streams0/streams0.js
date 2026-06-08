@@ -101,7 +101,7 @@ function createProjectObjectModels(coreDetails, moduleDetails, pluginDetails, co
 
 	console.log('[' + new Date().toLocaleTimeString() + ']', 'Processing missing dependencies');
 
-	completeLibraryCache(config['mvn-cache'], coreDetails, moduleDetails, pluginDetails);
+	completeLibraryCache(coreDetails, moduleDetails, pluginDetails);
 
 	console.log('[' + new Date().toLocaleTimeString() + ']', 'Generating Maven project');
 
@@ -187,7 +187,7 @@ function createProjectWorkspace(coreDetails, moduleDetails, pluginDetails, confi
 	if (!config['no-complete-cache']) {
 		console.log('[' + new Date().toLocaleTimeString() + ']', 'Processing missing dependencies');
 
-		completeLibraryCache(config['mvn-cache'], coreDetails, gradleCacheModuleDetails, gradleCachePluginDetails);
+		completeLibraryCache(coreDetails, gradleCacheModuleDetails, gradleCachePluginDetails);
 	}
 
 	console.log('[' + new Date().toLocaleTimeString() + ']', 'Generating IntelliJ workspace');
@@ -408,7 +408,7 @@ function completeBomCache(moduleDetails) {
 		.each(highland.partial(executeGradleFile, 'BOM dependencies have been downloaded'));
 };
 
-function completeLibraryCache(useMaven, coreDetails, moduleDetails, pluginDetails) {
+function completeLibraryCache(coreDetails, moduleDetails, pluginDetails) {
 	var moduleStream = highland(moduleDetails);
 	var coreStream = highland(coreDetails);
 	var pluginStream = highland(pluginDetails);
@@ -426,14 +426,8 @@ function completeLibraryCache(useMaven, coreDetails, moduleDetails, pluginDetail
 		.filter(needsCacheEntry)
 		.filter(highland.compose(highland.not, hasLibraryPath));
 
-	if (useMaven) {
-		completeCacheStream.collect()
-			.each(highland.partial(executeMavenFile, 'Missing dependencies have been downloaded'));
-	}
-	else {
-		completeCacheStream.collect()
-			.each(highland.partial(executeGradleFile, 'Missing dependencies have been downloaded'));
-	}
+	completeCacheStream.collect()
+		.each(highland.partial(executeGradleFile, 'Missing dependencies have been downloaded'));
 };
 
 function executeGradleFile(completionMessage, libraries) {

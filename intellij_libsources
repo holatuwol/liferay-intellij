@@ -4,12 +4,7 @@ SCRIPT_FOLDER=$(dirname "$0")
 
 . "${SCRIPT_FOLDER}/intellij_common"
 
-checknode
-setupsdk
-
-cachemodules $@
-
-if copylibs; then
+if checknode && compile && cachemodules $@ && checkbinariescache; then
 	if [ "" != "$(which mvn)" ]; then
 		"$NODEJS" "${SCRIPT_FOLDER}/bin/pom.js" "$PWD" $@
 

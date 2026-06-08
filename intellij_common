@@ -109,7 +109,7 @@ mavenjar() {
 	fi
 }
 
-copylibs() {
+checkbinariescache() {
 	if [ ! -d modules ]; then
 		return 0
 	fi
@@ -148,6 +148,7 @@ copylibs() {
 		return 1
 	fi
 
+
 	if [ "" == "$(which mvn)" ]; then
 		timeecho 'Maven is not available in the path, dependency libraries will be missing'
 		return 1
@@ -166,19 +167,8 @@ copylibs() {
 			continue
 		fi
 
-		for dependency in $(cat lib/$folder/dependencies.properties); do
-			local lib_jar=lib/$folder/$(echo $dependency | cut -d'=' -f 1).jar
-
-			local group_maven=$(echo $dependency | cut -d'=' -f 2 | cut -d':' -f 1 | tr '.' '/')
-			local name=$(echo $dependency | cut -d'=' -f 2 | cut -d':' -f 2)
-			local version=$(echo $dependency | cut -d'=' -f 2 | cut -d':' -f 3)
-
-			local maven_path=$HOME/.m2/repository/${group_maven}/${name}/${version}/${name}-${version}.jar
-
-			if [ -f $maven_path ]; then
-				cp $maven_path $lib_jar
-				continue
-			fi
+		for dependency in $(cat lib/$folder/dependencies.properties | cut -d'=' -f 2); do
+			mvn dependency:get -Dartifact=${dependency}
 		done
 	done
 }
@@ -257,30 +247,18 @@ setantopts() {
 	export ANT_OPTS
 }
 
-setupsdk() {
-	if [ ! -f build.xml ] || [ ! -d modules ]; then
+compile() {
+	if [ ! -f build.xml ] || [ -d portal-impl/classes ]; then
 		return 0
 	fi
 
 	rm -rf .idea/libraries
 
-	local NEEDS_SETUP_LIBS=
-
-	for folder in development global portal; do
-		if [ -f "lib/$folder/dependencies.properties" ] && [[ $(ls -1 lib/$folder/ | grep -c '\.jar$') -lt $(cat "lib/$folder/dependencies.properties" | wc -l) ]]; then
-			NEEDS_SETUP_LIBS=true
-		fi
-	done
-
-	if [ -d tools/sdk ] && [ "" == "${NEEDS_SETUP_LIBS}" ]; then
-		return 0
-	fi
-
 	setantopts
 
-	timeecho 'Running ant setup-sdk to initialize gradle configuration'
+	timeecho 'Running ant compile jar install-portal-snapshots to initialize gradle configuration'
 
-	ant setup-sdk setup-libs
+	ant -Dbaseline.jar.report.level=off compile jar install-portal-snapshots
 }
 
 setupwork() {

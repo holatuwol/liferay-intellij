@@ -1,3 +1,4 @@
+*.code-workspace
 *.zip
 node_modules
 node.version.*

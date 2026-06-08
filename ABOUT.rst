@@ -61,9 +61,11 @@ Change Log
 
 This is a change log for when I started keeping track of the changes that were made.
 
-* **2026-01-26**: When completing the Maven/Gradle cache, exclude all `com.liferay.osb.koroneiki` artifacts and any that have `latest.version` as their version, not just the client
-* **2025-12-26**: Download any `com.liferay` dependencies we could not map to a project, unless it's known there's no project (like the Koroneiki client)
-* **2025-12-25**: Fix dependency download retry loop so that you only have to run the `ij` command once
+* **2026-06-08**: Unset ``NPM_CONFIG_PREFIX`` so that we can use ``nvm``
+* **2026-04-16**: Call ``ant compile jar install-portal-snapshots`` instead of ``ant setup-sdk setup-libs`` to initialize folder structure, and don't check out licensing code
+* **2026-01-26**: When completing the Maven/Gradle cache, exclude all ``com.liferay.osb.koroneiki`` artifacts and any that have ``latest.version`` as their version, not just the client
+* **2025-12-26**: Download any ``com.liferay`` dependencies we could not map to a project, unless it's known there's no project (like the Koroneiki client)
+* **2025-12-25**: Fix dependency download retry loop so that you only have to run the ``ij`` command once
 * **2025-09-26**: Fix ``com.liferay.jakarta.*`` library descriptors
 * **2025-09-05**: Make completing the cache the default behavior, and change the flag to ``--no-complete-cache``
 * **2025-07-03**: Treat the megajars the same way as the BOMs for dependency management purposes
