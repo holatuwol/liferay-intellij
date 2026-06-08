@@ -61,7 +61,7 @@ Change Log
 
 This is a change log for when I started keeping track of the changes that were made.
 
-* **2026-06-08**: Unset ``NPM_CONFIG_PREFIX`` so that we can use ``nvm``
+* **2026-06-08**: Unset ``NPM_CONFIG_PREFIX`` and call ``nvm`` with ``--delete-prefix`` to see if it removes the ``NPM_CONFIG_PREFIX`` warning
 * **2026-04-16**: Call ``ant compile jar install-portal-snapshots`` instead of ``ant setup-sdk setup-libs`` to initialize folder structure, and don't check out licensing code
 * **2026-01-26**: When completing the Maven/Gradle cache, exclude all ``com.liferay.osb.koroneiki`` artifacts and any that have ``latest.version`` as their version, not just the client
 * **2025-12-26**: Download any ``com.liferay`` dependencies we could not map to a project, unless it's known there's no project (like the Koroneiki client)

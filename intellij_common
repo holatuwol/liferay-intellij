@@ -67,7 +67,7 @@ checknodemodules() {
 	nvm current > node.version.new
 
 	nvm install
-	nvm use
+	nvm use --delete-prefix
 
 	if [ -f node.version.old ]; then
 		if [ "$(cat node.version.old)" != "$(cat node.version.new)" ]; then
